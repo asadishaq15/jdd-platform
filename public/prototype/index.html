@@ -1,0 +1,501 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="theme-color" content="#F4F4F2" />
+<link rel="icon" href="./assets/favicon.png" type="image/png" />
+<title>Jardin du Désert — Space</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  /* ===== Design system — same as hospitality.jardindudesert.com ===== */
+  :root{
+    --neutral-0:#ffffff; --neutral-1:#f4f4f2; --neutral-2:#dededb; --neutral-3:#a8a8a5;
+    --neutral-4:#6e6e6b; --neutral-5:#3a3a38; --neutral-6:#1e1e1d; --neutral-7:#111110;
+    --muted-grey:#8c8c88; --warm-white:#e9e4d9;
+    --copper-dark:#a66a3f; --copper:#c58452; --copper-light:#e6b98a; --copper-highlight:#f0c79b;
+    --copper-gradient:linear-gradient(92deg,#a66a3f 0%,#c58452 28%,#d6a06d 50%,#f0c79b 68%,#b47749 88%,#a66a3f 100%);
+    --copper-gradient-light:linear-gradient(100deg,#d6a06d 0%,#f0c79b 40%,#e6b98a 65%,#c58452 100%);
+    --copper-shimmer:linear-gradient(90deg,rgba(166,106,63,.35) 0%,#f0c79b 30%,#d6a06d 50%,#f0c79b 70%,rgba(166,106,63,.35) 100%);
+    --copper-star:radial-gradient(circle at 40% 40%,#fff0da 0%,#f0c79b 40%,#e6b98a 75%,#d6a06d 100%);
+    --ease-lux:cubic-bezier(0.22,1,0.36,1); --ease-line:cubic-bezier(0.5,0,0.2,1);
+    --serif:"Cormorant Garamond",Georgia,serif; --sans:Inter,"Helvetica Neue",Arial,sans-serif;
+
+    --bg:var(--neutral-1); --fg:var(--neutral-7); --muted:var(--muted-grey);
+    --pad-x:28px;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;height:100%}
+  body{
+    background:var(--bg); color:var(--fg); font-family:var(--sans);
+    -webkit-font-smoothing:antialiased; overflow:hidden;
+    transition: background-color 1.2s var(--ease-lux), color 1.2s var(--ease-lux);
+  }
+  body.night{ --bg:var(--neutral-7); --fg:var(--warm-white); --muted:var(--muted-grey); background:var(--neutral-7); }
+
+  /* ===== App frame (mobile first) ===== */
+  .app{ position:relative; height:100dvh; width:100%; max-width:480px; margin:0 auto; display:flex; flex-direction:column; }
+
+  .top{
+    position:relative; z-index:5; display:flex; align-items:center; justify-content:space-between;
+    padding: calc(env(safe-area-inset-top) + 18px) var(--pad-x) 10px;
+    min-height:64px;
+  }
+  .back{
+    min-width:44px; min-height:44px; display:flex; align-items:center; justify-content:flex-start;
+    background:none; border:0; padding:0; font:13px var(--sans); letter-spacing:.06em; color:var(--muted); cursor:pointer;
+    opacity:0; pointer-events:none; transition: opacity .6s var(--ease-lux);
+  }
+  .back.show{ opacity:1; pointer-events:auto; }
+  .back:hover{ background:var(--copper-gradient-light); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; }
+  .mark{ position:absolute; left:50%; top:calc(env(safe-area-inset-top) + 18px); transform:translateX(-50%); height:30px; }
+  .count{ font-family:var(--serif); font-size:13px; letter-spacing:.3em; color:var(--muted); font-variant-numeric:lining-nums; min-width:44px; text-align:right; }
+
+  /* progress: three thin lines, the active one carries the moving copper light */
+  .progress{ display:flex; gap:8px; justify-content:center; padding: 4px var(--pad-x) 0; position:relative; z-index:5; }
+  .progress i{ display:block; width:28px; height:1px; background:var(--neutral-2); transition: background .6s var(--ease-lux); }
+  body.night .progress i{ background:rgba(255,255,255,.18); }
+  .progress i.done{ background:var(--copper-light); }
+  .progress i.on{ background:var(--copper-shimmer); background-size:220% 100%; animation:shimmer 3.2s var(--ease-lux) infinite; }
+
+  /* ===== Screens ===== */
+  .screens{ position:relative; flex:1; }
+  .scr{
+    position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; text-align:center;
+    padding: 8px var(--pad-x) calc(env(safe-area-inset-bottom) + 26px);
+    opacity:0; pointer-events:none; transform: translateX(14px);
+    transition: opacity .9s var(--ease-lux), transform .9s var(--ease-lux);
+  }
+  .scr.on{ opacity:1; pointer-events:auto; transform:none; }
+  .scr.left{ transform: translateX(-14px); }
+
+  .scene{ flex:1 1 auto; width:100%; display:flex; align-items:center; justify-content:center; min-height:0; }
+  .scene svg{ width:min(300px,78vw); height:auto; max-height:34vh; overflow:visible; }
+  .copy{ flex:0 0 auto; width:100%; }
+  .actions{ flex:0 0 auto; width:100%; padding-top:26px; display:flex; justify-content:center; }
+
+  /* type roles */
+  .eyebrow{ font-size:11px; letter-spacing:.24em; text-transform:uppercase; color:var(--muted); margin:0 0 16px; }
+  .title{ font-family:var(--serif); font-weight:300; font-size:clamp(34px, 9.4vw, 46px); line-height:1.08; margin:0 auto 18px; max-width:12ch; }
+  .title .cu{ background:var(--copper-gradient); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent;
+              font-style:italic; padding:0 .12em .16em; margin:0 -.12em -.16em; }
+  body.night .title .cu{ background:var(--copper-gradient-light); -webkit-background-clip:text; background-clip:text; }
+  .body{ font-size:15.5px; line-height:1.6; color:var(--muted); margin:0 auto; max-width:32ch; }
+  body.night .body{ color:var(--warm-white); opacity:.82; }
+  .line{ font-family:var(--serif); font-style:italic; font-weight:300; font-size:20px; line-height:1.35; margin:16px auto 0; max-width:26ch; }
+  .fine{ font-size:11px; letter-spacing:.06em; font-weight:300; color:var(--muted); margin:18px auto 0; max-width:34ch; line-height:1.6; }
+
+  /* text control (the site's button) — large tap area on phone */
+  .tlink{
+    position:relative; min-height:48px; padding:12px 6px 16px; background:none; border:0; cursor:pointer;
+    font:13px var(--sans); letter-spacing:.06em; color:var(--fg); display:inline-flex; align-items:center; gap:10px;
+  }
+  .tlink::after{ content:""; position:absolute; left:6px; right:6px; bottom:8px; height:1px;
+    background:var(--copper-shimmer); background-size:220% 100%; background-position:100% 50%; animation:shimmer 3.2s var(--ease-lux) infinite; }
+  .tlink:hover, .tlink:focus-visible{ outline:none; background:var(--copper-gradient-light); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; }
+  .tlink .arr{ display:inline-block; transition: transform .42s var(--ease-lux); }
+  .tlink:hover .arr{ transform:translateX(3px); }
+  @keyframes shimmer{ 0%{background-position:100% 50%} 100%{background-position:-100% 50%} }
+
+  /* typing reveal (page-1 style) */
+  .w{ display:inline-block; opacity:0; transform:translateY(6px); filter:blur(3px); }
+  .scr.on .w{ animation: typeIn 1.1s var(--ease-lux) forwards; }
+  @keyframes typeIn{ to{ opacity:1; transform:none; filter:blur(0); } }
+  .fade{ opacity:0; transform:translateY(8px); }
+  .scr.on .fade{ animation: rise 1s var(--ease-lux) forwards; animation-delay: var(--d, 0s); }
+  @keyframes rise{ to{ opacity:1; transform:none; } }
+
+  /* line drawings */
+  .ln{ fill:none; stroke:url(#cg); stroke-width:1.1; stroke-linecap:round; stroke-linejoin:round; stroke-dasharray:1; stroke-dashoffset:1; }
+  .scr.on .ln{ animation: draw var(--dur,1.8s) var(--ease-line) forwards; animation-delay: var(--d,0s); }
+  @keyframes draw{ to{ stroke-dashoffset:0; } }
+  .sun{ fill: color-mix(in srgb, var(--neutral-7) 4.5%, transparent); }
+  .pt{ fill:url(#cd); opacity:0; }
+  .scr.on .pt{ animation: ptIn .8s var(--ease-lux) forwards, glow 3.8s ease-in-out infinite; animation-delay: var(--d,0s), calc(var(--d,0s) + .8s); }
+  @keyframes ptIn{ to{ opacity:1; } }
+  @keyframes glow{ 0%,100%{ filter: drop-shadow(0 0 3px rgba(255,236,210,.6)) drop-shadow(0 0 9px rgba(240,199,155,.45)); }
+                   50%{ filter: drop-shadow(0 0 5px rgba(255,236,210,.9)) drop-shadow(0 0 18px rgba(240,199,155,.8)); } }
+
+  /* screen 2: 22 stars across the night */
+  .sky{ position:absolute; inset:0; pointer-events:none; }
+  .star{ position:absolute; border-radius:50%; background:var(--copper-star); opacity:0; transform:translate(-50%,-50%) scale(.6);
+         box-shadow:0 0 6px 1px rgba(255,236,210,.55), 0 0 16px 4px rgba(240,199,155,.35); }
+  .scr.on .star{ animation: starIn 1.2s var(--ease-lux) forwards, twinkle var(--tw,4s) ease-in-out infinite; animation-delay: var(--in,0s), calc(var(--in,0s) + 1.2s); }
+  @keyframes starIn{ to{ opacity:1; transform:translate(-50%,-50%) scale(1); } }
+  @keyframes twinkle{ 0%,100%{ opacity:.45 } 50%{ opacity:1 } }
+  .num22{ font-family:var(--serif); font-weight:300; }
+
+  /* end stub */
+  .stub .title{ max-width:14ch; }
+
+  /* desktop: same column, a little more air */
+  @media (min-width: 768px){
+    :root{ --pad-x:40px; }
+    .title{ font-size:52px; }
+    .scene svg{ width:340px; }
+    .body{ font-size:16.5px; }
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    .w,.fade,.ln,.pt,.star{ animation:none !important; opacity:1 !important; transform:none !important; filter:none !important; stroke-dashoffset:0 !important; }
+    .scr{ transition:none; }
+  }
+
+  /* threshold light: copper hairline that opens outward under the doorway (chapter I) */
+  .threshold{ width:0; height:1px; margin:-4px auto 0; opacity:0;
+    background:linear-gradient(90deg,transparent 0%,var(--copper) 24%,var(--copper-highlight) 50%,var(--copper) 76%,transparent 100%); }
+  .scr.on .threshold{ animation: open 1.6s var(--ease-lux) 4.8s forwards; }
+  @keyframes open{ to{ width:min(240px,62vw); opacity:1; } }
+
+  /* global map (chapter II): thin grid turning slowly, 22 copper points appearing one by one */
+  .globe{ width:min(270px,70vw) !important; max-height:36vh; }
+  .ggrid ellipse, .ggrid line, .ggrid circle{ fill:none; stroke:var(--neutral-3); stroke-width:.7; opacity:.55; }
+  .ggrid .gouter{ stroke:var(--neutral-4); opacity:.7; stroke-width:.9; }
+  .ggrid{ transform-origin:310px 310px; opacity:0; }
+  .scr.on .ggrid{ animation: rise 1.2s var(--ease-lux) forwards, spin 60s linear 1.2s infinite; }
+  @keyframes spin{ to{ transform: rotate(360deg); } }
+  .gdot{ fill:url(#cd); opacity:0; transform-box:fill-box; transform-origin:center; }
+  .scr.on .gdot{ animation: ptIn 1s var(--ease-lux) forwards, gbreath var(--tw,4s) ease-in-out infinite; animation-delay: var(--in,0s), calc(var(--in,0s) + 1s); }
+  @keyframes gbreath{ 0%,100%{ transform:scale(.85); filter: drop-shadow(0 0 3px rgba(255,236,210,.6)) drop-shadow(0 0 8px rgba(240,199,155,.4)); }
+                      50%{ transform:scale(1.12); filter: drop-shadow(0 0 5px rgba(255,236,210,.9)) drop-shadow(0 0 16px rgba(240,199,155,.8)); } }
+
+  /* anchor (chapter III): labels + a quiet ripple that keeps returning */
+  .alabel{ font-family:var(--sans); font-size:15px; letter-spacing:4px; fill:var(--muted); }
+  .ripple{ fill:none; stroke:#D6A06D; stroke-width:.9; opacity:0; transform-box:view-box; transform-origin:400px 394px; }
+  .scr.on .ripple{ animation: ripple 4.8s var(--ease-lux) 6.4s infinite; }
+  @keyframes ripple{ 0%{opacity:0;transform:scale(.3)} 15%{opacity:.55} 100%{opacity:0;transform:scale(1.25)} }
+
+  /* ---- layout: wider, calmer, more air ---- */
+  :root{ --pad-x:24px; }
+  .app{ max-width:560px; }
+  .scr{ padding-top: 4px; }
+  .copy{ max-width:100%; }
+  .eyebrow{ margin-bottom:20px; }
+  .title{
+    font-size: clamp(27px, 7.2vw, 34px); line-height:1.18; max-width:none; margin:0 auto 22px;
+    text-wrap: balance;
+  }
+  .body{ max-width:40ch; line-height:1.7; font-size:15px; }
+  .line{ margin-top:22px; font-size:19px; }
+  .fine{ margin-top:22px; }
+  .actions{ padding-top:34px; }
+  /* chapter II: two clean lines, never three */
+  .title.t2{ white-space: nowrap; }
+  @media (max-width:340px){ .title.t2{ white-space: normal; } }
+  @media (min-width:768px){
+    .app{ max-width:760px; }
+    .title{ font-size:44px; }
+    .body{ font-size:16.5px; max-width:46ch; }
+    .scene svg{ width:380px; }
+  }
+
+  /* ---- chapter I: the cactus is the real logo, drawing itself ---- */
+  .scene-box{ position:relative; display:inline-block; line-height:0; }
+  .scene-box svg{ display:block; }
+  .scene-logo{
+    position:absolute; left:17.2%; top:24%; height:66%; width:auto;
+    transform: translateX(-30%); opacity:0; transition: opacity .8s var(--ease-lux);
+  }
+  .scene-logo.in{ opacity:1; }
+
+  /* threshold light sits on the ground line under the doorway */
+  .scene-box .threshold{ position:absolute; left:61.25%; top:89.3%; margin:0; transform:translateX(-50%); }
+  @keyframes open{ to{ width:34%; opacity:1; } }
+  .scene-logo{ height:60%; top:30%; }
+
+  /* day / night switch */
+  .theme{ min-width:44px; min-height:44px; display:flex; align-items:center; justify-content:flex-end; background:none; border:0; padding:0; cursor:pointer; }
+  .theme svg{ width:20px; height:20px; fill:none; stroke:var(--fg); stroke-width:1.1; stroke-linecap:round; stroke-linejoin:round; transition: stroke .4s var(--ease-lux), transform .6s var(--ease-lux), opacity .4s var(--ease-lux); }
+  .theme .sunic{ display:none; }
+  body.night .theme .moon{ display:none; }
+  body.night .theme .sunic{ display:block; }
+  .theme:hover svg{ stroke:var(--copper-light); transform: rotate(-12deg); }
+  /* night details */
+  body.night .sun{ fill: color-mix(in srgb, #fff 5.5%, transparent); }
+  body.night .ggrid ellipse, body.night .ggrid line, body.night .ggrid circle{ stroke: rgba(255,255,255,.35); }
+  body.night .ggrid .gouter{ stroke: rgba(255,255,255,.6); }
+  body.night .eyebrow, body.night .fine{ color: var(--muted-grey); }
+
+  /* order: heading on top · animation in the middle · explanation · button */
+  .copy-top{ flex:0 0 auto; padding-top:18px; }
+  .scr .scene{ flex:1 1 auto; padding:10px 0; }
+  .copy-bottom{ flex:0 0 auto; }
+  .copy-top .title{ margin-bottom:0; }
+  .actions{ padding-top:26px; }
+  .one-line{ white-space:nowrap; max-width:none !important; }
+  .fine.one-line{ font-size: clamp(9.5px, 2.75vw, 11px); letter-spacing:.02em; }
+  .line.one-line{ font-size: clamp(17px, 4.8vw, 20px); }
+
+  /* compact composition with fixed vertical zones:
+     top copy keeps its air; the illustration compresses first on short screens. */
+  .scr:not(.stub){
+    display:grid;
+    grid-template-rows:auto minmax(150px, 1fr) auto auto;
+    align-content:start;
+    justify-items:center;
+    padding-top:clamp(24px, 5dvh, 54px);
+  }
+  .copy-top{ padding-top:0; margin-top:0; }
+  .scr .scene{ min-height:0; padding:clamp(20px, 4dvh, 34px) 0 clamp(18px, 3.5dvh, 28px); }
+  .scene svg{ width:min(330px,82vw); max-height:32vh; }
+  .globe{ width:min(250px,64vw) !important; max-height:30vh; }
+  .actions{ padding-top:26px; }
+  .scr{ padding-bottom: calc(env(safe-area-inset-bottom) + 40px); }
+
+  @media (max-height:720px){
+    .scr:not(.stub){
+      grid-template-rows:auto minmax(118px, 1fr) auto auto;
+      padding-top:24px;
+    }
+    .scr .scene{ padding:18px 0 18px; }
+    .scene svg{ max-height:28vh; }
+    .scene svg.aligned{ max-height:26vh; }
+  }
+
+  /* Skip: low on the screen, same style and place as Back on the sign-in screens */
+  .skip-row{ position:absolute; left:0; right:0; bottom:calc(env(safe-area-inset-bottom) + 28px); margin:0; display:flex; justify-content:center; }
+  .tlink.skip-l{ font-size:12px; color:var(--muted); min-height:40px; }
+  .scr{ padding-bottom:calc(env(safe-area-inset-bottom) + 84px); }   /* room so the content never covers Skip */
+
+  /* same spacing rule as the sign-in screens: main action 40px below the content, Skip 40px above the bottom edge */
+  .actions{ padding-top:40px !important; }
+  .skip-row{ bottom:calc(env(safe-area-inset-bottom) + 40px) !important; }
+  .scr{ padding-bottom:calc(env(safe-area-inset-bottom) + 96px) !important; }
+
+  /* explanations on pages 1 and 2: always two lines */
+  .body.two-lines{ max-width:none; font-size: clamp(10.5px, calc((100vw - 36px) / 34.8), 15px); line-height:1.75; }
+  .body.two-lines span{ display:block; white-space:nowrap; }
+  .scr .copy-bottom{ padding: 0 2px; }
+  @media (min-width:768px){ .body.two-lines{ font-size:15.5px; } }
+
+  /* page 3: "Created by…" in the same serif italic as "Discover the world aligned with yours." */
+  .line.one-line.created{ font-size: clamp(12px, calc((100vw - 36px) / 26), 20px); }
+  .house{ font-size:10.5px; letter-spacing:.26em; text-transform:uppercase; color:var(--muted); margin:8px 0 0; }
+  .copy-bottom .line.one-line + .house{ margin-top:6px; }
+  /* screen 3: two lines — the State and the guest — meet in one copper point */
+  .ln.guest{ stroke:#8C8C88; stroke-width:.9; }
+  .scene svg.aligned{ width:min(380px,90vw); max-height:30vh; }
+  @media (max-height:720px){ .scene svg.aligned{ max-height:26vh; } }
+  .top-r{ display:flex; align-items:center; gap:14px; }
+  .skip{ background:none; border:0; padding:8px 0; cursor:pointer; font:12px var(--sans); letter-spacing:.06em; color:var(--muted); }
+  .skip:hover{ color:var(--fg); }
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <linearGradient id="cg" gradientUnits="userSpaceOnUse" x1="120" y1="0" x2="780" y2="0">
+      <stop offset="0%" stop-color="#A66A3F"/><stop offset="28%" stop-color="#C58452"/><stop offset="50%" stop-color="#D6A06D"/>
+      <stop offset="68%" stop-color="#E6B98A"/><stop offset="88%" stop-color="#B47749"/><stop offset="100%" stop-color="#A66A3F"/>
+    </linearGradient>
+    <radialGradient id="cd" cx="40%" cy="40%">
+      <stop offset="0%" stop-color="#FFF0DA"/><stop offset="45%" stop-color="#F0C79B"/><stop offset="80%" stop-color="#E6B98A"/><stop offset="100%" stop-color="#D6A06D"/>
+    </radialGradient>
+  </defs>
+</svg>
+
+<div class="app" id="app">
+  <header class="top">
+    <button class="back" id="back" aria-label="Back">Back</button>
+    <img class="mark" src="./assets/jdd-logo.webp" alt="Jardin du Désert">
+    <div class="top-r">
+    <button class="theme" id="theme" aria-label="Switch to night" aria-pressed="false">
+      <svg class="moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5Z"/></svg>
+      <svg class="sunic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M5.3 18.7l1.6-1.6M17.1 6.9l1.6-1.6"/></svg>
+    </button></div>
+  </header>
+  <div class="progress" aria-hidden="true"><i></i><i></i><i></i></div>
+
+  <main class="screens" id="screens">
+
+    <!-- ONBOARDING 01 -->
+    <section class="scr" data-i="0" aria-label="Onboarding 1 of 3">
+      <div class="copy copy-top">
+        <p class="eyebrow fade" style="--d:.2s">State-Based Hospitality</p>
+        <h1 class="title" data-type>Choose your stay by <em class="cu">State</em> — not status.</h1>
+      </div>
+      <div class="scene">
+        <div class="scene-box">
+        <svg viewBox="0 0 800 560" aria-hidden="true">
+          <circle class="sun fade" style="--d:.2s" cx="470" cy="330" r="190"/>
+          <path class="ln" pathLength="1" style="--d:.1s;--dur:1.4s" d="M 120 500 L 700 500"/>
+          <path class="ln" pathLength="1" style="--d:.6s;--dur:2s" d="M 360 500 L 360 250 A 130 130 0 0 1 620 250 L 620 500"/>
+          <path class="ln" pathLength="1" style="--d:1.2s" d="M 410 500 L 410 290 A 80 80 0 0 1 570 290 L 570 500"/>
+          <path class="ln" pathLength="1" style="--d:1.6s;--dur:2.4s" d="M 252.1 500.0 L 252.1 294.0 C 252.1 247.8 248.2 193.9 244.4 170.8 C 240.5 151.6 227.1 149.6 221.3 149.6 C 207.8 149.6 198.2 155.4 196.2 170.8 C 194.3 209.3 189.3 294.0 189.3 363.3 C 189.3 401.8 192.4 421.1 200.1 421.8 C 205.9 422.6 207.8 413.4 207.0 394.1"/>
+          <path class="ln" pathLength="1" style="--d:2.1s;--dur:2.2s" d="M 207.0 394.1 C 203.9 363.3 188.6 324.8 169.3 297.9 C 153.9 276.7 138.5 265.1 128.9 265.1 C 119.2 265.1 115.4 278.6 117.3 294.0 C 121.2 332.5 146.2 378.7 173.2 413.4 C 192.4 436.5 203.9 451.9 215.5 453.8 C 220.1 454.2 222.4 455.7 222.4 459.6 L 222.4 500.0"/>
+          <path class="ln" pathLength="1" style="--d:2.5s;--dur:2.2s" d="M 211.7 378.7 C 211.7 347.9 230.9 317.1 254.0 278.6 C 273.2 244.0 304.1 217.0 329.1 214.7 C 346.4 213.2 349.5 228.6 337.9 239.4 C 315.6 259.4 277.1 282.5 254.0 297.9 C 240.5 307.5 236.7 317.1 236.7 332.5 L 236.7 432.6 C 236.7 444.2 230.9 451.9 222.4 455.7"/>
+          <path class="ln" pathLength="1" style="--d:3.4s;--dur:1.6s" d="M 490 440 C 490 490 520 540 600 540 L 760 540"/>
+          <circle class="pt" style="--d:4.6s" cx="760" cy="540" r="7"/>
+        </svg>
+        <div class="threshold" aria-hidden="true"></div>
+        </div>
+      </div>
+      <div class="copy copy-bottom">
+        <p class="body fade two-lines" style="--d:2.6s"><span>Discover the luxury hospitality world aligned with your inner</span><span>direction through self-knowledge, intention and sensory science.</span></p>
+      </div>
+      <div class="actions fade" style="--d:3.1s">
+        <button class="tlink" data-next>Continue</button>
+      </div>
+      <p class="skip-row fade" style="--d:3.1s"><button class="tlink skip-l" data-enter aria-label="Skip onboarding">Skip</button></p>
+    </section>
+
+    <!-- ONBOARDING 02 -->
+    <section class="scr" data-i="1" aria-label="Onboarding 2 of 3">
+      <div class="copy copy-top">
+        <p class="eyebrow fade" style="--d:.2s">The neuroscience of scent</p>
+        <h1 class="title" data-type>A scent becomes your <em class="cu">anchor</em>.</h1>
+      </div>
+      <div class="scene">
+        <svg viewBox="0 0 800 560" aria-hidden="true">
+          <circle class="sun fade" style="--d:.2s" cx="400" cy="330" r="170"/>
+          <path class="ln" pathLength="1" style="--d:.1s;--dur:1.8s" d="M 140 420 C 270 378 530 378 660 420"/>
+          <path class="ln" pathLength="1" style="--d:.4s;--dur:1.8s;opacity:.55" d="M 170 462 C 290 432 510 432 630 462"/>
+          <circle class="ln" pathLength="1" style="--d:1.1s;--dur:.9s" cx="400" cy="96" r="9"/>
+          <path class="ln" pathLength="1" style="--d:1.7s;--dur:1.7s" d="M 400 105 L 400 386"/>
+          <circle class="pt" style="--d:3.3s" cx="400" cy="392" r="5"/>
+          <ellipse class="ln" pathLength="1" style="--d:3.6s;--dur:1.1s" cx="400" cy="394" rx="42" ry="10"/>
+          <ellipse class="ln" pathLength="1" style="--d:4.3s;--dur:1.2s" cx="400" cy="394" rx="88" ry="21"/>
+          <ellipse class="ln" pathLength="1" style="--d:5s;--dur:1.3s" cx="400" cy="394" rx="136" ry="32"/>
+          <ellipse class="ripple" cx="400" cy="394" rx="136" ry="32"/>
+          <text class="alabel fade" style="--d:3.9s" x="268" y="530" text-anchor="middle">SCENT</text>
+          <text class="alabel fade" style="--d:4.6s" x="400" y="530" text-anchor="middle">INTENTION</text>
+          <text class="alabel fade" style="--d:5.3s" x="540" y="530" text-anchor="middle">REPETITION</text>
+        </svg>
+      </div>
+      <div class="copy copy-bottom">
+        <p class="body fade two-lines" style="--d:2.6s"><span>Scent connects place, emotion and memory. Your scented card</span><span>or perfume oil becomes part of a personal ritual — a reminder</span><span>of your intention, before or after your stay.</span></p>
+      </div>
+      <div class="actions fade" style="--d:3.2s">
+        <button class="tlink" data-next>Continue</button>
+      </div>
+      <p class="skip-row fade" style="--d:3.1s"><button class="tlink skip-l" data-enter aria-label="Skip onboarding">Skip</button></p>
+    </section>
+
+    <!-- ONBOARDING 03 -->
+    <section class="scr" data-i="2" aria-label="Onboarding 3 of 3">
+      <div class="copy copy-top">
+        <h1 class="title" data-type>Belong to a world aligned with <em class="cu">yours</em>.</h1>
+      </div>
+      <div class="scene">
+        <svg viewBox="0 0 900 400" aria-hidden="true" class="aligned">
+          <circle class="sun fade" style="--d:1.4s" cx="720" cy="200" r="120"/>
+          <path class="ln" pathLength="1" style="--d:.2s;--dur:3.4s" d="M 60 150 L 380 150 C 560 150 600 200 720 200"/>
+          <path class="ln guest" pathLength="1" style="--d:.2s;--dur:3.4s" d="M 60 250 L 380 250 C 560 250 600 200 720 200"/>
+          <circle class="pt" style="--d:3.5s" cx="720" cy="200" r="3.6"/>
+        </svg>
+      </div>
+      <div class="copy copy-bottom">
+        <p class="body fade two-lines" style="--d:2.2s"><span>22 States. 22 hospitality worlds.</span><span>Each hospitality world expresses a State through its</span><span>spaces, experiences and rituals.</span><span>Discover the one you want to experience.</span></p>
+        <p class="line one-line fade" style="--d:2.9s">By Jardin du Désert</p>
+        <p class="house fade" style="--d:3.1s">Private Intellectual Fragrance House</p>
+      </div>
+      <div class="actions fade" style="--d:3.5s">
+        <button class="tlink" data-enter>Enter your Space</button>
+      </div>
+    </section>
+
+    <!-- placeholder for the next step -->
+    <section class="scr stub" data-i="3" aria-label="Next step">
+      <div class="scene"></div>
+      <div class="copy">
+        <p class="eyebrow fade">Next step</p>
+        <h1 class="title" data-type>Sign-in comes <em class="cu">next</em>.</h1>
+        <p class="body fade" style="--d:1.6s">Placeholder — we'll design the sign-in screen (Apple · Google) in the next step.</p>
+      </div>
+      <div class="actions fade" style="--d:2s">
+        <button class="tlink" data-restart>Replay onboarding</button>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<script>
+(function(){
+  const screens = Array.from(document.querySelectorAll('.scr'));
+  const back = document.getElementById('back');
+  const bars = Array.from(document.querySelectorAll('.progress i'));
+  let idx = 0;
+
+  // split headings into words for the page-1 typing reveal (keeps <em>/<br>)
+  screens.forEach(scr => {
+    const h = scr.querySelector('[data-type]'); if (!h) return;
+    let k = 0; const base = 350, step = 170;
+    const walk = node => {
+      Array.from(node.childNodes).forEach(n => {
+        if (n.nodeType === 3){
+          const frag = document.createDocumentFragment();
+          n.textContent.split(/(\s+)/).forEach(part => {
+            if (!part) return;
+            if (/^\s+$/.test(part)){ frag.appendChild(document.createTextNode(' ')); return; }
+            const w = document.createElement('span'); w.className = 'w'; w.textContent = part;
+            w.style.animationDelay = (base + k++ * step) + 'ms'; frag.appendChild(w);
+          });
+          n.replaceWith(frag);
+        } else if (n.nodeName === 'EM' || (n.classList && n.classList.contains('num22'))){
+          const w = document.createElement('span'); w.className = 'w';
+          w.style.animationDelay = (base + k++ * step + (n.nodeName === 'EM' ? 200 : 0)) + 'ms';
+          n.replaceWith(w); w.appendChild(n);
+        } else if (n.nodeName !== 'BR'){ walk(n); }
+      });
+    };
+    walk(h);
+  });
+
+
+  function show(n, dir){
+    if (n < 0 || n >= screens.length) return;
+    screens.forEach((s,i) => {
+      s.classList.remove('on','left');
+      if (i < n) s.classList.add('left');
+    });
+    void document.body.offsetWidth;            // restart animations on the new screen
+    screens[n].classList.add('on');
+    idx = n;
+    back.classList.toggle('show', n > 0 && n < 3);
+    bars.forEach((b,i) => { b.classList.toggle('on', i === n); b.classList.toggle('done', i < n); });
+  }
+
+  document.querySelectorAll('[data-next]').forEach(b => b.addEventListener('click', () => show(idx + 1)));
+  document.querySelectorAll('[data-restart]').forEach(b => b.addEventListener('click', () => show(0)));
+  back.addEventListener('click', () => show(idx - 1));
+
+  // swipe on phones
+  let x0 = null, y0 = null;
+  document.addEventListener('touchstart', e => { x0 = e.touches[0].clientX; y0 = e.touches[0].clientY; }, { passive:true });
+  document.addEventListener('touchend', e => {
+    if (x0 === null) return;
+    const dx = e.changedTouches[0].clientX - x0, dy = e.changedTouches[0].clientY - y0;
+    if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy)){ if (dx < 0 && idx < 2) show(idx + 1); if (dx > 0 && idx > 0 && idx < 3) show(idx - 1); }
+    x0 = null;
+  }, { passive:true });
+  // keyboard on desktop
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight' && idx < 2) show(idx + 1);
+    if (e.key === 'ArrowLeft' && idx > 0 && idx < 3) show(idx - 1);
+  });
+
+  // day / night switch (moon ↔ sun)
+  const theme = document.getElementById('theme');
+  theme.addEventListener('click', () => {
+    const night = !document.body.classList.contains('night');
+    document.body.classList.toggle('night', night);
+    theme.setAttribute('aria-pressed', night ? 'true' : 'false');
+    theme.setAttribute('aria-label', night ? 'Switch to day' : 'Switch to night');
+    document.querySelector('meta[name=theme-color]').setAttribute('content', night ? '#111110' : '#F4F4F2');
+  });
+
+  // RULE: index.html always shows onboarding — on every visit and every refresh, returning members included
+  // (they may have skipped it the first time). No redirect for returning users. Skip / Enter your Space → the app.
+  document.querySelectorAll('[data-enter]').forEach(b => b.addEventListener('click', () => {
+    try { localStorage.setItem('jdd-onboarded','1'); } catch(e){}
+    location.href = '/prototype/space-signin.html';
+  }));
+  show(0);
+})();
+</script>
+</body>
+</html>
