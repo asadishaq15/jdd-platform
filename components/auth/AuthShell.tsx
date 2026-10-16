@@ -53,7 +53,7 @@ export default function AuthShell({ children }: { children: React.ReactNode }) {
       </aside>
       <main className="main">
         <header className="top">
-          <span className="demo-tag" title="All properties are fictional"><a className="demo-restart" href="/">Restart demo</a></span>
+          <span aria-hidden="true" />
           <BrandMark />
           <ThemeToggle />
         </header>

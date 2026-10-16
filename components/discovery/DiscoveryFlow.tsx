@@ -6,7 +6,7 @@ import BrandMark from "../brand/BrandMark";
 import GradientDefs from "../layout/GradientDefs";
 import ThemeToggle from "../layout/ThemeToggle";
 import { demoCodes, getWorld, HospitalityWorld, normalizeAccessCode, numberFromDob, worldDetails, worlds } from "../../lib/worlds";
-import { loadSpaceState, saveSpaceState, SPACE_STATE_KEY, SpaceState } from "../../lib/space-state";
+import { loadSpaceState, saveSpaceState, SpaceState } from "../../lib/space-state";
 
 type Step = "dob" | "result" | "states" | "property" | "intent" | "becoming" | "codewarn" | "code" | "stay";
 type ExploreMode = "onb" | "dash";
@@ -80,15 +80,6 @@ export default function DiscoveryFlow() {
     go("states");
   }
 
-  function restartDemo() {
-    localStorage.removeItem(SPACE_STATE_KEY);
-    setState({});
-    setStack([]);
-    setExploreMode("onb");
-    setStep("dob");
-    router.replace("/discover");
-  }
-
   function submitIntention(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!intention.trim()) {
@@ -143,7 +134,7 @@ export default function DiscoveryFlow() {
     <main className="discover-shell">
       <GradientDefs />
       <header className="top">
-        <span className="demo-tag"><button className="demo-restart" type="button" onClick={restartDemo}>Restart demo</button></span>
+        <span aria-hidden="true" />
         <BrandMark />
         <ThemeToggle />
       </header>

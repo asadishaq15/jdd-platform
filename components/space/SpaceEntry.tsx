@@ -56,11 +56,6 @@ export default function SpaceEntry({ account, stays, activeStayId }: SpaceEntryP
     window.location.assign("/sign-in");
   }
 
-  function restartDemo() {
-    localStorage.removeItem("jdd-space-react-v1");
-    window.location.assign("/discover");
-  }
-
   return (
     <main className="space-entry">
       <GradientDefs />
@@ -73,7 +68,6 @@ export default function SpaceEntry({ account, stays, activeStayId }: SpaceEntryP
           setModal(next);
           setMenuOpen(false);
         }}
-        onRestart={restartDemo}
         onSignOut={signOut}
       />
 
@@ -131,8 +125,6 @@ export default function SpaceEntry({ account, stays, activeStayId }: SpaceEntryP
 
             <p className="links small demo-ctl">
               <button className="tlink" type="button" onClick={signOut}>Sign out</button>
-              <span className="sep">·</span>
-              <button className="tlink" type="button" onClick={restartDemo}>Restart demo</button>
             </p>
           </div>
         </section>
@@ -144,20 +136,19 @@ export default function SpaceEntry({ account, stays, activeStayId }: SpaceEntryP
   );
 }
 
-function DashboardHeader({ account, guest, menuOpen, onToggleMenu, onOpenModal, onRestart, onSignOut }: {
+function DashboardHeader({ account, guest, menuOpen, onToggleMenu, onOpenModal, onSignOut }: {
   account: AccountSummary;
   guest: boolean;
   menuOpen: boolean;
   onToggleMenu: () => void;
   onOpenModal: (modal: Exclude<ProfileMenu, null>) => void;
-  onRestart: () => void;
   onSignOut: () => void;
 }) {
   const initial = account.fullName.trim().charAt(0).toUpperCase() || "G";
 
   return (
     <header className="top dash-top">
-      <span className="demo-tag"><button className="demo-restart" type="button" onClick={onRestart}>Restart demo</button></span>
+      <span aria-hidden="true" />
       <div className="dash-brand"><BrandMark className="dash-logo" /><span className="dash-title">My Space</span></div>
       <ThemeToggle />
       <div className="pmenu-wrap">

@@ -31,6 +31,7 @@
 
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 html, body { width: 100%; min-height: 100%; margin: 0; }
+html { font-family: var(--sans); }
 body {
   background: var(--bg);
   color: var(--fg);
@@ -45,7 +46,7 @@ body.night {
   --field: var(--neutral-6);
   background: var(--neutral-7);
 }
-button, input { font: inherit; color: inherit; }
+button, input, textarea, select { font: inherit; color: inherit; }
 .defs { position: absolute; }
 
 .cu {
