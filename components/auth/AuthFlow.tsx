@@ -11,7 +11,7 @@ type EmailMode = "sign-in" | "sign-up";
 
 function requestedDestination() {
   const value = new URLSearchParams(window.location.search).get("next");
-  return value?.startsWith("/") && !value.startsWith("//") ? value : "/discover";
+  return value?.startsWith("/") && !value.startsWith("//") ? value : "/auth/continue";
 }
 
 export default function AuthFlow() {

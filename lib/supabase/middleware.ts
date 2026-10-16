@@ -36,7 +36,9 @@ export async function updateSession(request: NextRequest) {
 
   if (path === "/sign-in" && data.user) {
     const requestedNext = request.nextUrl.searchParams.get("next");
-    const safeNext = requestedNext?.startsWith("/") ? requestedNext : "/discover";
+    const safeNext = requestedNext?.startsWith("/") && !requestedNext.startsWith("//")
+      ? requestedNext
+      : "/auth/continue";
     return NextResponse.redirect(new URL(safeNext, request.url));
   }
 

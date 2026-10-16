@@ -31,7 +31,7 @@ export default async function SpacePage({ searchParams }: SpacePageProps) {
   const [{ data: profile }, { data: stayRows }] = await Promise.all([
     supabase
       .from("profiles")
-      .select("full_name, avatar_url")
+      .select("full_name, avatar_url, recommended_world_number, chosen_world_number")
       .eq("id", userData.user.id)
       .maybeSingle(),
     supabase
@@ -73,6 +73,10 @@ export default async function SpacePage({ searchParams }: SpacePageProps) {
       }}
       stays={stays}
       activeStayId={activeStayId}
+      initialState={{
+        recommended: profile?.recommended_world_number || undefined,
+        chosen: profile?.chosen_world_number || undefined,
+      }}
     />
   );
 }

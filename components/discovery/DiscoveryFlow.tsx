@@ -7,9 +7,28 @@ import GradientDefs from "../layout/GradientDefs";
 import ThemeToggle from "../layout/ThemeToggle";
 import { demoCodes, getWorld, HospitalityWorld, normalizeAccessCode, numberFromDob, worldDetails, worlds } from "../../lib/worlds";
 import { loadSpaceState, saveSpaceState, SpaceState } from "../../lib/space-state";
+import { createClient } from "../../lib/supabase/client";
 
 type Step = "dob" | "result" | "states" | "property" | "intent" | "becoming" | "codewarn" | "code" | "stay";
 type ExploreMode = "onb" | "dash";
+
+async function persistDiscoveryProfile(state: SpaceState) {
+  const supabase = createClient();
+  const { data: userData, error: userError } = await supabase.auth.getUser();
+  if (userError || !userData.user) return "Your session expired. Please sign in again.";
+
+  const chosenWorld = state.chosen || state.visited || state.recommended;
+  const { error: profileError } = await supabase
+    .from("profiles")
+    .update({
+      recommended_world_number: state.recommended || null,
+      chosen_world_number: chosenWorld || null,
+      discovery_completed_at: new Date().toISOString(),
+    })
+    .eq("id", userData.user.id);
+
+  return profileError ? "We could not save your discovery. Please try again." : null;
+}
 
 export default function DiscoveryFlow() {
   const [step, setStep] = useState<Step>("dob");
@@ -21,6 +40,7 @@ export default function DiscoveryFlow() {
   const [becoming, setBecoming] = useState("");
   const [code, setCode] = useState("");
   const [error, setError] = useState("");
+  const [finishing, setFinishing] = useState(false);
   const [exploreMode, setExploreMode] = useState<ExploreMode>("onb");
   const router = useRouter();
 
@@ -35,8 +55,19 @@ export default function DiscoveryFlow() {
     if (fromDashboard) {
       setExploreMode("dash");
       setStep("states");
+    } else if (saved.chosen || saved.visited) {
+      // Bridge accounts that completed discovery before it was persisted in Supabase.
+      setFinishing(true);
+      void persistDiscoveryProfile(saved).then((message) => {
+        if (message) {
+          setError(message);
+          setFinishing(false);
+          return;
+        }
+        router.replace("/space");
+      });
     }
-  }, []);
+  }, [router]);
 
   function go(next: Step) {
     setStack((items) => [...items, step]);
@@ -91,9 +122,18 @@ export default function DiscoveryFlow() {
     go("becoming");
   }
 
-  function finish(nextBecoming = becoming) {
+  async function finish(nextBecoming = becoming) {
     const next = { ...state, intention: intention.trim(), becoming: nextBecoming.trim() };
     saveSpaceState(next);
+
+    setFinishing(true);
+    const message = await persistDiscoveryProfile(next);
+    if (message) {
+      setError(message);
+      setFinishing(false);
+      return;
+    }
+
     router.push("/space");
   }
 
@@ -103,7 +143,7 @@ export default function DiscoveryFlow() {
       setError("Please write your answer, or skip for now.");
       return;
     }
-    finish(becoming);
+    void finish(becoming);
   }
 
   function submitCode(event: FormEvent<HTMLFormElement>) {
@@ -215,9 +255,9 @@ export default function DiscoveryFlow() {
                   <textarea className="free" rows={2} maxLength={220} aria-label="Your intention" placeholder="In your own words" value={intention} onChange={(event) => { setIntention(event.target.value); setError(""); }} />
                 </div>
                 <p className={`err ${error ? "show" : ""}`}>{error}</p>
-                <button className="btn primary" type="submit">Continue</button>
+                <button className="btn primary" type="submit" disabled={finishing}>Continue</button>
               </form>
-              <p className="links small"><button className="tlink" type="button" onClick={() => finish("")}>Skip for now</button><span className="sep">·</span><button className="tlink" type="button" onClick={back}>Back</button></p>
+              <p className="links small"><button className="tlink" type="button" disabled={finishing} onClick={() => void finish("")}>Skip for now</button><span className="sep">·</span><button className="tlink" type="button" disabled={finishing} onClick={back}>Back</button></p>
             </section>
           )}
 
@@ -231,9 +271,9 @@ export default function DiscoveryFlow() {
                   <textarea className="free" rows={2} maxLength={260} aria-label="Who you need to become" placeholder="In your own words" value={becoming} onChange={(event) => { setBecoming(event.target.value); setError(""); }} />
                 </div>
                 <p className={`err ${error ? "show" : ""}`}>{error}</p>
-                <button className="btn primary" type="submit">Save and continue</button>
+                <button className="btn primary" type="submit" disabled={finishing}>{finishing ? "Saving…" : "Save and continue"}</button>
               </form>
-              <p className="links small"><button className="tlink" type="button" onClick={() => finish("")}>Skip for now</button><span className="sep">·</span><button className="tlink" type="button" onClick={back}>Back</button></p>
+              <p className="links small"><button className="tlink" type="button" disabled={finishing} onClick={() => void finish("")}>Skip for now</button><span className="sep">·</span><button className="tlink" type="button" disabled={finishing} onClick={back}>Back</button></p>
             </section>
           )}
 

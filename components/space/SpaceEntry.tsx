@@ -18,9 +18,10 @@ type SpaceEntryProps = {
   account: AccountSummary;
   stays: ConnectedStay[];
   activeStayId?: string;
+  initialState?: Pick<SpaceState, "recommended" | "chosen">;
 };
 
-export default function SpaceEntry({ account, stays, activeStayId }: SpaceEntryProps) {
+export default function SpaceEntry({ account, stays, activeStayId, initialState = {} }: SpaceEntryProps) {
   const [state, setState] = useState<SpaceState>({});
   const [menuOpen, setMenuOpen] = useState(false);
   const [modal, setModal] = useState<ProfileMenu>(null);
@@ -31,10 +32,15 @@ export default function SpaceEntry({ account, stays, activeStayId }: SpaceEntryP
 
   useEffect(() => {
     const loaded = loadSpaceState();
-    const next = connectedStay ? { ...loaded, visited: connectedStay.property.worldNumber } : loaded;
+    const synced = {
+      ...loaded,
+      ...(initialState.recommended ? { recommended: initialState.recommended } : {}),
+      ...(initialState.chosen ? { chosen: initialState.chosen } : {}),
+    };
+    const next = connectedStay ? { ...synced, visited: connectedStay.property.worldNumber } : synced;
     setState(next);
-    if (connectedStay) saveSpaceState(next);
-  }, [connectedStay]);
+    saveSpaceState(next);
+  }, [connectedStay, initialState.chosen, initialState.recommended]);
 
   const activeNumber = connectedStay?.property.worldNumber || state.visited || state.chosen || state.recommended || 9;
   const baseWorld = getWorld(activeNumber);
@@ -88,18 +94,7 @@ export default function SpaceEntry({ account, stays, activeStayId }: SpaceEntryP
 
             <div className="secs">
               <WorldSection world={world} guest={guest} />
-              <ScentSection
-                world={world}
-                guest={guest}
-                guestName={guestName}
-                state={state}
-                onOrder={() => { setOrderStep(1); setFlow("order"); }}
-                onSimulate={() => {
-                  const nextStatus: CardStatus = state.cardStatus === "preparing" ? "sent" : state.cardStatus === "sent" ? "delivered" : "received";
-                  updateState({ ...state, cardStatus: nextStatus });
-                }}
-              />
-              <IntentionSection state={state} world={world} />
+              {/* Scent Invitation and My Intention are temporarily hidden from My Space. */}
               <RitualSection
                 active={ritualActive}
                 onRitual={() => setFlow("ritual")}
