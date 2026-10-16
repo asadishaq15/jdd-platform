@@ -1,14 +1,15 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { FormEvent, useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useState } from "react";
 import BrandMark from "../brand/BrandMark";
 import GradientDefs from "../layout/GradientDefs";
 import ThemeToggle from "../layout/ThemeToggle";
-import { demoCodes, getWorld, normalizeAccessCode, numberFromDob, worlds } from "../../lib/worlds";
-import { saveSpaceState, SpaceState } from "../../lib/space-state";
+import { demoCodes, getWorld, HospitalityWorld, normalizeAccessCode, numberFromDob, worldDetails, worlds } from "../../lib/worlds";
+import { loadSpaceState, saveSpaceState, SPACE_STATE_KEY, SpaceState } from "../../lib/space-state";
 
 type Step = "dob" | "result" | "states" | "property" | "intent" | "becoming" | "codewarn" | "code" | "stay";
+type ExploreMode = "onb" | "dash";
 
 export default function DiscoveryFlow() {
   const [step, setStep] = useState<Step>("dob");
@@ -20,10 +21,22 @@ export default function DiscoveryFlow() {
   const [becoming, setBecoming] = useState("");
   const [code, setCode] = useState("");
   const [error, setError] = useState("");
+  const [exploreMode, setExploreMode] = useState<ExploreMode>("onb");
   const router = useRouter();
 
-  const activeWorld = useMemo(() => getWorld(state.visited || state.chosen || state.recommended || preview || 9), [preview, state]);
+  const activeWorld = useMemo(() => getWorld(preview || state.visited || state.chosen || state.recommended || 9), [preview, state]);
   const recommendedWorld = getWorld(state.recommended || 9);
+
+  useEffect(() => {
+    const saved = loadSpaceState();
+    const params = new URLSearchParams(window.location.search);
+    const fromDashboard = params.get("mode") === "dash";
+    setState(saved);
+    if (fromDashboard) {
+      setExploreMode("dash");
+      setStep("states");
+    }
+  }, []);
 
   function go(next: Step) {
     setStack((items) => [...items, step]);
@@ -33,7 +46,7 @@ export default function DiscoveryFlow() {
 
   function back() {
     const previous = stack.at(-1);
-    if (!previous) return router.push("/sign-in");
+    if (!previous) return router.push(exploreMode === "dash" ? "/space" : "/sign-in");
     setStack((items) => items.slice(0, -1));
     setError("");
     setStep(previous);
@@ -60,6 +73,20 @@ export default function DiscoveryFlow() {
     setState((value) => ({ ...value, chosen: n, entryMode: mode }));
     setPreview(n);
     go("intent");
+  }
+
+  function openStates(mode: ExploreMode) {
+    setExploreMode(mode);
+    go("states");
+  }
+
+  function restartDemo() {
+    localStorage.removeItem(SPACE_STATE_KEY);
+    setState({});
+    setStack([]);
+    setExploreMode("onb");
+    setStep("dob");
+    router.replace("/discover");
   }
 
   function submitIntention(event: FormEvent<HTMLFormElement>) {
@@ -116,7 +143,7 @@ export default function DiscoveryFlow() {
     <main className="discover-shell">
       <GradientDefs />
       <header className="top">
-        <button className="back show" type="button" onClick={back}>Back</button>
+        <span className="demo-tag"><button className="demo-restart" type="button" onClick={restartDemo}>Restart demo</button></span>
         <BrandMark />
         <ThemeToggle />
       </header>
@@ -138,7 +165,10 @@ export default function DiscoveryFlow() {
                 <p className={`err ${error ? "show" : ""}`}>{error}</p>
                 <button className="btn primary" type="submit">Continue</button>
               </form>
+              <p className="links small"><button className="tlink" type="button" onClick={back}>Back</button></p>
+              {/* Legacy access-code entry UI is intentionally hidden while activation links are in use.
               <p className="links small"><button className="tlink" type="button" onClick={() => go("codewarn")}>I have an access code</button></p>
+              */}
             </section>
           )}
 
@@ -150,7 +180,7 @@ export default function DiscoveryFlow() {
               <p className="prop-name">{recommendedWorld.property}</p>
               <p className="country">{recommendedWorld.country}</p>
               <div className="stay-actions"><button className="tlink" type="button" onClick={() => chooseWorld(recommendedWorld.n, "recommended")}>Choose this world</button></div>
-              <p className="links small"><button className="tlink" type="button" onClick={() => go("states")}>Explore other States</button></p>
+              <p className="links small"><button className="tlink" type="button" onClick={() => openStates("onb")}>Explore other States</button><span className="sep">·</span><button className="tlink" type="button" onClick={back}>Back</button></p>
             </section>
           )}
 
@@ -160,24 +190,27 @@ export default function DiscoveryFlow() {
               <h1 className="title">Explore the <em className="cu">States</em>.</h1>
               <div className="states-grid">
                 {worlds.map((world) => (
-                  <button className="state-cell" type="button" key={world.n} onClick={() => { setPreview(world.n); go("property"); }}>
-                    <span className="c-num">{String(world.n).padStart(2, "0")}</span>
+                  <button className={`state-cell st-cell${world.n === (state.visited || state.chosen) ? " current" : ""}`} type="button" key={world.n} onClick={() => { setPreview(world.n); go("property"); }}>
                     <span className="c-h">{world.state}</span>
-                    <span className="c-p">{world.property}</span>
+                    <span className="c-l">{world.property} · {world.country}</span>
+                    {world.n === state.visited ? <span className="c-s">Your stay</span> : world.n === state.chosen ? <span className="c-s">Your chosen world</span> : world.n === state.recommended ? <span className="c-s">Your recommended world</span> : null}
                   </button>
                 ))}
               </div>
+              <p className="links small"><button className="tlink" type="button" onClick={back}>Back</button></p>
             </section>
           )}
 
           {step === "property" && (
-            <section className="view-card property-view">
-              <p className="eyebrow">{activeWorld.state}</p>
-              <h1 className="title">{activeWorld.property}</h1>
+            <section className="view-card property-view propv">
               <PropertyImage n={activeWorld.n} />
+              <p className="eyebrow pv-eye">{activeWorld.state}{activeWorld.n === state.chosen ? " · Your chosen world" : ""}{activeWorld.n === state.visited ? " · Your stay" : ""}</p>
+              <h1 className="title">{activeWorld.property}</h1>
               <p className="country">{activeWorld.country}</p>
+              <p className="mantra">{activeWorld.mantra}</p>
               <p className="body result-desc">{activeWorld.desc}</p>
-              <div className="stay-actions"><button className="tlink" type="button" onClick={() => chooseWorld(activeWorld.n)}>Choose this world</button></div>
+              {exploreMode === "onb" ? <div className="stay-actions"><button className="tlink" type="button" onClick={() => chooseWorld(activeWorld.n)}>Choose this world</button></div> : <DashboardPropertyDetails world={activeWorld} chosen={activeWorld.n === state.chosen} onChoose={() => chooseWorld(activeWorld.n)} />}
+              <p className="links small"><button className="tlink" type="button" onClick={back}>Back</button></p>
             </section>
           )}
 
@@ -193,7 +226,7 @@ export default function DiscoveryFlow() {
                 <p className={`err ${error ? "show" : ""}`}>{error}</p>
                 <button className="btn primary" type="submit">Continue</button>
               </form>
-              <p className="links small"><button className="tlink" type="button" onClick={() => finish("")}>Skip for now</button></p>
+              <p className="links small"><button className="tlink" type="button" onClick={() => finish("")}>Skip for now</button><span className="sep">·</span><button className="tlink" type="button" onClick={back}>Back</button></p>
             </section>
           )}
 
@@ -209,10 +242,11 @@ export default function DiscoveryFlow() {
                 <p className={`err ${error ? "show" : ""}`}>{error}</p>
                 <button className="btn primary" type="submit">Save and continue</button>
               </form>
-              <p className="links small"><button className="tlink" type="button" onClick={() => finish("")}>Skip for now</button></p>
+              <p className="links small"><button className="tlink" type="button" onClick={() => finish("")}>Skip for now</button><span className="sep">·</span><button className="tlink" type="button" onClick={back}>Back</button></p>
             </section>
           )}
 
+          {/* Legacy access-code flow retained for possible restoration.
           {step === "codewarn" && (
             <section className="view-card">
               <p className="eyebrow">Before you add a new stay</p>
@@ -256,9 +290,26 @@ export default function DiscoveryFlow() {
               <div className="stay-actions"><button className="tlink" type="button" onClick={continueStay}>Continue</button></div>
             </section>
           )}
+          */}
         </div>
       </div>
     </main>
+  );
+}
+
+function DashboardPropertyDetails({ world, chosen, onChoose }: { world: HospitalityWorld; chosen: boolean; onChoose: () => void }) {
+  const detail = worldDetails[world.n] || worldDetails[9];
+  return (
+    <>
+      <span className="stay-rule" aria-hidden="true" />
+      <h2 className="pv-h">Experience your State here.</h2>
+      <ul className="pv-list">{detail.experiences.map((experience) => <li key={experience}>{experience}</li>)}</ul>
+      <p className="g-label pv-frag-l">Scent introduction</p>
+      <p className="pv-frag">{detail.scent}</p>
+      <span className="stay-rule note-rule" aria-hidden="true" />
+      <p className="body pv-note">Your card introduces you to the scent. A stay lets you experience the place, its rituals and its way of hospitality.</p>
+      {!chosen && <><p className="links small choose-note"><button className="tlink" type="button" onClick={onChoose}>Choose this world</button></p><p className="commit-note">Changing your world starts a new commitment. You’ll set a new intention, who you are becoming, and your actions.</p></>}
+    </>
   );
 }
 

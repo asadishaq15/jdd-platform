@@ -60,11 +60,13 @@ export default function AuthShell({ children }: { children: React.ReactNode }) {
         <div className="stage">
           <div className="panel">{children}</div>
         </div>
+        {/* Legacy access-code entry UI is intentionally hidden while activation links are in use.
         <footer className="code-bar auth-code-bar">
           <svg className="key" viewBox="0 0 24 24" aria-hidden="true"><circle cx="8" cy="12" r="4" /><path d="M12 12h9M18 12v3M21 12v2" /></svg>
           <span>Have an access code from your stay?</span>
           <a className="tlink" href="/discover">Enter your code</a>
         </footer>
+        */}
       </main>
     </div>
   );

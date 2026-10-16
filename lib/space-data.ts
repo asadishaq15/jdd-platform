@@ -1,0 +1,20 @@
+export type AccountSummary = {
+  id: string;
+  fullName: string;
+  email: string;
+  avatarUrl: string | null;
+};
+
+export type ConnectedStay = {
+  id: string;
+  guestName: string | null;
+  checkIn: string | null;
+  checkOut: string | null;
+  activatedAt: string | null;
+  property: {
+    name: string;
+    country: string | null;
+    worldNumber: number;
+  };
+};
+

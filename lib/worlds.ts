@@ -7,6 +7,36 @@ export type HospitalityWorld = {
   country: string;
 };
 
+export type HospitalityWorldDetails = {
+  experiences: [string, string, string];
+  scent: string;
+};
+
+export const worldDetails: Record<number, HospitalityWorldDetails> = {
+  1: { experiences: ["A morning studio session with a local artisan", "Breakfast at a long table where ideas are sketched", "An afternoon making something with your own hands"], scent: "Fig leaf, warm terracotta and fresh basil — the scent of making." },
+  2: { experiences: ["A silent walk at first light", "An evening of guided listening by the fire", "A day without screens or schedule"], scent: "Juniper smoke, cool stone and white tea." },
+  3: { experiences: ["Harvest in the kitchen garden, then a slow lunch", "Tending the orchard with the head gardener", "Afternoon tea beside the willow pond"], scent: "Wet earth, rose geranium and warm milk." },
+  4: { experiences: ["A guided ridge walk at first light", "A steady morning routine with the house coach", "An evening by the hearth in the stone library"], scent: "Pine resin, cedar wood and alpine air." },
+  5: { experiences: ["A tea ceremony with a master", "A reading hour in the archive room", "A calligraphy lesson at dusk"], scent: "Hinoki, old paper and green tea." },
+  6: { experiences: ["A long-table dinner shared with other guests", "A sunset sail for two", "Cooking with the family who runs the estate"], scent: "Orange blossom, sea salt and fresh bread." },
+  7: { experiences: ["A sunrise ride across open land", "A solo trail with a map and a destination", "An evening under the stars to name your next step"], scent: "Sage, dry wood and warm leather." },
+  8: { experiences: ["A sauna and cold-lake ritual", "A shared table where everyone serves", "A quiet afternoon of slow craft"], scent: "Birch, clean linen and cold water." },
+  9: { experiences: ["Moss-garden contemplation at dawn", "A silent kaiseki dinner", "Private meditation in the tea house"], scent: "Moss, incense and yuzu peel." },
+  10: { experiences: ["Geothermal bathing at sunrise", "A walk to the edge of the glacier", "A fresh-start breakfast ritual"], scent: "Mineral water, wild thyme and cold air." },
+  11: { experiences: ["A guided trail run through the forest", "A surf session at first light", "An open-air movement class"], scent: "Lime, wet leaves and cacao." },
+  12: { experiences: ["A workshop with a visiting artist", "A room designed without straight lines", "A night walk along the dunes"], scent: "Ink, sea grass and smoked wood." },
+  13: { experiences: ["A water ritual at the river", "Breathwork at the edge of the rice fields", "A letting-go ceremony at sunset"], scent: "Frangipani, rain and sandalwood." },
+  14: { experiences: ["A swim in a quiet cove", "An herbal workshop with the island gardener", "Sunset music on the terrace"], scent: "Fig, olive leaf and warm stone." },
+  15: { experiences: ["A private hammam ritual", "A candlelit dinner in the inner courtyard", "A spice-market walk with the chef"], scent: "Amber, rose and saffron." },
+  16: { experiences: ["A night drive under open skies", "A dune climb at sunrise", "A sleep-out on the rock platform"], scent: "Dry grass, hot stone and myrrh." },
+  17: { experiences: ["Painting in the garden atelier", "An evening salon with guest artists", "The lavender fields at golden hour"], scent: "Lavender, iris and fresh paint." },
+  18: { experiences: ["A night with a stargazer in the desert", "A silent dune walk at moonrise", "A frankincense ceremony"], scent: "Frankincense, night jasmine and warm sand." },
+  19: { experiences: ["A sunlit breakfast in the courtyard", "A celebration dinner with the house", "A morning swim in clear water"], scent: "Neroli, white musk and sun-warmed citrus." },
+  20: { experiences: ["A northern-lights watch with a guide", "A fjord kayak at dawn", "A day given to the local community"], scent: "Spruce, snow and cardamom." },
+  21: { experiences: ["A walk across the land with a local guide", "A shared harvest dinner", "A coast-to-mountain day"], scent: "Fern, sea air and manuka." },
+  22: { experiences: ["Stargazing in one of the clearest skies on earth", "A day with no plan and a local guide", "Finding a hidden hot spring"], scent: "Desert flower, copper earth and fresh rain." },
+};
+
 export const worlds: HospitalityWorld[] = [
   { n: 1, state: "Creation", mantra: "I can act.", desc: "You belong among people who turn ideas into action and invisible possibilities into form — connected by initiative, authorship, practical intelligence and the desire to create something real.", property: "Forma House", country: "Italy" },
   { n: 2, state: "Inner Knowing", mantra: "I hear inner knowledge.", desc: "You belong among people who trust what they perceive beneath the visible surface — connected by intuition, observation, subtle intelligence and an understanding that does not require immediate explanation.", property: "Veil Retreat", country: "Bhutan" },
