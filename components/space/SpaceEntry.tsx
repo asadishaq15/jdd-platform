@@ -5,6 +5,8 @@ import { useEffect, useState } from "react";
 import BrandMark from "../brand/BrandMark";
 import GradientDefs from "../layout/GradientDefs";
 import ThemeToggle from "../layout/ThemeToggle";
+import AccountSettings from "./AccountSettings";
+import DeleteAccountDialog from "./DeleteAccountDialog";
 import { getWorld, HospitalityWorld, worldDetails } from "../../lib/worlds";
 import { loadSpaceState, saveSpaceState, SpaceState } from "../../lib/space-state";
 import type { AccountSummary, ConnectedStay } from "../../lib/space-data";
@@ -21,7 +23,8 @@ type SpaceEntryProps = {
   initialState?: Pick<SpaceState, "recommended" | "chosen">;
 };
 
-export default function SpaceEntry({ account, stays, activeStayId, initialState = {} }: SpaceEntryProps) {
+export default function SpaceEntry({ account: initialAccount, stays, activeStayId, initialState = {} }: SpaceEntryProps) {
+  const [account, setAccount] = useState(initialAccount);
   const [state, setState] = useState<SpaceState>({});
   const [menuOpen, setMenuOpen] = useState(false);
   const [modal, setModal] = useState<ProfileMenu>(null);
@@ -125,7 +128,7 @@ export default function SpaceEntry({ account, stays, activeStayId, initialState 
         </section>
       </div>
 
-      <ProfileModal modal={modal} account={account} stays={stays} state={state} world={world} onClose={() => setModal(null)} onDelete={() => { setModal(null); setFlow("delete"); }} />
+      <ProfileModal modal={modal} account={account} stays={stays} state={state} world={world} onAccountChange={setAccount} onClose={() => setModal(null)} onDelete={() => { setModal(null); setFlow("delete"); }} />
       <FlowModal flow={flow} world={world} guestName={guestName} state={state} orderStep={orderStep} circleDetail={circleDetail} onCircleDetail={setCircleDetail} onStep={setOrderStep} onClose={() => { setFlow(null); setCircleDetail(null); }} onSave={updateState} />
     </main>
   );
@@ -300,7 +303,7 @@ function CommunityGlobe() {
   );
 }
 
-function ProfileModal({ modal, account, stays, state, world, onClose, onDelete }: { modal: ProfileMenu; account: AccountSummary; stays: ConnectedStay[]; state: SpaceState; world: HospitalityWorld; onClose: () => void; onDelete: () => void }) {
+function ProfileModal({ modal, account, stays, state, world, onAccountChange, onClose, onDelete }: { modal: ProfileMenu; account: AccountSummary; stays: ConnectedStay[]; state: SpaceState; world: HospitalityWorld; onAccountChange: (account: AccountSummary) => void; onClose: () => void; onDelete: () => void }) {
   if (!modal) return null;
   const title = { account: "My account", orders: "My orders", stays: "My stays", events: "My events", reminders: "Reminders", legal: "Terms & Privacy", delete: "Delete account" }[modal];
   return (
@@ -308,7 +311,7 @@ function ProfileModal({ modal, account, stays, state, world, onClose, onDelete }
       <section className="jm-in glass" role="dialog" aria-modal="true" aria-label={title}>
         <h2 className="jm-title">{title}</h2>
         <div className="jm-text">
-          {modal === "account" && <p>{account.fullName}<br />{account.email}</p>}
+          {modal === "account" && <AccountSettings account={account} onAccountChange={onAccountChange} />}
           {modal === "orders" && <p>{state.order ? `${state.order.property} · ${state.order.state}` : "No orders yet."}<br />Scented card status: {statusLabel(state.cardStatus || "none")}.</p>}
           {modal === "stays" && (stays.length ? stays.map((stay) => <p key={stay.id}><strong>{stay.property.name}</strong><br />{stay.checkIn || "Date pending"}{stay.checkOut ? ` — ${stay.checkOut}` : ""}</p>) : <p>{state.code ? `${world.property} is connected.` : "No activated stays yet."}</p>)}
           {modal === "events" && <p>{Object.values(state.rsvps || {}).some(Boolean) ? "You have accepted or reserved Property Circle items." : "No events yet."}</p>}
@@ -358,7 +361,7 @@ function FlowModal({ flow, world, guestName, state, orderStep, circleDetail, onC
         {flow === "oil" && <><p className="g-label">Perfume oil ritual</p><h2 className="jm-title">Your State, on skin.</h2><ol className="rit-preview"><li><span>01</span>Remember. Recall your intention.</li><li><span>02</span>Apply. Place the oil on pulse points.</li><li><span>03</span>Return. Let the scent bring you back to your State.</li></ol><p className="sec-text">Wear alone, layer beneath your favourite perfume, or combine oils collected from different hospitality worlds.</p></>}
         {flow === "action" && <><p className="g-label">Reminder</p><h2 className="jm-title">Choose one action.</h2><div className="field"><input value={action} onChange={(event) => setAction(event.target.value)} placeholder="One action that supports your intention" /></div><div className="seg"><button className={frequency === "off" ? "sel" : ""} onClick={() => setFrequency("off")}>Off</button><button className={frequency === "once" ? "sel" : ""} onClick={() => setFrequency("once")}>Once</button><button className={frequency === "daily" ? "sel" : ""} onClick={() => setFrequency("daily")}>Daily</button></div><button className="btn primary" onClick={() => { onSave({ ...state, reminder: { action: action || "One quiet action today", frequency } }); onClose(); }}>Save</button></>}
         {flow === "circle" && <><p className="g-label">Property Circle · {world.property}</p>{detail ? <><h2 className="jm-title">{detail.title}</h2><p className="country">{detail.when}</p><p className="jm-text">{detail.body}</p><button className="btn primary" onClick={() => rsvp(detail.key)}>{state.rsvps?.[detail.key] ? "Saved" : detail.action}</button><p className="links"><button className="tlink" onClick={() => onCircleDetail(null)}>Back</button></p></> : <div className="circle-list">{circleItems.map((item) => <button key={item.key} className="circle-item" onClick={() => onCircleDetail(item.key)}><span>{item.label}</span><strong>{item.title}</strong><em>{state.rsvps?.[item.key] ? "Saved" : item.when}</em></button>)}</div>}</>}
-        {flow === "delete" && <><p className="g-label">Delete account</p><h2 className="jm-title">Delete your Space?</h2><p className="jm-text">This removes your local demo Space, intention, State, orders and linked stays.</p><button className="btn primary danger" onClick={() => { localStorage.clear(); window.location.assign("/"); }}>Delete my account</button></>}
+        {flow === "delete" && <DeleteAccountDialog />}
         <p className="links small"><button className="tlink" type="button" onClick={onClose}>Close</button></p>
       </section>
     </div>

@@ -6,8 +6,9 @@ import { createClient } from "../../lib/supabase/client";
 import LegalModal from "./LegalModal";
 import LoadingView from "./LoadingView";
 
-type Step = "entry" | "loading" | "confirmation";
+type Step = "entry" | "loading" | "confirmation" | "forgot-password" | "recovery-sent";
 type EmailMode = "sign-in" | "sign-up";
+type CredentialStep = "name" | "email" | "password";
 
 function requestedDestination() {
   const value = new URLSearchParams(window.location.search).get("next");
@@ -21,11 +22,17 @@ export default function AuthFlow() {
   const [error, setError] = useState("");
   const [email, setEmail] = useState("");
   const [fullName, setFullName] = useState("");
+  const [password, setPassword] = useState("");
+  const [credentialStep, setCredentialStep] = useState<CredentialStep>("email");
   const [legal, setLegal] = useState<"terms" | "privacy" | null>(null);
+  const [notice, setNotice] = useState("");
+  const [loadingTitle, setLoadingTitle] = useState("Preparing your private space.");
 
   useEffect(() => {
-    const message = new URLSearchParams(window.location.search).get("error");
+    const search = new URLSearchParams(window.location.search);
+    const message = search.get("error");
     if (message) setError(message);
+    if (search.get("reset") === "success") setNotice("Your password has been updated. Sign in with your new password.");
   }, []);
 
   function requireTerms() {
@@ -39,6 +46,7 @@ export default function AuthFlow() {
 
   async function continueWithGoogle() {
     if (!requireTerms()) return;
+    setLoadingTitle("Preparing your private space.");
     setStep("loading");
 
     const redirectTo = new URL("/auth/callback", window.location.origin);
@@ -57,15 +65,32 @@ export default function AuthFlow() {
 
   async function continueWithEmail(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!requireTerms()) return;
 
-    const form = new FormData(event.currentTarget);
-    const password = String(form.get("password") || "");
-    if (password.length < 8) {
-      setError("Password must contain at least 8 characters.");
+    if (credentialStep === "email") {
+      setError("");
+      setCredentialStep("password");
       return;
     }
 
+    if (credentialStep === "password") {
+      if (password.length < 8) {
+        setError("Password must contain at least 8 characters.");
+        return;
+      }
+      if (mode === "sign-up") {
+        setError("");
+        setCredentialStep("name");
+        return;
+      }
+    }
+
+    if (credentialStep === "name" && fullName.trim().length < 2) {
+      setError("Please enter your full name.");
+      return;
+    }
+    if (!requireTerms()) return;
+
+    setLoadingTitle("Preparing your private space.");
     setStep("loading");
     const supabase = createClient();
 
@@ -113,7 +138,65 @@ export default function AuthFlow() {
     window.location.assign(requestedDestination());
   }
 
-  if (step === "loading") return <LoadingView title="Preparing your private space." />;
+  function selectMode(nextMode: EmailMode) {
+    setMode(nextMode);
+    setCredentialStep("email");
+    setPassword("");
+    setError("");
+    setNotice("");
+  }
+
+  async function requestPasswordReset(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setError("");
+    setNotice("");
+    setLoadingTitle("Preparing your recovery link.");
+    setStep("loading");
+
+    const callback = new URL("/auth/callback", window.location.origin);
+    callback.searchParams.set("next", "/reset-password");
+    const supabase = createClient();
+    const { error: resetError } = await supabase.auth.resetPasswordForEmail(email.trim(), {
+      redirectTo: callback.toString(),
+    });
+
+    if (resetError) {
+      setError(resetError.message);
+      setStep("forgot-password");
+      return;
+    }
+
+    setStep("recovery-sent");
+  }
+
+  if (step === "loading") return <LoadingView title={loadingTitle} />;
+
+  if (step === "forgot-password") {
+    return (
+      <section className="auth-view" aria-label="Reset your password">
+        <p className="eyebrow">Account recovery</p>
+        <h1 className="title">Reset your <em className="cu">password</em>.</h1>
+        <p className="body recovery-copy">Enter your email address and we’ll send you a secure recovery link.</p>
+        <form className="email-auth-form recovery-form" onSubmit={requestPasswordReset}>
+          <div className="field"><input name="email" type="email" autoComplete="email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="Email address" required autoFocus /></div>
+          <button className="btn primary" type="submit">Send recovery link</button>
+        </form>
+        <p className={`err ${error ? "show" : ""}`} role="alert">{error}</p>
+        <p className="links small"><button className="tlink" type="button" onClick={() => { setError(""); setStep("entry"); }}>Back to sign in</button></p>
+      </section>
+    );
+  }
+
+  if (step === "recovery-sent") {
+    return (
+      <section className="auth-view" aria-label="Check your email">
+        <p className="eyebrow">Check your email</p>
+        <h1 className="title">Recovery is on its <em className="cu">way</em>.</h1>
+        <p className="body verify-copy">If an account exists for <span className="to">{email}</span>, we sent a secure password-reset link.</p>
+        <p className="links small"><button className="tlink" type="button" onClick={() => { selectMode("sign-in"); setStep("entry"); }}>Back to sign in</button></p>
+      </section>
+    );
+  }
 
   if (step === "confirmation") {
     return (
@@ -121,7 +204,7 @@ export default function AuthFlow() {
         <p className="eyebrow">Check your email</p>
         <h1 className="title">Confirm your <em className="cu">account</em>.</h1>
         <p className="body verify-copy">We sent a secure confirmation link to <span className="to">{email}</span>.</p>
-        <p className="links small"><button className="tlink" type="button" onClick={() => { setMode("sign-in"); setStep("entry"); }}>Back to sign in</button></p>
+        <p className="links small"><button className="tlink" type="button" onClick={() => { selectMode("sign-in"); setStep("entry"); }}>Back to sign in</button></p>
       </section>
     );
   }
@@ -131,23 +214,41 @@ export default function AuthFlow() {
       <section className="auth-view" aria-label="Enter your private space">
         <h1 className="title">Enter your <em className="cu">private space</em>.</h1>
 
-        <div className="providers entry-providers google-only">
-          <button className="btn" type="button" onClick={continueWithGoogle}><GoogleIcon />Continue with Google</button>
-        </div>
-
-        <div className="auth-divider"><span>or</span></div>
-
         <div className="auth-modes" role="group" aria-label="Email authentication mode">
-          <button type="button" className={mode === "sign-in" ? "active" : ""} onClick={() => { setMode("sign-in"); setError(""); }}>Sign in</button>
-          <button type="button" className={mode === "sign-up" ? "active" : ""} onClick={() => { setMode("sign-up"); setError(""); }}>Create account</button>
+          <button type="button" className={mode === "sign-in" ? "active" : ""} onClick={() => selectMode("sign-in")}>Sign in</button>
+          <button type="button" className={mode === "sign-up" ? "active" : ""} onClick={() => selectMode("sign-up")}>Create account</button>
         </div>
 
         <form className="email-auth-form" onSubmit={continueWithEmail}>
-          {mode === "sign-up" && <div className="field"><input name="fullName" type="text" autoComplete="name" value={fullName} onChange={(event) => setFullName(event.target.value)} placeholder="Full name" required /></div>}
-          <div className="field"><input name="email" type="email" autoComplete="email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="Email address" required /></div>
-          <div className="field"><input name="password" type="password" autoComplete={mode === "sign-up" ? "new-password" : "current-password"} placeholder="Password" minLength={8} required /></div>
-          <button className="btn primary" type="submit">{mode === "sign-up" ? "Create my account" : "Continue"}</button>
+          <div className="credential-question" key={`${mode}-${credentialStep}`}>
+            <p className="credential-step-label">{credentialStep === "name" ? "Your name" : credentialStep === "email" ? "Your email" : "Your password"}</p>
+            <div className="field credential-field">
+              <input
+                name={credentialStep === "name" ? "fullName" : credentialStep}
+                type={credentialStep === "email" ? "email" : credentialStep === "password" ? "password" : "text"}
+                autoComplete={credentialStep === "name" ? "name" : credentialStep === "email" ? "email" : mode === "sign-up" ? "new-password" : "current-password"}
+                value={credentialStep === "name" ? fullName : credentialStep === "email" ? email : password}
+                onChange={(event) => credentialStep === "name" ? setFullName(event.target.value) : credentialStep === "email" ? setEmail(event.target.value) : setPassword(event.target.value)}
+                placeholder={credentialStep === "name" ? "Full name" : credentialStep === "email" ? "Email address" : "Password"}
+                minLength={credentialStep === "password" ? 8 : undefined}
+                required
+                autoFocus
+              />
+            </div>
+          </div>
+          <div className="forgot-row credential-helper-slot">
+            {mode === "sign-in" && credentialStep === "password" && <button type="button" onClick={() => { setError(""); setNotice(""); setStep("forgot-password"); }}>Forgot password?</button>}
+          </div>
+          <button className="btn primary" type="submit">
+            {mode === "sign-up" && credentialStep === "name" ? "Create my account" : mode === "sign-in" && credentialStep === "password" ? "Continue" : "Next"}
+          </button>
         </form>
+
+        <div className="auth-divider"><span>or</span></div>
+
+        <div className="providers entry-providers google-only">
+          <button className="btn" type="button" onClick={continueWithGoogle}><GoogleIcon />Continue with Google</button>
+        </div>
 
         <label className="agree">
           <input type="checkbox" checked={accepted} onChange={(event) => { setAccepted(event.target.checked); if (event.target.checked) setError(""); }} />
@@ -156,6 +257,7 @@ export default function AuthFlow() {
             I agree to the <button className="doc-link" type="button" onClick={() => setLegal("terms")}>Terms of Use</button> and acknowledge the <button className="doc-link" type="button" onClick={() => setLegal("privacy")}>Privacy Policy</button>.
           </span>
         </label>
+        <p className={`auth-notice ${notice ? "show" : ""}`} role="status">{notice}</p>
         <p className={`err ${error ? "show" : ""}`} role="alert">{error}</p>
       </section>
 

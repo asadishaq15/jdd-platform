@@ -22,6 +22,7 @@
 
 .entry-providers.google-only {
   grid-template-columns: 1fr;
+  margin-top: 0;
 }
 
 .auth-divider {
@@ -47,6 +48,7 @@
   display: flex;
   justify-content: center;
   gap: 22px;
+  margin-top: 30px;
   margin-bottom: 10px;
 }
 
@@ -73,6 +75,118 @@
 
 .email-auth-form .btn.primary {
   margin-top: 10px;
+}
+
+.credential-step-label {
+  margin: 4px 0 6px;
+  color: var(--muted);
+  font-size: 9.5px;
+  letter-spacing: .22em;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.credential-question {
+  min-height: 72px;
+  animation: credential-in .38s var(--ease-lux) both;
+  will-change: opacity, transform;
+}
+
+.credential-helper-slot {
+  min-height: 25px;
+  margin-top: -6px;
+}
+
+@keyframes credential-in {
+  from { opacity: .68; transform: translateY(2px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.forgot-row {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: -6px;
+}
+
+.forgot-row button {
+  border: 0;
+  padding: 4px 0;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 11.5px;
+}
+
+.forgot-row button:hover,
+.forgot-row button:focus-visible {
+  color: var(--copper-dark);
+}
+
+.recovery-copy {
+  max-width: 34ch;
+  margin-top: 14px;
+}
+
+.recovery-form,
+.reset-password-form {
+  margin-top: 28px;
+}
+
+.recovery-password-field input {
+  padding-right: 44px;
+}
+
+.recovery-password-field button {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  z-index: 1;
+  display: grid;
+  width: 44px;
+  height: 44px;
+  place-items: center;
+  border: 0;
+  background: transparent;
+  color: var(--copper);
+  cursor: pointer;
+}
+
+.recovery-password-field button svg {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.recovery-password-field button:focus-visible {
+  outline: 1px solid var(--copper);
+  outline-offset: -4px;
+}
+
+.reset-password-form .btn:disabled {
+  cursor: wait;
+  opacity: .55;
+}
+
+.auth-notice {
+  display: none;
+  margin: 14px 0 0;
+  color: var(--copper-dark);
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+.auth-notice.show {
+  display: block;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .credential-question {
+    animation: none;
+  }
 }
 
 .entry-providers .btn {
