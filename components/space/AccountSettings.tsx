@@ -2,6 +2,7 @@
 
 import { FormEvent, useState } from "react";
 import type { AccountSummary } from "../../lib/space-data";
+import { friendlyAuthError } from "../../lib/auth-errors";
 import { createClient } from "../../lib/supabase/client";
 import { EyeIcon, EyeOffIcon, PencilIcon } from "../icons/AccountIcons";
 
@@ -70,7 +71,7 @@ export default function AccountSettings({ account, onAccountChange }: {
       { emailRedirectTo: `${window.location.origin}/space` },
     );
     setSaving(false);
-    if (error) return setNotice({ kind: "error", text: error.message });
+    if (error) return setNotice({ kind: "error", text: friendlyAuthError(error, "We could not update your email. Please try again.") });
 
     setEditor(null);
     setNotice({ kind: "success", text: `Confirmation sent to ${nextEmail}. Your current email remains active until you confirm the change.` });
@@ -86,7 +87,7 @@ export default function AccountSettings({ account, onAccountChange }: {
     const supabase = createClient();
     const { error } = await supabase.auth.updateUser({ password });
     setSaving(false);
-    if (error) return setNotice({ kind: "error", text: error.message });
+    if (error) return setNotice({ kind: "error", text: friendlyAuthError(error, "We could not update your password. Please try again.") });
 
     setPassword("");
     setPasswordConfirmation("");
@@ -96,26 +97,29 @@ export default function AccountSettings({ account, onAccountChange }: {
 
   return (
     <div className="account-settings">
-      <AccountRow label="Name" value={account.fullName} onEdit={() => openEditor("name")} />
-      {editor === "name" && <form className="account-form" onSubmit={saveName}>
-        <label htmlFor="account-name">Your name</label>
-        <input id="account-name" value={name} onChange={(event) => setName(event.target.value)} autoComplete="name" maxLength={100} required autoFocus />
-        <FormActions saving={saving} onCancel={() => setEditor(null)} />
-      </form>}
+      <div className="account-section">
+        {editor === "name" ? <form className="account-form" onSubmit={saveName}>
+          <label htmlFor="account-name">Name</label>
+          <input id="account-name" value={name} onChange={(event) => setName(event.target.value)} autoComplete="name" maxLength={100} required autoFocus />
+          <FormActions saving={saving} onCancel={() => setEditor(null)} />
+        </form> : <AccountRow label="Name" value={account.fullName} onEdit={() => openEditor("name")} />}
+      </div>
 
-      <AccountRow label="Email" value={account.email} onEdit={() => openEditor("email")} />
-      {editor === "email" && <form className="account-form" onSubmit={saveEmail}>
-        <label htmlFor="account-email">New email address</label>
-        <input id="account-email" type="email" value={email} onChange={(event) => setEmail(event.target.value)} autoComplete="email" required autoFocus />
-        <FormActions saving={saving} onCancel={() => setEditor(null)} />
-      </form>}
+      <div className="account-section">
+        {editor === "email" ? <form className="account-form" onSubmit={saveEmail}>
+          <label htmlFor="account-email">Email</label>
+          <input id="account-email" type="email" value={email} onChange={(event) => setEmail(event.target.value)} autoComplete="email" required autoFocus />
+          <FormActions saving={saving} onCancel={() => setEditor(null)} />
+        </form> : <AccountRow label="Email" value={account.email} onEdit={() => openEditor("email")} />}
+      </div>
 
-      <AccountRow label="Password" value="••••••••" onEdit={() => openEditor("password")} />
-      {editor === "password" && <form className="account-form" onSubmit={savePassword}>
-        <PasswordField id="account-password" label="New password" value={password} visible={showPassword} onChange={setPassword} onToggle={() => setShowPassword((value) => !value)} autoFocus />
-        <PasswordField id="account-password-confirm" label="Confirm password" value={passwordConfirmation} visible={showConfirmation} onChange={setPasswordConfirmation} onToggle={() => setShowConfirmation((value) => !value)} />
-        <FormActions saving={saving} onCancel={() => setEditor(null)} />
-      </form>}
+      <div className="account-section">
+        {editor === "password" ? <form className="account-form" onSubmit={savePassword}>
+          <PasswordField id="account-password" label="New password" value={password} visible={showPassword} onChange={setPassword} onToggle={() => setShowPassword((value) => !value)} autoFocus />
+          <PasswordField id="account-password-confirm" label="Confirm password" value={passwordConfirmation} visible={showConfirmation} onChange={setPasswordConfirmation} onToggle={() => setShowConfirmation((value) => !value)} />
+          <FormActions saving={saving} onCancel={() => setEditor(null)} />
+        </form> : <AccountRow label="Password" value="••••••••" onEdit={() => openEditor("password")} />}
+      </div>
 
       {notice && <p className={`account-notice ${notice.kind}`} role="status" aria-live="polite">{notice.text}</p>}
     </div>
@@ -123,7 +127,7 @@ export default function AccountSettings({ account, onAccountChange }: {
 }
 
 function AccountRow({ label, value, onEdit }: { label: string; value: string; onEdit: () => void }) {
-  return <div className="account-row"><div><span>{label}</span><strong>{value}</strong></div><button className="account-edit" type="button" onClick={onEdit} aria-label={`Edit ${label.toLowerCase()}`}><PencilIcon /></button></div>;
+  return <button className="account-row" type="button" onClick={onEdit} aria-label={`Edit ${label.toLowerCase()}`}><span className="account-value"><span>{label}</span><strong>{value}</strong></span><span className="account-edit" aria-hidden="true"><PencilIcon /></span></button>;
 }
 
 function PasswordField({ id, label, value, visible, onChange, onToggle, autoFocus = false }: {

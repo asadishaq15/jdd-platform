@@ -2,6 +2,7 @@
 
 import { FormEvent, useEffect, useState } from "react";
 import { GoogleIcon } from "../icons/AuthIcons";
+import { friendlyAuthError } from "../../lib/auth-errors";
 import { createClient } from "../../lib/supabase/client";
 import LegalModal from "./LegalModal";
 import LoadingView from "./LoadingView";
@@ -24,6 +25,7 @@ export default function AuthFlow() {
   const [fullName, setFullName] = useState("");
   const [password, setPassword] = useState("");
   const [credentialStep, setCredentialStep] = useState<CredentialStep>("email");
+  const [questionTransitioning, setQuestionTransitioning] = useState(false);
   const [legal, setLegal] = useState<"terms" | "privacy" | null>(null);
   const [notice, setNotice] = useState("");
   const [loadingTitle, setLoadingTitle] = useState("Preparing your private space.");
@@ -65,10 +67,11 @@ export default function AuthFlow() {
 
   async function continueWithEmail(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (questionTransitioning) return;
 
     if (credentialStep === "email") {
       setError("");
-      setCredentialStep("password");
+      transitionToCredentialStep("password");
       return;
     }
 
@@ -79,7 +82,7 @@ export default function AuthFlow() {
       }
       if (mode === "sign-up") {
         setError("");
-        setCredentialStep("name");
+        transitionToCredentialStep("name");
         return;
       }
     }
@@ -113,7 +116,7 @@ export default function AuthFlow() {
       });
 
       if (authError) {
-        setError(authError.message);
+        setError(friendlyAuthError(authError, "We could not create your account. Please try again."));
         setStep("entry");
         return;
       }
@@ -139,11 +142,21 @@ export default function AuthFlow() {
   }
 
   function selectMode(nextMode: EmailMode) {
+    if (questionTransitioning) return;
     setMode(nextMode);
     setCredentialStep("email");
     setPassword("");
     setError("");
     setNotice("");
+  }
+
+  function transitionToCredentialStep(nextStep: CredentialStep) {
+    setQuestionTransitioning(true);
+    const delay = window.matchMedia("(prefers-reduced-motion: reduce)").matches ? 0 : 220;
+    window.setTimeout(() => {
+      setCredentialStep(nextStep);
+      setQuestionTransitioning(false);
+    }, delay);
   }
 
   async function requestPasswordReset(event: FormEvent<HTMLFormElement>) {
@@ -161,7 +174,7 @@ export default function AuthFlow() {
     });
 
     if (resetError) {
-      setError(resetError.message);
+      setError(friendlyAuthError(resetError, "We could not send the recovery email. Please try again."));
       setStep("forgot-password");
       return;
     }
@@ -220,7 +233,7 @@ export default function AuthFlow() {
         </div>
 
         <form className="email-auth-form" onSubmit={continueWithEmail}>
-          <div className="credential-question" key={`${mode}-${credentialStep}`}>
+          <div className={`credential-question ${questionTransitioning ? "leaving" : ""}`} key={`${mode}-${credentialStep}`}>
             <p className="credential-step-label">{credentialStep === "name" ? "Your name" : credentialStep === "email" ? "Your email" : "Your password"}</p>
             <div className="field credential-field">
               <input
@@ -239,7 +252,7 @@ export default function AuthFlow() {
           <div className="forgot-row credential-helper-slot">
             {mode === "sign-in" && credentialStep === "password" && <button type="button" onClick={() => { setError(""); setNotice(""); setStep("forgot-password"); }}>Forgot password?</button>}
           </div>
-          <button className="btn primary" type="submit">
+          <button className="btn primary" type="submit" disabled={questionTransitioning}>
             {mode === "sign-up" && credentialStep === "name" ? "Create my account" : mode === "sign-in" && credentialStep === "password" ? "Continue" : "Next"}
           </button>
         </form>

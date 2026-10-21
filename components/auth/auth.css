@@ -77,6 +77,10 @@
   margin-top: 10px;
 }
 
+.email-auth-form .btn.primary:disabled {
+  cursor: wait;
+}
+
 .credential-step-label {
   margin: 4px 0 6px;
   color: var(--muted);
@@ -88,8 +92,13 @@
 
 .credential-question {
   min-height: 72px;
-  animation: credential-in .38s var(--ease-lux) both;
+  animation: credential-in .54s var(--ease-lux) both;
   will-change: opacity, transform;
+}
+
+.credential-question.leaving {
+  animation: credential-out .22s cubic-bezier(.4, 0, 1, 1) both;
+  pointer-events: none;
 }
 
 .credential-helper-slot {
@@ -98,8 +107,13 @@
 }
 
 @keyframes credential-in {
-  from { opacity: .68; transform: translateY(2px); }
+  from { opacity: .52; transform: translateY(4px); }
   to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes credential-out {
+  from { opacity: 1; transform: translateY(0); }
+  to { opacity: .52; transform: translateY(-3px); }
 }
 
 .forgot-row {
@@ -130,6 +144,10 @@
 .recovery-form,
 .reset-password-form {
   margin-top: 28px;
+}
+
+.reset-password-question {
+  min-height: 70px;
 }
 
 .recovery-password-field input {

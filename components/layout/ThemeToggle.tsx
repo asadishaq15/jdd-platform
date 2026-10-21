@@ -1,17 +1,38 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useLayoutEffect, useState } from "react";
+
+const THEME_KEY = "jdd-theme";
+
+function applyTheme(night: boolean) {
+  document.body.classList.toggle("night", night);
+  const theme = document.querySelector('meta[name="theme-color"]') || document.createElement("meta");
+  theme.setAttribute("name", "theme-color");
+  theme.setAttribute("content", night ? "#111110" : "#F4F4F2");
+  if (!theme.parentElement) document.head.appendChild(theme);
+}
 
 export default function ThemeToggle() {
-  const [night, setNight] = useState(false);
+  const [night, setNight] = useState(true);
 
-  useEffect(() => {
-    document.body.classList.toggle("night", night);
-    const theme = document.querySelector('meta[name="theme-color"]') || document.createElement("meta");
-    theme.setAttribute("name", "theme-color");
-    theme.setAttribute("content", night ? "#111110" : "#F4F4F2");
-    if (!theme.parentElement) document.head.appendChild(theme);
-  }, [night]);
+  useLayoutEffect(() => {
+    let savedTheme: string | null = null;
+    try {
+      savedTheme = localStorage.getItem(THEME_KEY);
+    } catch {}
+    const initialNight = savedTheme !== "light";
+    setNight(initialNight);
+    applyTheme(initialNight);
+  }, []);
+
+  function toggleTheme() {
+    const nextNight = !night;
+    setNight(nextNight);
+    try {
+      localStorage.setItem(THEME_KEY, nextNight ? "dark" : "light");
+    } catch {}
+    applyTheme(nextNight);
+  }
 
   return (
     <button
@@ -19,7 +40,7 @@ export default function ThemeToggle() {
       type="button"
       aria-label={night ? "Switch to day" : "Switch to night"}
       aria-pressed={night}
-      onClick={() => setNight((value) => !value)}
+      onClick={toggleTheme}
     >
       <svg className="moon" viewBox="0 0 24 24" aria-hidden="true">
         <path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5Z" />
