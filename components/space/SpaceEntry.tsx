@@ -2,15 +2,18 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import ProductEvent from "../admin/ProductEvent";
 import BrandMark from "../brand/BrandMark";
 import GradientDefs from "../layout/GradientDefs";
 import ThemeToggle from "../layout/ThemeToggle";
 import AccountSettings from "./AccountSettings";
 import DeleteAccountDialog from "./DeleteAccountDialog";
+import GuestFeedbackCard from "./GuestFeedbackCard";
 import { getWorld, HospitalityWorld, worldDetails } from "../../lib/worlds";
 import { loadSpaceState, saveSpaceState, SpaceState } from "../../lib/space-state";
-import type { AccountSummary, ConnectedStay } from "../../lib/space-data";
+import type { AccountSummary, CardOrder, ConnectedStay } from "../../lib/space-data";
 import { createClient } from "../../lib/supabase/client";
+import { trackProductEvent } from "../../lib/product-events";
 
 type ProfileMenu = "account" | "orders" | "stays" | "events" | "reminders" | "legal" | "delete" | null;
 type Flow = "order" | "ritual" | "oil" | "action" | "circle" | "delete" | null;
@@ -20,10 +23,11 @@ type SpaceEntryProps = {
   account: AccountSummary;
   stays: ConnectedStay[];
   activeStayId?: string;
+  initialOrders?: CardOrder[];
   initialState?: Pick<SpaceState, "recommended" | "chosen">;
 };
 
-export default function SpaceEntry({ account: initialAccount, stays, activeStayId, initialState = {} }: SpaceEntryProps) {
+export default function SpaceEntry({ account: initialAccount, stays, activeStayId, initialOrders = [], initialState = {} }: SpaceEntryProps) {
   const [account, setAccount] = useState(initialAccount);
   const [state, setState] = useState<SpaceState>({});
   const [menuOpen, setMenuOpen] = useState(false);
@@ -40,10 +44,15 @@ export default function SpaceEntry({ account: initialAccount, stays, activeStayI
       ...(initialState.recommended ? { recommended: initialState.recommended } : {}),
       ...(initialState.chosen ? { chosen: initialState.chosen } : {}),
     };
-    const next = connectedStay ? { ...synced, visited: connectedStay.property.worldNumber } : synced;
+    const latestOrder = initialOrders[0];
+    const persistedOrder = latestOrder ? {
+      cardStatus: orderStatusForSpace(latestOrder.status),
+      order: { property: latestOrder.propertyName, state: getWorld(connectedStay?.property.worldNumber || synced.chosen || synced.recommended || 9).state, recipient: latestOrder.recipientName },
+    } : {};
+    const next = connectedStay ? { ...synced, ...persistedOrder, visited: connectedStay.property.worldNumber } : { ...synced, ...persistedOrder };
     setState(next);
     saveSpaceState(next);
-  }, [connectedStay, initialState.chosen, initialState.recommended]);
+  }, [connectedStay, initialOrders, initialState.chosen, initialState.recommended]);
 
   const activeNumber = connectedStay?.property.worldNumber || state.visited || state.chosen || state.recommended || 9;
   const baseWorld = getWorld(activeNumber);
@@ -67,6 +76,7 @@ export default function SpaceEntry({ account: initialAccount, stays, activeStayI
 
   return (
     <main className="space-entry">
+      <ProductEvent name="space_opened" stayId={connectedStay?.id} dedupeKey={connectedStay?.id || "space"} />
       <GradientDefs />
       <DashboardHeader
         account={account}
@@ -97,13 +107,15 @@ export default function SpaceEntry({ account: initialAccount, stays, activeStayI
 
             <div className="secs">
               <WorldSection world={world} guest={guest} />
-              {/* Scent Invitation and My Intention are temporarily hidden from My Space. */}
+              <ScentSection world={world} guest={guest} guestName={guestName} state={state} onOrder={() => { setOrderStep(1); setFlow("order"); }} canOrder={Boolean(connectedStay)} />
+              {/* My Intention is temporarily hidden from My Space. */}
               <RitualSection
                 active={ritualActive}
-                onRitual={() => setFlow("ritual")}
+                onRitual={() => { void trackProductEvent({ name: "ritual_opened", stayId: connectedStay?.id, worldNumber: world.n }); setFlow("ritual"); }}
                 onOil={() => setFlow("oil")}
               />
-              <CommunitySection world={world} guest={guest} state={state} onOpen={() => setFlow("circle")} />
+              <CommunitySection world={world} guest={guest} state={state} onOpen={() => { void trackProductEvent({ name: "property_circle_opened", stayId: connectedStay?.id, worldNumber: world.n }); setFlow("circle"); }} />
+              {connectedStay && <GuestFeedbackCard stayId={connectedStay.id} propertyName={world.property} checkOut={connectedStay.checkOut} />}
             </div>
 
             <button className="wide-world reveal in" type="button" aria-label={`Open ${world.property}`} onClick={() => window.location.assign("/discover")}>
@@ -129,7 +141,7 @@ export default function SpaceEntry({ account: initialAccount, stays, activeStayI
       </div>
 
       <ProfileModal modal={modal} account={account} stays={stays} state={state} world={world} onAccountChange={setAccount} onClose={() => setModal(null)} onDelete={() => { setModal(null); setFlow("delete"); }} />
-      <FlowModal flow={flow} world={world} guestName={guestName} state={state} orderStep={orderStep} circleDetail={circleDetail} onCircleDetail={setCircleDetail} onStep={setOrderStep} onClose={() => { setFlow(null); setCircleDetail(null); }} onSave={updateState} />
+      <FlowModal flow={flow} world={world} guestName={guestName} activeStayId={connectedStay?.id} state={state} orderStep={orderStep} circleDetail={circleDetail} onCircleDetail={setCircleDetail} onStep={setOrderStep} onClose={() => { setFlow(null); setCircleDetail(null); }} onSave={updateState} />
     </main>
   );
 }
@@ -188,13 +200,13 @@ function WorldSection({ world, guest }: { world: HospitalityWorld; guest: boolea
   );
 }
 
-function ScentSection({ world, guest, guestName, state, onOrder, onSimulate }: {
+function ScentSection({ world, guest, guestName, state, onOrder, canOrder }: {
   world: HospitalityWorld;
   guest: boolean;
   guestName: string;
   state: SpaceState;
   onOrder: () => void;
-  onSimulate: () => void;
+  canOrder: boolean;
 }) {
   const status = state.cardStatus || (guest ? "received" : "none");
   return (
@@ -208,9 +220,7 @@ function ScentSection({ world, guest, guestName, state, onOrder, onSimulate }: {
           <span className="oc-name">For {guestName}</span>
         </div>
         {guest && !state.order ? <p className="c-s">Received during your stay</p> : status === "none" ? <><p className="sec-text">A personalized card that introduces the aroma of this hospitality world.</p><p className="c-s muted">Not ordered</p></> : <OrderTracker status={status} />}
-        {status === "delivered" && <div className="sec-act"><button className="tlink" type="button" onClick={onSimulate}>I received my card</button></div>}
-        {["preparing", "sent"].includes(status) && <p className="demo-ctl-in"><button className="tlink" type="button" onClick={onSimulate}>Simulate card delivery</button></p>}
-        <div className="sec-act"><button className="tlink" type="button" onClick={onOrder}>{guest || status === "received" ? "Order another card" : "Order my card"}</button></div>
+        <div className="sec-act">{canOrder ? <button className="tlink" type="button" onClick={onOrder}>{guest || status === "received" ? "Order another card" : "Order my card"}</button> : <span className="c-s muted">Activate a stay to request a card.</span>}</div>
       </div>
     </article>
   );
@@ -325,13 +335,25 @@ function ProfileModal({ modal, account, stays, state, world, onAccountChange, on
   );
 }
 
-function FlowModal({ flow, world, guestName, state, orderStep, circleDetail, onCircleDetail, onStep, onClose, onSave }: { flow: Flow; world: HospitalityWorld; guestName: string; state: SpaceState; orderStep: number; circleDetail: string | null; onCircleDetail: (value: string | null) => void; onStep: (step: number) => void; onClose: () => void; onSave: (next: SpaceState) => void }) {
+function FlowModal({ flow, world, guestName, activeStayId, state, orderStep, circleDetail, onCircleDetail, onStep, onClose, onSave }: { flow: Flow; world: HospitalityWorld; guestName: string; activeStayId?: string; state: SpaceState; orderStep: number; circleDetail: string | null; onCircleDetail: (value: string | null) => void; onStep: (step: number) => void; onClose: () => void; onSave: (next: SpaceState) => void }) {
   const [action, setAction] = useState(state.reminder?.action || "");
   const [frequency, setFrequency] = useState<"off" | "once" | "daily">(state.reminder?.frequency || "off");
+  const [recipientName, setRecipientName] = useState(guestName);
+  const [shippingAddress, setShippingAddress] = useState("");
+  const [orderError, setOrderError] = useState("");
+  const [ordering, setOrdering] = useState(false);
   if (!flow) return null;
 
-  function completeOrder() {
-    onSave({ ...state, cardStatus: "preparing", order: { property: world.property, state: world.state, recipient: guestName, address: "Demo address", payment: "Card" } });
+  async function completeOrder() {
+    if (!activeStayId) { setOrderError("Activate a stay before requesting a card."); return; }
+    if (recipientName.trim().length < 2 || shippingAddress.trim().length < 8) { setOrderError("Enter the recipient and complete delivery address."); return; }
+    setOrdering(true);
+    setOrderError("");
+    const response = await fetch("/api/card-orders", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ stayId: activeStayId, recipientName, shippingAddress }) });
+    const result = await response.json();
+    if (!response.ok) { setOrderError(result.error || "The order request could not be saved."); setOrdering(false); return; }
+    onSave({ ...state, cardStatus: "preparing", order: { property: world.property, state: world.state, recipient: recipientName.trim(), address: shippingAddress.trim() } });
+    setOrdering(false);
     onClose();
   }
 
@@ -351,11 +373,11 @@ function FlowModal({ flow, world, guestName, state, orderStep, circleDetail, onC
     <div className="jmodal open" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}>
       <section className="jm-in glass flow-modal" role="dialog" aria-modal="true" aria-label="Space flow">
         {flow === "order" && <>
-          <p className="g-label">Scented card order · {orderStep} of 4</p>
+          <p className="g-label">Scented card request · {orderStep} of 3</p>
           {orderStep === 1 && <><h2 className="jm-title">Your scented card.</h2><div className="order-card dash-card" style={{ "--h": (world.n * 37) % 360 } as React.CSSProperties}><span className="d-card-t">{world.property}</span><span className="d-card-s">{world.state}</span><span className="oc-name">For {guestName}</span></div><button className="btn primary" onClick={() => onStep(2)}>Continue</button></>}
-          {orderStep === 2 && <><h2 className="jm-title">Delivery details.</h2><div className="field"><input aria-label="Full name" placeholder="Full name" defaultValue={guestName} /></div><div className="field"><input aria-label="Address" placeholder="Address" /></div><button className="btn primary" onClick={() => onStep(3)}>Review</button></>}
-          {orderStep === 3 && <><h2 className="jm-title">Payment.</h2><div className="field"><input aria-label="Card number" placeholder="4242 4242 4242 4242" inputMode="numeric" /></div><div className="pay-row"><div className="field"><input aria-label="Expiry" placeholder="MM / YY" /></div><div className="field"><input aria-label="Security code" placeholder="CVC" /></div></div><button className="btn primary" onClick={() => onStep(4)}>Continue</button></>}
-          {orderStep === 4 && <><h2 className="jm-title">Review order.</h2><p>{world.property} · {world.state}<br />Total · demo payment</p><button className="btn primary" onClick={completeOrder}>Place order</button></>}
+          {orderStep === 2 && <><h2 className="jm-title">Delivery details.</h2><div className="field"><input aria-label="Full name" placeholder="Full name" value={recipientName} onChange={(event) => setRecipientName(event.target.value)} /></div><div className="field"><input aria-label="Address" placeholder="Complete delivery address" value={shippingAddress} onChange={(event) => setShippingAddress(event.target.value)} /></div><button className="btn primary" onClick={() => { if (recipientName.trim().length >= 2 && shippingAddress.trim().length >= 8) { setOrderError(""); onStep(3); } else setOrderError("Enter the recipient and complete delivery address."); }}>Review</button></>}
+          {orderStep === 3 && <><h2 className="jm-title">Review request.</h2><p>{world.property} · {world.state}<br />For {recipientName}<br />{shippingAddress}</p><p className="sec-text">No payment details are collected. The property will manage fulfilment.</p><button className="btn primary" disabled={ordering} onClick={completeOrder}>{ordering ? "Saving…" : "Place request"}</button></>}
+          {orderError && <p className="feedback-error" role="alert">{orderError}</p>}
         </>}
         {flow === "ritual" && <RitualContent state={state} onAction={() => onSave({ ...state, reminder: { action: state.reminder?.action || "One quiet action today", frequency: state.reminder?.frequency || "once" } })} />}
         {flow === "oil" && <><p className="g-label">Perfume oil ritual</p><h2 className="jm-title">Your State, on skin.</h2><ol className="rit-preview"><li><span>01</span>Remember. Recall your intention.</li><li><span>02</span>Apply. Place the oil on pulse points.</li><li><span>03</span>Return. Let the scent bring you back to your State.</li></ol><p className="sec-text">Wear alone, layer beneath your favourite perfume, or combine oils collected from different hospitality worlds.</p></>}
@@ -374,4 +396,10 @@ function RitualContent({ state, onAction }: { state: SpaceState; onAction: () =>
 
 function statusLabel(status: NonNullable<SpaceState["cardStatus"]> | "none") {
   return ({ none: "No card ordered", preparing: "Preparing", sent: "Sent", delivered: "Delivered", received: "Received" } as const)[status];
+}
+
+function orderStatusForSpace(status: CardOrder["status"]): NonNullable<SpaceState["cardStatus"]> {
+  if (status === "requested") return "preparing";
+  if (status === "cancelled") return "none";
+  return status;
 }

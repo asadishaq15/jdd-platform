@@ -23,15 +23,21 @@ export async function updateSession(request: NextRequest) {
 
   const { data } = await supabase.auth.getUser();
   const path = request.nextUrl.pathname;
+  const isAdminSignIn = path === "/admin/sign-in";
   const isProtected = path.startsWith("/discover")
     || path.startsWith("/space")
+    || (path.startsWith("/admin") && !isAdminSignIn)
     || path.startsWith("/activate/");
 
   if (isProtected && !data.user) {
     const signInUrl = request.nextUrl.clone();
-    signInUrl.pathname = "/sign-in";
+    signInUrl.pathname = path.startsWith("/admin") ? "/admin/sign-in" : "/sign-in";
     signInUrl.searchParams.set("next", `${path}${request.nextUrl.search}`);
     return NextResponse.redirect(signInUrl);
+  }
+
+  if (isAdminSignIn && data.user) {
+    return NextResponse.redirect(new URL("/admin", request.url));
   }
 
   if (path === "/sign-in" && data.user) {

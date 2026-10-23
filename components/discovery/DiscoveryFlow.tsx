@@ -8,6 +8,7 @@ import ThemeToggle from "../layout/ThemeToggle";
 import { demoCodes, getWorld, HospitalityWorld, normalizeAccessCode, numberFromDob, worldDetails, worlds } from "../../lib/worlds";
 import { loadSpaceState, saveSpaceState, SpaceState } from "../../lib/space-state";
 import { createClient } from "../../lib/supabase/client";
+import { trackProductEvent } from "../../lib/product-events";
 
 type Step = "dob" | "result" | "states" | "property" | "intent" | "becoming" | "codewarn" | "code" | "stay";
 type ExploreMode = "onb" | "dash";
@@ -66,6 +67,8 @@ export default function DiscoveryFlow() {
         }
         router.replace("/space");
       });
+    } else {
+      void trackProductEvent({ name: "discovery_started", metadata: { source: "onboarding" } });
     }
   }, [router]);
 
@@ -101,6 +104,7 @@ export default function DiscoveryFlow() {
   }
 
   function chooseWorld(n: number, mode: "recommended" | "chosen" = "chosen") {
+    void trackProductEvent({ name: "world_chosen", worldNumber: n, metadata: { recommended_world: state.recommended || 0, chosen_world: n } });
     setState((value) => ({ ...value, chosen: n, entryMode: mode }));
     setPreview(n);
     go("intent");
@@ -133,6 +137,15 @@ export default function DiscoveryFlow() {
       setFinishing(false);
       return;
     }
+
+    void trackProductEvent({
+      name: "discovery_completed",
+      worldNumber: next.chosen || next.visited || next.recommended,
+      metadata: {
+        recommended_world: next.recommended || 0,
+        chosen_world: next.chosen || next.visited || next.recommended || 0,
+      },
+    });
 
     router.push("/space");
   }
@@ -221,7 +234,7 @@ export default function DiscoveryFlow() {
               <h1 className="title">Explore the <em className="cu">States</em>.</h1>
               <div className="states-grid">
                 {worlds.map((world) => (
-                  <button className={`state-cell st-cell${world.n === (state.visited || state.chosen) ? " current" : ""}`} type="button" key={world.n} onClick={() => { setPreview(world.n); go("property"); }}>
+                  <button className={`state-cell st-cell${world.n === (state.visited || state.chosen) ? " current" : ""}`} type="button" key={world.n} onClick={() => { void trackProductEvent({ name: "world_viewed", worldNumber: world.n }); setPreview(world.n); go("property"); }}>
                     <span className="c-h">{world.state}</span>
                     <span className="c-l">{world.property} · {world.country}</span>
                     {world.n === state.visited ? <span className="c-s">Your stay</span> : world.n === state.chosen ? <span className="c-s">Your chosen world</span> : world.n === state.recommended ? <span className="c-s">Your recommended world</span> : null}

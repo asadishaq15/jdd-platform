@@ -18,3 +18,13 @@ export type ConnectedStay = {
   };
 };
 
+export type CardOrder = {
+  id: string;
+  stayId: string | null;
+  propertyId: string;
+  propertyName: string;
+  recipientName: string;
+  status: "requested" | "preparing" | "sent" | "delivered" | "received" | "cancelled";
+  createdAt: string;
+};
+

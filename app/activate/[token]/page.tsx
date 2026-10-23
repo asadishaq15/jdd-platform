@@ -1,5 +1,7 @@
 import { redirect } from "next/navigation";
+import ProductEvent from "../../../components/admin/ProductEvent";
 import AuthShell from "../../../components/auth/AuthShell";
+import { createAdminClient } from "../../../lib/supabase/admin";
 import { createClient } from "../../../lib/supabase/server";
 import "../../../components/auth/auth.css";
 
@@ -34,6 +36,20 @@ export default async function ActivationPage({ params, searchParams }: Activatio
       redirect(`/activate/${encodeURIComponent(token)}?error=unavailable`);
     }
 
+    const { data: currentUserData } = await supabase.auth.getUser();
+    if (currentUserData.user) {
+      const admin = createAdminClient();
+      const { data: membership } = await admin.from("admin_memberships").select("id").eq("user_id", currentUserData.user.id).eq("is_active", true).limit(1).maybeSingle();
+      await admin.from("product_events").insert({
+        event_name: "activation_completed",
+        user_id: currentUserData.user.id,
+        stay_id: data[0].stay_id,
+        property_id: data[0].property_id,
+        is_internal: Boolean(membership),
+        metadata: {},
+      });
+    }
+
     redirect(`/space?stay=${data[0].stay_id}`);
   }
 
@@ -48,6 +64,7 @@ export default async function ActivationPage({ params, searchParams }: Activatio
 
   return (
     <AuthShell>
+      <ProductEvent name="activation_page_opened" dedupeKey="activation" />
       <section className="auth-view" aria-label="Activate your guest stay">
         <p className="eyebrow">Guest activation</p>
         <h1 className="title">Open your <em className="cu">private stay</em>.</h1>

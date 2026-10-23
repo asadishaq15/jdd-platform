@@ -417,6 +417,22 @@ body.night .jm-in { border-color: rgba(255,255,255,.08); background: rgba(30,30,
 .delete-confirm label { margin-bottom: 8px; }
 .delete-confirm label strong { color: var(--fg); font-weight: 500; }
 .delete-account-button:disabled { cursor: not-allowed; opacity: .45; }
+.guest-feedback h2 { margin: 8px 0 10px; font: 300 30px/1.15 var(--serif); }
+.feedback-options { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 24px; }
+.feedback-options button { min-height: 48px; padding: 10px 12px; border: 1px solid var(--line); background: transparent; color: var(--fg); cursor: pointer; font-size: 11px; text-align: left; }
+.feedback-options button.selected { border-color: var(--copper); background: rgba(197,132,82,.09); }
+.feedback-note { display: grid; gap: 8px; margin-top: 20px; }
+.feedback-note > span { color: var(--muted); font-size: 9px; letter-spacing: .12em; text-transform: uppercase; }
+.feedback-note em { font-style: normal; opacity: .65; }
+.feedback-note textarea { width: 100%; resize: vertical; border: 1px solid var(--line); border-radius: 0; background: transparent; color: var(--fg); padding: 12px; font: 300 14px/1.5 var(--sans); outline: none; }
+.feedback-note textarea:focus { border-color: var(--copper); }
+.feedback-actions { display: flex; align-items: center; gap: 16px; margin-top: 18px; }
+.feedback-actions button { border: 0; background: transparent; color: var(--fg); padding: 8px 0; cursor: pointer; font-size: 11px; text-decoration: underline; text-underline-offset: 4px; }
+.feedback-actions button.primary { padding: 11px 15px; border: 1px solid var(--copper); text-decoration: none; }
+.feedback-actions button:disabled { cursor: wait; opacity: .55; }
+.feedback-answer { margin: 22px 0 0; color: var(--copper-dark); font: italic 25px/1.2 var(--serif); }
+.feedback-comment { margin: 14px 0 0; color: var(--muted); font: 300 16px/1.6 var(--serif); }
+.feedback-error { margin: 10px 0 0; color: #a65a3f; font-size: 11px; }
 
 @media (min-width: 760px) {
   .wide-world { width: 72%; }
@@ -433,6 +449,7 @@ body.night .jm-in { border-color: rgba(255,255,255,.08); background: rgba(30,30,
   #sec-world { padding: 34px 20px 30px; }
   .track { gap: 10px; }
   .track li { font-size: 8.5px; letter-spacing: .12em; }
+  .feedback-options { grid-template-columns: 1fr; }
 }
 
 @media (prefers-reduced-motion: reduce) {

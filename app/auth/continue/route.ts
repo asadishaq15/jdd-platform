@@ -10,7 +10,7 @@ export async function GET(request: Request) {
     return NextResponse.redirect(new URL("/sign-in", url.origin));
   }
 
-  const [{ data: profile }, { data: stays }] = await Promise.all([
+  const [{ data: profile }, { data: stays }, { data: adminMemberships }] = await Promise.all([
     supabase
       .from("profiles")
       .select("discovery_completed_at")
@@ -21,7 +21,17 @@ export async function GET(request: Request) {
       .select("id")
       .eq("guest_id", userData.user.id)
       .limit(1),
+    supabase
+      .from("admin_memberships")
+      .select("id")
+      .eq("user_id", userData.user.id)
+      .eq("is_active", true)
+      .limit(1),
   ]);
+
+  if (adminMemberships?.length) {
+    return NextResponse.redirect(new URL("/admin", url.origin));
+  }
 
   const destination = profile?.discovery_completed_at || stays?.length
     ? "/space"
