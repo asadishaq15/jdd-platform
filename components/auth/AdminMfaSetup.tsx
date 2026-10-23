@@ -7,6 +7,8 @@ type Mode = "password" | "checking" | "enroll" | "challenge" | "ready";
 
 export default function AdminMfaSetup({ requirePassword = false }: { requirePassword?: boolean }) {
   const [mode, setMode] = useState<Mode>(requirePassword ? "password" : "checking");
+  const [passwordStep, setPasswordStep] = useState<"new" | "confirm">("new");
+  const [passwordTransitioning, setPasswordTransitioning] = useState(false);
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [factorId, setFactorId] = useState("");
@@ -66,11 +68,23 @@ export default function AdminMfaSetup({ requirePassword = false }: { requirePass
 
   async function savePassword(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (passwordTransitioning) return;
     setError("");
-    if (password.length < 12) {
-      setError("Use at least 12 characters for the administrative password.");
+
+    if (passwordStep === "new") {
+      if (password.length < 12) {
+        setError("Use at least 12 characters for the administrative password.");
+        return;
+      }
+      setPasswordTransitioning(true);
+      const delay = window.matchMedia("(prefers-reduced-motion: reduce)").matches ? 0 : 220;
+      window.setTimeout(() => {
+        setPasswordStep("confirm");
+        setPasswordTransitioning(false);
+      }, delay);
       return;
     }
+
     if (password !== confirmPassword) {
       setError("The passwords do not match.");
       return;
@@ -117,7 +131,7 @@ export default function AdminMfaSetup({ requirePassword = false }: { requirePass
   }
 
   if (mode === "password") {
-    return <section className="admin-security-card"><p className="admin-kicker">Accept your invitation</p><h1>Create your password.</h1><p>This account cannot self-register. It was invited and assigned by Jardin du Désert.</p><form onSubmit={savePassword}><label>Password<input type="password" autoComplete="new-password" minLength={12} value={password} onChange={(event) => setPassword(event.target.value)} required /></label><label>Confirm password<input type="password" autoComplete="new-password" minLength={12} value={confirmPassword} onChange={(event) => setConfirmPassword(event.target.value)} required /></label><button className="admin-security-primary" type="submit">Save password and continue</button></form>{error && <p className="admin-security-error">{error}</p>}<button className="admin-security-link" type="button" onClick={signOut}>Sign out</button></section>;
+    return <section className="admin-security-card"><p className="admin-kicker">Accept your invitation</p><h1>{passwordStep === "new" ? "Create your password." : "Confirm your password."}</h1><p>This account cannot self-register. It was invited and assigned by Jardin du Désert.</p><form onSubmit={savePassword}><div className={`credential-question ${passwordTransitioning ? "leaving" : ""}`} key={passwordStep}><label>{passwordStep === "new" ? "New password" : "Confirm password"}<input type="password" autoComplete="new-password" minLength={12} value={passwordStep === "new" ? password : confirmPassword} onChange={(event) => passwordStep === "new" ? setPassword(event.target.value) : setConfirmPassword(event.target.value)} required autoFocus /></label></div>{passwordStep === "confirm" && <button className="admin-security-form-link" type="button" onClick={() => { setConfirmPassword(""); setError(""); setPasswordStep("new"); }}>Choose a different password</button>}<button className="admin-security-primary" type="submit" disabled={passwordTransitioning}>{passwordStep === "new" ? "Next" : "Save password and continue"}</button></form>{error && <p className="admin-security-error">{error}</p>}<button className="admin-security-link" type="button" onClick={signOut}>Sign out</button></section>;
   }
 
   return (

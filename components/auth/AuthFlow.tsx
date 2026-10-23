@@ -249,9 +249,11 @@ export default function AuthFlow() {
               />
             </div>
           </div>
-          <div className="forgot-row credential-helper-slot">
-            {mode === "sign-in" && credentialStep === "password" && <button type="button" onClick={() => { setError(""); setNotice(""); setStep("forgot-password"); }}>Forgot password?</button>}
-          </div>
+          {mode === "sign-in" && credentialStep === "password" && (
+            <div className="forgot-row credential-helper-slot credential-helper-enter">
+              <button type="button" onClick={() => { setError(""); setNotice(""); setStep("forgot-password"); }}>Forgot password?</button>
+            </div>
+          )}
           <button className="btn primary" type="submit" disabled={questionTransitioning}>
             {mode === "sign-up" && credentialStep === "name" ? "Create my account" : mode === "sign-in" && credentialStep === "password" ? "Continue" : "Next"}
           </button>

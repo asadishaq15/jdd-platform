@@ -106,6 +106,10 @@
   margin-top: -6px;
 }
 
+.credential-helper-enter {
+  animation: credential-helper-in .42s var(--ease-lux) both;
+}
+
 @keyframes credential-in {
   from { opacity: .52; transform: translateY(4px); }
   to { opacity: 1; transform: translateY(0); }
@@ -114,6 +118,11 @@
 @keyframes credential-out {
   from { opacity: 1; transform: translateY(0); }
   to { opacity: .52; transform: translateY(-3px); }
+}
+
+@keyframes credential-helper-in {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 .forgot-row {
@@ -202,7 +211,8 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .credential-question {
+  .credential-question,
+  .credential-helper-enter {
     animation: none;
   }
 }

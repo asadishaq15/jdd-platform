@@ -13,7 +13,6 @@ export default function AdminSignInPage() {
           <Link className="btn" href="/staff/sign-in">Internal staff</Link>
           <Link className="btn" href="/property/sign-in">Property or business</Link>
         </div>
-        <p className="links small"><Link className="tlink" href="/sign-in">Guest sign in</Link></p>
       </section>
     </AuthShell>
   );

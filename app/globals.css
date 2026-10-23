@@ -118,7 +118,7 @@ body.night .theme .sunic { display: block; }
 .mark { position: absolute; left: 50%; top: calc(env(safe-area-inset-top) + 18px); transform: translateX(-50%); width: auto; height: 30px; }
 .top { position: relative; z-index: 5; display: flex; align-items: center; justify-content: space-between; padding: calc(env(safe-area-inset-top) + 18px) var(--pad-x) 10px; min-height: 64px; }
 
-.btn { position: relative; width: 100%; height: 46px; display: flex; align-items: center; justify-content: center; gap: 12px; border-radius: 0; border: 1px solid rgba(17, 17, 16, .16); background: transparent; cursor: pointer; font-weight: 300; font-size: 13px; letter-spacing: .04em; transition: border-color .4s var(--ease-lux), background .4s var(--ease-lux), transform .3s var(--ease-lux); }
+.btn { position: relative; width: 100%; height: 46px; display: flex; align-items: center; justify-content: center; gap: 12px; border-radius: 0; border: 1px solid rgba(17, 17, 16, .16); background: transparent; color: var(--fg); cursor: pointer; font-weight: 300; font-size: 13px; letter-spacing: .04em; text-decoration: none; transition: border-color .4s var(--ease-lux), background .4s var(--ease-lux), transform .3s var(--ease-lux); }
 .btn svg { width: 15px; height: 15px; flex: 0 0 auto; }
 .btn[data-provider="apple"] svg { fill: var(--fg); }
 .btn:hover { border-color: var(--copper-light); }
