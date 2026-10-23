@@ -2,6 +2,7 @@ export type AccountSummary = {
   id: string;
   fullName: string;
   email: string;
+  pendingEmail?: string;
   avatarUrl: string | null;
 };
 

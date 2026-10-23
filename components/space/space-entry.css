@@ -412,6 +412,7 @@ body.night .jm-in { border-color: rgba(255,255,255,.08); background: rgba(30,30,
 .account-actions button:disabled { cursor: wait; opacity: .55; }
 .account-notice { margin: 16px 0 0; font-size: 12px; line-height: 1.55; text-align: left; }
 .account-notice.success { color: var(--copper-dark); }
+.account-notice.pending { color: var(--muted); }
 .account-notice.error { color: #a65a3f; }
 .delete-confirm { margin-top: 22px; text-align: left; }
 .delete-confirm label { margin-bottom: 8px; }

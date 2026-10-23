@@ -132,6 +132,15 @@ body.night .btn.primary { border-color: rgba(233, 228, 217, .6); }
 .field label { display: block; font-size: 10.5px; letter-spacing: .24em; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; }
 .field input { width: 100%; height: 44px; border: 0; border-bottom: 1px solid rgba(17, 17, 16, .25); background: transparent; padding: 0 2px; font-size: 16px; font-weight: 300; text-align: center; outline: none; border-radius: 0; transition: border-color .4s var(--ease-lux); }
 body.night .field input { border-bottom-color: rgba(255, 255, 255, .3); }
+body.night input:-webkit-autofill,
+body.night input:-webkit-autofill:hover,
+body.night input:-webkit-autofill:focus,
+body.night input:-webkit-autofill:active {
+  -webkit-text-fill-color: var(--fg);
+  caret-color: var(--fg);
+  -webkit-box-shadow: 0 0 0 1000px var(--bg) inset;
+  box-shadow: 0 0 0 1000px var(--bg) inset;
+}
 .field input::placeholder { color: var(--neutral-3); }
 .field::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 1px; background: var(--copper-gradient); transform: scaleX(0); transform-origin: left; transition: transform .6s var(--ease-lux); }
 .field:focus-within::after { transform: scaleX(1); }

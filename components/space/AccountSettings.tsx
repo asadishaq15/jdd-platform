@@ -66,15 +66,21 @@ export default function AccountSettings({ account, onAccountChange }: {
     setSaving(true);
     setNotice(null);
     const supabase = createClient();
-    const { error } = await supabase.auth.updateUser(
+    const callback = new URL("/auth/callback", window.location.origin);
+    callback.searchParams.set("next", "/space");
+    const { data, error } = await supabase.auth.updateUser(
       { email: nextEmail },
-      { emailRedirectTo: `${window.location.origin}/space` },
+      { emailRedirectTo: callback.toString() },
     );
     setSaving(false);
     if (error) return setNotice({ kind: "error", text: friendlyAuthError(error, "We could not update your email. Please try again.") });
 
+    onAccountChange({ ...account, pendingEmail: data.user?.new_email || nextEmail });
     setEditor(null);
-    setNotice({ kind: "success", text: `Confirmation sent to ${nextEmail}. Your current email remains active until you confirm the change.` });
+    setNotice({
+      kind: "success",
+      text: `Email change pending. Confirm the messages sent to both ${account.email} and ${nextEmail}. Your current email remains active until both confirmations are complete.`,
+    });
   }
 
   async function savePassword(event: FormEvent<HTMLFormElement>) {
@@ -112,6 +118,12 @@ export default function AccountSettings({ account, onAccountChange }: {
           <FormActions saving={saving} onCancel={() => setEditor(null)} />
         </form> : <AccountRow label="Email" value={account.email} onEdit={() => openEditor("email")} />}
       </div>
+
+      {account.pendingEmail && account.pendingEmail.toLowerCase() !== account.email.toLowerCase() && !notice && (
+        <p className="account-notice pending" role="status">
+          Email change pending to {account.pendingEmail}. Confirm the messages sent to both email addresses; until then, sign in with {account.email}.
+        </p>
+      )}
 
       <div className="account-section">
         {editor === "password" ? <form className="account-form" onSubmit={savePassword}>

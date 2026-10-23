@@ -74,6 +74,7 @@ export default async function SpacePage({ searchParams }: SpacePageProps) {
           || userData.user.user_metadata.name
           || "Guest",
         email: userData.user.email || "",
+        pendingEmail: userData.user.new_email || undefined,
         avatarUrl: profile?.avatar_url || userData.user.user_metadata.avatar_url || null,
       }}
       stays={stays}
