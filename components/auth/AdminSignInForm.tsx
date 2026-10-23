@@ -49,7 +49,6 @@ export default function AdminSignInForm({ audience }: AdminSignInFormProps) {
         <button className="btn primary" type="submit" disabled={submitting}>{submitting ? "Signing in…" : "Continue"}</button>
       </form>
       <p className={`err ${error ? "show" : ""}`} role="alert">{error}</p>
-      <p className="links small"><a className="tlink" href="/sign-in">Guest sign in</a></p>
     </section>
   );
 }
