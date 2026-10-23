@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { canOperateProperty, getAdminContext, recordAdminAudit, requireAdminRole } from "./admin-auth";
+import { canOperateProperty, getAdminContext, recordAdminAudit, requireAdmin, requireAdminRole } from "./admin-auth";
 import { createAdminClient } from "./supabase/admin";
 import { createClient } from "./supabase/server";
 
@@ -19,8 +19,7 @@ export type AdminInviteActionState = { error?: string; success?: string };
 async function getAuthorizedStay(stayId: string) {
   if (!UUID_PATTERN.test(stayId)) return { error: "Invalid stay identifier." } as const;
 
-  const context = await getAdminContext();
-  if (!context) return { error: "Administrator access is required." } as const;
+  const context = await requireAdmin();
 
   const admin = createAdminClient();
   const { data: stay, error } = await admin
