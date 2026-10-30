@@ -8,6 +8,7 @@ const navigation = [
   { href: "/admin/stays", label: "Stays" },
   { href: "/admin/activations", label: "Activations" },
   { href: "/admin/properties", label: "Properties" },
+  { href: "/admin/community", label: "Community" },
   { href: "/admin/integrations", label: "Integrations" },
   { href: "/admin/analytics", label: "Analytics" },
   { href: "/admin/invite", label: "Invite", superAdminOnly: true },
