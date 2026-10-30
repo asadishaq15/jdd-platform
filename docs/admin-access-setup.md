@@ -5,9 +5,11 @@ Administrative access is invitation-only and uses two distinct portals:
 - `/staff/sign-in` for Jardin du Désert internal staff
 - `/property/sign-in` for properties and businesses
 
-Both account types must complete TOTP two-step verification. Property accounts
-are restricted to one property, and only one active account can be assigned to
-each property.
+Both account types normally complete TOTP two-step verification. MFA is
+temporarily disabled in app + `admin_mfa_verified()` (migration
+`202610300003_temp_disable_admin_mfa.sql`) — restore before production.
+Property accounts are restricted to one property, and only one active account
+can be assigned to each property.
 
 ## Deployment requirements
 

@@ -123,7 +123,9 @@ export async function requireAdmin(options: { requireMfa?: boolean } = {}) {
   const context = await getAdminContext();
   if (!context) redirect("/admin/unauthorized");
 
-  if (options.requireMfa !== false) {
+  // TODO: re-enable MFA before production partner rollout.
+  // Temporary: skip authenticator requirement so admin flows work without AAL2.
+  if (options.requireMfa === true) {
     const supabase = await createClient();
     const { data: assurance, error } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
     if (error || assurance.currentLevel !== "aal2") redirect("/admin/security");
