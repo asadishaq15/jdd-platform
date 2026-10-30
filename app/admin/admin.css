@@ -205,6 +205,7 @@
 .admin-pms-overview-link span { color: var(--admin-muted); }
 .admin-community-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; margin-top: 28px; }
 .admin-community-card { display: grid; gap: 18px; padding: 22px; border: 1px solid var(--admin-line); border-radius: 12px; background: var(--admin-panel); align-content: start; }
+.admin-community-thumb { width: 100%; aspect-ratio: 16 / 10; object-fit: cover; border: 1px solid var(--admin-line); border-radius: 8px; background: #fafaf8; }
 .admin-community-card-head { display: grid; gap: 10px; }
 .admin-community-card-head h2 { margin: 0; font: 400 22px/1.15 var(--serif); }
 .admin-community-card-head > p:last-of-type { margin: 0; color: var(--admin-muted); font-size: 12px; line-height: 1.5; }

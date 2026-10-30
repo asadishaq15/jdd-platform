@@ -50,6 +50,11 @@ export default function CommunityEventForm({
         </span>
       </div>
 
+      {event?.thumbnailUrl && (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img className="admin-community-thumb" src={event.thumbnailUrl} alt="" />
+      )}
+
       {canManage ? (
         <>
           <form className="admin-community-form" action={saveAction}>
@@ -84,6 +89,16 @@ export default function CommunityEventForm({
                 required
                 maxLength={2000}
                 rows={4}
+              />
+            </label>
+            <label>
+              <span>Thumbnail URL (optional)</span>
+              <input
+                name="thumbnailUrl"
+                type="url"
+                defaultValue={event?.thumbnailUrl || ""}
+                placeholder="https://…"
+                maxLength={2000}
               />
             </label>
             <label className="admin-community-check">
@@ -121,6 +136,7 @@ export default function CommunityEventForm({
               <p><strong>{event.title}</strong></p>
               <p className="admin-muted">{event.timing}</p>
               <p>{event.body}</p>
+              {event.thumbnailUrl && <p className="admin-muted">Thumbnail set</p>}
             </>
           ) : (
             <p className="admin-muted">No {CATEGORY_LABELS[category].toLowerCase()} yet.</p>

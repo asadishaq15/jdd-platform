@@ -19,6 +19,7 @@ export type CommunityEventView = {
   title: string;
   timing: string;
   body: string;
+  thumbnailUrl: string | null;
   isPublished: boolean;
   updatedAt: string;
 };
@@ -44,6 +45,7 @@ type CommunityEventRow = {
   title: string;
   timing: string;
   body: string;
+  thumbnail_url: string | null;
   is_published: boolean;
   updated_at: string;
 };
@@ -60,9 +62,20 @@ function mapEvent(row: CommunityEventRow): CommunityEventView {
     title: row.title,
     timing: row.timing,
     body: row.body,
+    thumbnailUrl: row.thumbnail_url,
     isPublished: row.is_published,
     updatedAt: row.updated_at,
   };
+}
+
+function normalizeThumbnailUrl(value: string): { url: string | null; error?: string } {
+  const trimmed = value.trim();
+  if (!trimmed) return { url: null };
+  if (trimmed.length > 2000) return { url: null, error: "Thumbnail URL is too long." };
+  if (!/^https?:\/\//i.test(trimmed)) {
+    return { url: null, error: "Thumbnail must be an http or https URL." };
+  }
+  return { url: trimmed };
 }
 
 function canManageCommunity(context: AdminContext, propertyId: string) {
@@ -87,7 +100,7 @@ export async function loadCommunityBoards(
   const admin = createAdminClient();
   const { data, error } = await admin
     .from("community_events")
-    .select("id, property_id, category, title, timing, body, is_published, updated_at")
+    .select("id, property_id, category, title, timing, body, thumbnail_url, is_published, updated_at")
     .in("property_id", propertyIds)
     .order("updated_at", { ascending: false });
 
@@ -117,6 +130,7 @@ export async function upsertCommunityEvent(
   const title = String(formData.get("title") || "").trim();
   const timing = String(formData.get("timing") || "").trim();
   const body = String(formData.get("body") || "").trim();
+  const thumbnail = normalizeThumbnailUrl(String(formData.get("thumbnailUrl") || ""));
   const isPublished = String(formData.get("isPublished") || "") === "on"
     || String(formData.get("isPublished") || "") === "true";
 
@@ -128,6 +142,7 @@ export async function upsertCommunityEvent(
   if (title.length < 2 || title.length > 160) return { error: "Title must be between 2 and 160 characters." };
   if (timing.length < 1 || timing.length > 120) return { error: "Enter timing or schedule text." };
   if (body.length < 1 || body.length > 2000) return { error: "Body must be between 1 and 2000 characters." };
+  if (thumbnail.error) return { error: thumbnail.error };
 
   const admin = createAdminClient();
   const { data: existing, error: loadError } = await admin
@@ -143,7 +158,13 @@ export async function upsertCommunityEvent(
   if (existing) {
     const { error } = await admin
       .from("community_events")
-      .update({ title, timing, body, is_published: isPublished })
+      .update({
+        title,
+        timing,
+        body,
+        thumbnail_url: thumbnail.url,
+        is_published: isPublished,
+      })
       .eq("id", existing.id);
     if (error) return { error: error.message || "Unable to update community event." };
   } else {
@@ -155,6 +176,7 @@ export async function upsertCommunityEvent(
         title,
         timing,
         body,
+        thumbnail_url: thumbnail.url,
         is_published: isPublished,
         created_by: context.user.id,
       })
