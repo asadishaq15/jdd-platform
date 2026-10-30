@@ -155,6 +155,15 @@ export function canOperateProperty(context: AdminContext, propertyId: string) {
   );
 }
 
+/** PMS connect/disconnect is limited to super admins and property admins. */
+export function canManagePmsConnection(context: AdminContext, propertyId: string) {
+  if (context.isSuperAdmin) return true;
+  return context.memberships.some((membership) =>
+    membership.propertyId === propertyId
+    && membership.role === "property_admin",
+  );
+}
+
 export async function recordAdminAudit(input: {
   action: string;
   resourceType: string;

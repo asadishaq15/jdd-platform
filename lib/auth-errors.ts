@@ -7,6 +7,10 @@ type AuthErrorLike = {
 export function friendlyAuthError(error: AuthErrorLike, fallback = "Something went wrong. Please try again.") {
   const message = error.message?.toLowerCase() || "";
 
+  if (message.includes("aal2 session is required")) {
+    return "Confirm your authenticator code to update this password.";
+  }
+
   if (
     error.code === "over_email_send_rate_limit"
     || message.includes("email rate limit")

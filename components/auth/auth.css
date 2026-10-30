@@ -127,8 +127,14 @@
 
 .forgot-row {
   display: flex;
-  justify-content: flex-end;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
   margin-top: -6px;
+}
+
+.forgot-row:has(> :only-child) {
+  justify-content: flex-end;
 }
 
 .forgot-row button {
@@ -159,15 +165,32 @@
   min-height: 70px;
 }
 
+.autofill-username {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  border: 0;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+}
+
 .recovery-password-field input {
   padding-right: 44px;
+}
+
+.recovery-password-field input::-ms-reveal,
+.recovery-password-field input::-ms-clear {
+  display: none;
 }
 
 .recovery-password-field button {
   position: absolute;
   right: 0;
   bottom: 0;
-  z-index: 1;
+  z-index: 2;
   display: grid;
   width: 44px;
   height: 44px;

@@ -72,11 +72,35 @@ export function getWorld(n: number) {
   return worlds.find((world) => world.n === n) ?? worlds[8];
 }
 
-export function numberFromDob(day: number, month: number, year: number) {
-  let n = `${day}${month}${year}`.split("").reduce((sum, digit) => sum + Number(digit), 0);
-  while (n > 22) n = String(n).split("").reduce((sum, digit) => sum + Number(digit), 0);
+/** Matrix of Destiny reduction: digit-sum while above 22; 22 stays 22. */
+export function reduceArcana(value: number) {
+  let n = Math.abs(Math.trunc(value));
+  while (n > 22) {
+    n = String(n).split("").reduce((sum, digit) => sum + Number(digit), 0);
+  }
   return n || 22;
 }
+
+/**
+ * Matrix of Destiny center (E) from a date of birth.
+ * A = r(day), B = month, C = r(year digits), D = r(A+B+C), E = r(A+B+C+D).
+ * Returns 1–22 for lookup via getWorld; product UI should show the State name, not this number.
+ */
+export function numberFromDob(day: number, month: number, year: number) {
+  const a = reduceArcana(day);
+  const b = month;
+  const c = reduceArcana(String(year).split("").reduce((sum, digit) => sum + Number(digit), 0));
+  const d = reduceArcana(a + b + c);
+  return reduceArcana(a + b + c + d);
+}
+
+/** Locked examples for Matrix center E → State (see scripts/verify-matrix-destiny.mjs). */
+export const matrixDestinyExamples = [
+  { day: 15, month: 3, year: 1990, e: 11, state: "Vitality" },
+  { day: 29, month: 5, year: 1990, e: 7, state: "Direction" },
+  { day: 15, month: 3, year: 1999, e: 11, state: "Vitality" },
+  { day: 25, month: 11, year: 2002, e: 8, state: "Balance" },
+] as const;
 
 export function normalizeAccessCode(code: string) {
   return code.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 12);

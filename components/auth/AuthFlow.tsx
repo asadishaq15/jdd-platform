@@ -1,8 +1,10 @@
 "use client";
 
 import { FormEvent, useEffect, useState } from "react";
+import { EyeIcon, EyeOffIcon } from "../icons/AccountIcons";
 import { GoogleIcon } from "../icons/AuthIcons";
 import { friendlyAuthError } from "../../lib/auth-errors";
+import { usePasswordVisibility } from "../../lib/password-visibility";
 import { createClient } from "../../lib/supabase/client";
 import LegalModal from "./LegalModal";
 import LoadingView from "./LoadingView";
@@ -24,6 +26,7 @@ export default function AuthFlow() {
   const [email, setEmail] = useState("");
   const [fullName, setFullName] = useState("");
   const [password, setPassword] = useState("");
+  const passwordField = usePasswordVisibility(password, setPassword);
   const [credentialStep, setCredentialStep] = useState<CredentialStep>("email");
   const [questionTransitioning, setQuestionTransitioning] = useState(false);
   const [legal, setLegal] = useState<"terms" | "privacy" | null>(null);
@@ -76,7 +79,9 @@ export default function AuthFlow() {
     }
 
     if (credentialStep === "password") {
-      if (password.length < 8) {
+      const nextPassword = passwordField.readValue();
+      setPassword(nextPassword);
+      if (nextPassword.length < 8) {
         setError("Password must contain at least 8 characters.");
         return;
       }
@@ -93,6 +98,7 @@ export default function AuthFlow() {
     }
     if (!requireTerms()) return;
 
+    const nextPassword = passwordField.readValue() || password;
     setLoadingTitle("Preparing your private space.");
     setStep("loading");
     const supabase = createClient();
@@ -108,7 +114,7 @@ export default function AuthFlow() {
       callback.searchParams.set("next", requestedDestination());
       const { data, error: authError } = await supabase.auth.signUp({
         email,
-        password,
+        password: nextPassword,
         options: {
           emailRedirectTo: callback.toString(),
           data: { full_name: fullName.trim() },
@@ -128,7 +134,7 @@ export default function AuthFlow() {
     } else {
       const { error: authError } = await supabase.auth.signInWithPassword({
         email,
-        password,
+        password: nextPassword,
       });
 
       if (authError) {
@@ -146,6 +152,7 @@ export default function AuthFlow() {
     setMode(nextMode);
     setCredentialStep("email");
     setPassword("");
+    passwordField.resetVisible();
     setError("");
     setNotice("");
   }
@@ -233,20 +240,44 @@ export default function AuthFlow() {
         </div>
 
         <form className="email-auth-form" onSubmit={continueWithEmail}>
+          {credentialStep === "password" && mode === "sign-in" && (
+            <input className="autofill-username" type="email" name="username" autoComplete="username" value={email} readOnly tabIndex={-1} aria-hidden="true" />
+          )}
           <div className={`credential-question ${questionTransitioning ? "leaving" : ""}`} key={`${mode}-${credentialStep}`}>
             <p className="credential-step-label">{credentialStep === "name" ? "Your name" : credentialStep === "email" ? "Your email" : "Your password"}</p>
-            <div className="field credential-field">
-              <input
-                name={credentialStep === "name" ? "fullName" : credentialStep}
-                type={credentialStep === "email" ? "email" : credentialStep === "password" ? "password" : "text"}
-                autoComplete={credentialStep === "name" ? "name" : credentialStep === "email" ? "email" : mode === "sign-up" ? "new-password" : "current-password"}
-                value={credentialStep === "name" ? fullName : credentialStep === "email" ? email : password}
-                onChange={(event) => credentialStep === "name" ? setFullName(event.target.value) : credentialStep === "email" ? setEmail(event.target.value) : setPassword(event.target.value)}
-                placeholder={credentialStep === "name" ? "Full name" : credentialStep === "email" ? "Email address" : "Password"}
-                minLength={credentialStep === "password" ? 8 : undefined}
-                required
-                autoFocus
-              />
+            <div className={`field credential-field${credentialStep === "password" ? " recovery-password-field" : ""}`}>
+              {credentialStep === "password" ? (
+                <>
+                  <input
+                    {...passwordField.inputProps}
+                    name="password"
+                    autoComplete={mode === "sign-up" ? "new-password" : "current-password"}
+                    placeholder="Password"
+                    minLength={8}
+                    required
+                    autoFocus
+                  />
+                  <button
+                    type="button"
+                    onClick={passwordField.toggleVisible}
+                    aria-label={passwordField.visible ? "Hide password" : "Show password"}
+                    aria-pressed={passwordField.visible}
+                  >
+                    {passwordField.visible ? <EyeOffIcon /> : <EyeIcon />}
+                  </button>
+                </>
+              ) : (
+                <input
+                  name={credentialStep === "name" ? "fullName" : "username"}
+                  type={credentialStep === "email" ? "email" : "text"}
+                  autoComplete={credentialStep === "name" ? "name" : "username"}
+                  value={credentialStep === "name" ? fullName : email}
+                  onChange={(event) => credentialStep === "name" ? setFullName(event.target.value) : setEmail(event.target.value)}
+                  placeholder={credentialStep === "name" ? "Full name" : "Email address"}
+                  required
+                  autoFocus
+                />
+              )}
             </div>
           </div>
           {mode === "sign-in" && credentialStep === "password" && (

@@ -1,8 +1,9 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, InputHTMLAttributes, Ref, useState } from "react";
 import type { AccountSummary } from "../../lib/space-data";
 import { friendlyAuthError } from "../../lib/auth-errors";
+import { usePasswordVisibility } from "../../lib/password-visibility";
 import { createClient } from "../../lib/supabase/client";
 import { EyeIcon, EyeOffIcon, PencilIcon } from "../icons/AccountIcons";
 
@@ -18,8 +19,8 @@ export default function AccountSettings({ account, onAccountChange }: {
   const [email, setEmail] = useState(account.email);
   const [password, setPassword] = useState("");
   const [passwordConfirmation, setPasswordConfirmation] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmation, setShowConfirmation] = useState(false);
+  const passwordField = usePasswordVisibility(password, setPassword);
+  const confirmationField = usePasswordVisibility(passwordConfirmation, setPasswordConfirmation);
   const [saving, setSaving] = useState(false);
   const [notice, setNotice] = useState<Notice>(null);
 
@@ -85,18 +86,24 @@ export default function AccountSettings({ account, onAccountChange }: {
 
   async function savePassword(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (password.length < 8) return setNotice({ kind: "error", text: "Use at least eight characters for your new password." });
-    if (password !== passwordConfirmation) return setNotice({ kind: "error", text: "The passwords do not match." });
+    const nextPassword = passwordField.readValue();
+    const nextConfirmation = confirmationField.readValue();
+    setPassword(nextPassword);
+    setPasswordConfirmation(nextConfirmation);
+    if (nextPassword.length < 8) return setNotice({ kind: "error", text: "Use at least eight characters for your new password." });
+    if (nextPassword !== nextConfirmation) return setNotice({ kind: "error", text: "The passwords do not match." });
 
     setSaving(true);
     setNotice(null);
     const supabase = createClient();
-    const { error } = await supabase.auth.updateUser({ password });
+    const { error } = await supabase.auth.updateUser({ password: nextPassword });
     setSaving(false);
     if (error) return setNotice({ kind: "error", text: friendlyAuthError(error, "We could not update your password. Please try again.") });
 
     setPassword("");
     setPasswordConfirmation("");
+    passwordField.resetVisible();
+    confirmationField.resetVisible();
     setEditor(null);
     setNotice({ kind: "success", text: "Your password has been updated." });
   }
@@ -127,8 +134,8 @@ export default function AccountSettings({ account, onAccountChange }: {
 
       <div className="account-section">
         {editor === "password" ? <form className="account-form" onSubmit={savePassword}>
-          <PasswordField id="account-password" label="New password" value={password} visible={showPassword} onChange={setPassword} onToggle={() => setShowPassword((value) => !value)} autoFocus />
-          <PasswordField id="account-password-confirm" label="Confirm password" value={passwordConfirmation} visible={showConfirmation} onChange={setPasswordConfirmation} onToggle={() => setShowConfirmation((value) => !value)} />
+          <PasswordField id="account-password" label="New password" visible={passwordField.visible} onToggle={passwordField.toggleVisible} inputProps={{ ...passwordField.inputProps, autoComplete: "new-password", minLength: 8, required: true, autoFocus: true }} />
+          <PasswordField id="account-password-confirm" label="Confirm password" visible={confirmationField.visible} onToggle={confirmationField.toggleVisible} inputProps={{ ...confirmationField.inputProps, autoComplete: "new-password", minLength: 8, required: true }} />
           <FormActions saving={saving} onCancel={() => setEditor(null)} />
         </form> : <AccountRow label="Password" value="••••••••" onEdit={() => openEditor("password")} />}
       </div>
@@ -142,10 +149,22 @@ function AccountRow({ label, value, onEdit }: { label: string; value: string; on
   return <button className="account-row" type="button" onClick={onEdit} aria-label={`Edit ${label.toLowerCase()}`}><span className="account-value"><span>{label}</span><strong>{value}</strong></span><span className="account-edit" aria-hidden="true"><PencilIcon /></span></button>;
 }
 
-function PasswordField({ id, label, value, visible, onChange, onToggle, autoFocus = false }: {
-  id: string; label: string; value: string; visible: boolean; onChange: (value: string) => void; onToggle: () => void; autoFocus?: boolean;
+function PasswordField({ id, label, visible, onToggle, inputProps }: {
+  id: string;
+  label: string;
+  visible: boolean;
+  onToggle: () => void;
+  inputProps: InputHTMLAttributes<HTMLInputElement> & { ref?: Ref<HTMLInputElement> };
 }) {
-  return <div className="password-field"><label htmlFor={id}>{label}</label><input id={id} type={visible ? "text" : "password"} value={value} onChange={(event) => onChange(event.target.value)} autoComplete="new-password" minLength={8} required autoFocus={autoFocus} /><button type="button" onClick={onToggle} aria-label={`${visible ? "Hide" : "Show"} ${label.toLowerCase()}`} aria-pressed={visible}>{visible ? <EyeOffIcon /> : <EyeIcon />}</button></div>;
+  return (
+    <div className="password-field">
+      <label htmlFor={id}>{label}</label>
+      <input id={id} {...inputProps} />
+      <button type="button" onClick={onToggle} aria-label={`${visible ? "Hide" : "Show"} ${label.toLowerCase()}`} aria-pressed={visible}>
+        {visible ? <EyeOffIcon /> : <EyeIcon />}
+      </button>
+    </div>
+  );
 }
 
 function FormActions({ saving, onCancel }: { saving: boolean; onCancel: () => void }) {

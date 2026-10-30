@@ -166,7 +166,7 @@ export async function inviteAdminAccount(
     propertyId: accountType === "property" ? propertyId : undefined,
     metadata: { account_type: accountType, email },
   });
-  revalidatePath("/admin/access");
+  revalidatePath("/admin/invite");
   return { success: `Invitation sent to ${email} for ${propertyName}.` };
 }
 
@@ -180,7 +180,7 @@ export async function revokeAdminAccount(formData: FormData) {
   const { error } = await admin.from("admin_memberships").update({ is_active: false }).eq("id", membershipId);
   if (error) throw new Error(`Unable to revoke the property account: ${error.message}`);
   await recordAdminAudit({ action: "admin.revoked", resourceType: "admin_membership", resourceId: membershipId, propertyId: membership.property_id || undefined, metadata: { user_id: membership.user_id } });
-  revalidatePath("/admin/access");
+  revalidatePath("/admin/invite");
 }
 
 export async function updateCardOrderStatus(formData: FormData) {

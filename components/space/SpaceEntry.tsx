@@ -100,7 +100,7 @@ export default function SpaceEntry({ account: initialAccount, stays, activeStayI
               </svg>
               {guest && <p className="calm-status">Guest access · {world.property}</p>}
               <h1 className="calm-name">{account.fullName}</h1>
-              <Link className="calm-world" href="/discover" aria-label="Open your hospitality world">
+              <Link className="calm-world" href="/discover?mode=dash" aria-label="Open your hospitality world">
                 <span className="calm-state"><span>State</span><span className="sep">·</span><em className="cu">{world.state}</em></span>
               </Link>
             </div>
@@ -118,7 +118,7 @@ export default function SpaceEntry({ account: initialAccount, stays, activeStayI
               {connectedStay && <GuestFeedbackCard stayId={connectedStay.id} propertyName={world.property} checkOut={connectedStay.checkOut} />}
             </div>
 
-            <button className="wide-world reveal in" type="button" aria-label={`Open ${world.property}`} onClick={() => window.location.assign("/discover")}>
+            <button className="wide-world reveal in" type="button" aria-label={`Open ${world.property}`} onClick={() => window.location.assign("/discover?mode=dash")}>
               <PropertyImage world={world} wide />
             </button>
 
@@ -186,7 +186,7 @@ function WorldSection({ world, guest }: { world: HospitalityWorld; guest: boolea
   const detail = worldDetails[world.n] || worldDetails[9];
   return (
     <article className="sec reveal in" id="sec-world">
-      <Link className="hw-card hw-in-box" href="/discover" aria-label={`Open ${world.property}`}>
+      <Link className="hw-card hw-in-box" href="/discover?mode=dash" aria-label={`Open ${world.property}`}>
         <span className="hw-eye">{guest ? "Your stay" : "Your chosen world"}</span>
         <span className="hw-name">{world.property}</span>
         <span className="hw-country">{world.country}</span>
@@ -244,8 +244,8 @@ function IntentionSection({ state, world }: { state: SpaceState; world: Hospital
         <span className="pimg-cap">{world.property} · {world.country}</span>
       </div>
       <div className={state.intention ? "ic-acts" : "sec-act"}>
-        <Link className={state.intention ? "mini" : "tlink"} href="/discover">{state.intention ? "Edit intention" : "Add your intention"}</Link>
-        {state.intention && <Link className="mini" href="/discover">{state.becoming ? "Edit I am becoming" : "Add I am becoming"}</Link>}
+        <Link className={state.intention ? "mini" : "tlink"} href="/discover?mode=dash">{state.intention ? "Edit intention" : "Add your intention"}</Link>
+        {state.intention && <Link className="mini" href="/discover?mode=dash">{state.becoming ? "Edit I am becoming" : "Add I am becoming"}</Link>}
       </div>
       {state.intention && !state.becoming && <p className="sec-q">Who do you need to become to welcome this into your life and sustain it?</p>}
     </article>
@@ -278,7 +278,7 @@ function CommunitySection({ world, guest, state, onOpen }: { world: HospitalityW
       <p className="c-eye">My Community</p>
       <p className="hw-mantra box-mantra">{world.mantra}</p>
       <p className="hw5-desc box-desc">{world.desc}</p>
-      <div className="sec-act"><Link className="tlink" href="/discover">{guest ? "Plan your next stay" : "Plan your stay"}</Link></div>
+      <div className="sec-act"><Link className="tlink" href="/discover?mode=dash">{guest ? "Plan your next stay" : "Plan your stay"}</Link></div>
       <div className="cmap"><CommunityGlobe /></div>
       <p className="c-eye small from-stay">Property Circle · {world.property}</p>
       {guest ? circleItems.map(([label, title, timing], index) => (

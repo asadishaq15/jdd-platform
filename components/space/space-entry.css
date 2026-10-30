@@ -405,7 +405,9 @@ body.night .jm-in { border-color: rgba(255,255,255,.08); background: rgba(30,30,
 .password-field { position: relative; margin-top: 16px; }
 .password-field:first-child { margin-top: 0; }
 .password-field input { padding-right: 48px; }
-.password-field button { position: absolute; right: 0; bottom: 0; display: grid; width: 44px; height: 44px; place-items: center; border: 0; background: transparent; color: var(--copper); cursor: pointer; }
+.password-field input::-ms-reveal,
+.password-field input::-ms-clear { display: none; }
+.password-field button { position: absolute; right: 0; bottom: 0; z-index: 2; display: grid; width: 44px; height: 44px; place-items: center; border: 0; background: transparent; color: var(--copper); cursor: pointer; }
 .account-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px; }
 .account-actions button { min-width: 82px; min-height: 40px; padding: 0 14px; border: 1px solid var(--line); background: transparent; color: var(--muted); cursor: pointer; font-size: 11px; letter-spacing: .12em; text-transform: uppercase; }
 .account-actions button.save { border-color: var(--copper); color: var(--fg); }

@@ -9,7 +9,8 @@
     "lint": "next lint",
     "activation:create": "node --env-file=.env.local scripts/create-activation-link.mjs",
     "admin:grant": "node --env-file=.env.local scripts/grant-admin.mjs",
-    "admin:inspect": "node --env-file=.env.local scripts/inspect-admin.mjs"
+    "admin:inspect": "node --env-file=.env.local scripts/inspect-admin.mjs",
+    "matrix:verify": "node scripts/verify-matrix-destiny.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.7",

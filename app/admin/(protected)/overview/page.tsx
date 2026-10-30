@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { requireAdmin } from "../../../../lib/admin-auth";
 import { getOverviewRange, loadOverviewAnalytics, type OverviewMetric } from "../../../../lib/admin-analytics";
+import { countPmsConnections } from "../../../../lib/pms-connections";
 
 type OverviewPageProps = { searchParams: Promise<{ property?: string; range?: string }> };
 
@@ -9,7 +10,9 @@ export default async function AdminOverviewPage({ searchParams }: OverviewPagePr
   const params = await searchParams;
   const range = getOverviewRange(params.range);
   const analytics = await loadOverviewAnalytics(context, range, params.property);
+  const pmsCounts = await countPmsConnections(context, params.property);
   const propertyName = params.property ? context.properties.find((property) => property.id === params.property)?.name : null;
+  const integrationsHref = withProperty("/admin/integrations", params.property);
 
   return (
     <section className="admin-overview">
@@ -21,6 +24,11 @@ export default async function AdminOverviewPage({ searchParams }: OverviewPagePr
           <button type="submit">Apply</button>
         </form>
       </div>
+
+      <Link className="admin-pms-overview-link" href={integrationsHref}>
+        <strong>PMS</strong>
+        <span>{pmsCounts.connected} connected · {pmsCounts.notConnected} not connected</span>
+      </Link>
 
       <div className="admin-metric-grid">
         <MetricCard label="Users" metric={analytics.users} description="Guest accounts within this administrative scope" />

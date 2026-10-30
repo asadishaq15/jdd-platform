@@ -56,6 +56,8 @@ property scope. Aggregation happens on the server or in database functions.
 - Events, invitations, and RSVPs
 - Card orders and fulfillment
 - Reminders
+- PMS Integrations admin UI and `pms_connections` storage (manual token connect;
+  Cloudbeds/Mews OAuth, webhooks, and live stay sync still pending)
 - PMS synchronization health
 - Scheduled reports, exports, and alerts
 

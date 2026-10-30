@@ -28,7 +28,7 @@ each property.
 
 Existing super administrators are redirected to `/admin/security` and must
 enroll an authenticator before any administrative page or mutation is allowed.
-After that, they can open `/admin/access` to invite internal staff or the single
+After that, they can open `/admin/invite` to invite internal staff or the single
 account assigned to each property.
 
 An invited account follows the email link, creates a password of at least 12
