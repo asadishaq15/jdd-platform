@@ -11,7 +11,7 @@ import DeleteAccountDialog from "./DeleteAccountDialog";
 import GuestFeedbackCard from "./GuestFeedbackCard";
 import { getWorld, HospitalityWorld, worldDetails } from "../../lib/worlds";
 import { loadSpaceState, saveSpaceState, SpaceState } from "../../lib/space-state";
-import type { AccountSummary, CardOrder, ConnectedStay } from "../../lib/space-data";
+import type { AccountSummary, CardOrder, CommunityCircleEvent, ConnectedStay } from "../../lib/space-data";
 import { createClient } from "../../lib/supabase/client";
 import { trackProductEvent } from "../../lib/product-events";
 
@@ -19,15 +19,37 @@ type ProfileMenu = "account" | "orders" | "stays" | "events" | "reminders" | "le
 type Flow = "order" | "ritual" | "oil" | "action" | "circle" | "delete" | null;
 type CardStatus = NonNullable<SpaceState["cardStatus"]>;
 
+const CATEGORY_LABELS: Record<CommunityCircleEvent["category"], string> = {
+  event: "Event",
+  invite: "Guest invitation",
+  news: "News",
+};
+
+const CATEGORY_ACTIONS: Record<CommunityCircleEvent["category"], string> = {
+  event: "Reserve my place",
+  invite: "Accept invitation",
+  news: "Save",
+};
+
 type SpaceEntryProps = {
   account: AccountSummary;
   stays: ConnectedStay[];
   activeStayId?: string;
   initialOrders?: CardOrder[];
+  circleEvents?: CommunityCircleEvent[];
+  initialRsvps?: Record<string, boolean>;
   initialState?: Pick<SpaceState, "recommended" | "chosen">;
 };
 
-export default function SpaceEntry({ account: initialAccount, stays, activeStayId, initialOrders = [], initialState = {} }: SpaceEntryProps) {
+export default function SpaceEntry({
+  account: initialAccount,
+  stays,
+  activeStayId,
+  initialOrders = [],
+  circleEvents = [],
+  initialRsvps = {},
+  initialState = {},
+}: SpaceEntryProps) {
   const [account, setAccount] = useState(initialAccount);
   const [state, setState] = useState<SpaceState>({});
   const [menuOpen, setMenuOpen] = useState(false);
@@ -43,6 +65,7 @@ export default function SpaceEntry({ account: initialAccount, stays, activeStayI
       ...loaded,
       ...(initialState.recommended ? { recommended: initialState.recommended } : {}),
       ...(initialState.chosen ? { chosen: initialState.chosen } : {}),
+      rsvps: { ...(loaded.rsvps || {}), ...initialRsvps },
     };
     const latestOrder = initialOrders[0];
     const persistedOrder = latestOrder ? {
@@ -52,7 +75,7 @@ export default function SpaceEntry({ account: initialAccount, stays, activeStayI
     const next = connectedStay ? { ...synced, ...persistedOrder, visited: connectedStay.property.worldNumber } : { ...synced, ...persistedOrder };
     setState(next);
     saveSpaceState(next);
-  }, [connectedStay, initialOrders, initialState.chosen, initialState.recommended]);
+  }, [connectedStay, initialOrders, initialRsvps, initialState.chosen, initialState.recommended]);
 
   const activeNumber = connectedStay?.property.worldNumber || state.visited || state.chosen || state.recommended || 9;
   const baseWorld = getWorld(activeNumber);
@@ -114,7 +137,17 @@ export default function SpaceEntry({ account: initialAccount, stays, activeStayI
                 onRitual={() => { void trackProductEvent({ name: "ritual_opened", stayId: connectedStay?.id, worldNumber: world.n }); setFlow("ritual"); }}
                 onOil={() => setFlow("oil")}
               />
-              <CommunitySection world={world} guest={guest} state={state} onOpen={() => { void trackProductEvent({ name: "property_circle_opened", stayId: connectedStay?.id, worldNumber: world.n }); setFlow("circle"); }} />
+              <CommunitySection
+                world={world}
+                guest={guest}
+                state={state}
+                circleEvents={circleEvents}
+                onOpen={(eventId) => {
+                  void trackProductEvent({ name: "property_circle_opened", stayId: connectedStay?.id, worldNumber: world.n });
+                  setCircleDetail(eventId || null);
+                  setFlow("circle");
+                }}
+              />
               {connectedStay && <GuestFeedbackCard stayId={connectedStay.id} propertyName={world.property} checkOut={connectedStay.checkOut} />}
             </div>
 
@@ -140,8 +173,21 @@ export default function SpaceEntry({ account: initialAccount, stays, activeStayI
         </section>
       </div>
 
-      <ProfileModal modal={modal} account={account} stays={stays} state={state} world={world} onAccountChange={setAccount} onClose={() => setModal(null)} onDelete={() => { setModal(null); setFlow("delete"); }} />
-      <FlowModal flow={flow} world={world} guestName={guestName} activeStayId={connectedStay?.id} state={state} orderStep={orderStep} circleDetail={circleDetail} onCircleDetail={setCircleDetail} onStep={setOrderStep} onClose={() => { setFlow(null); setCircleDetail(null); }} onSave={updateState} />
+      <ProfileModal modal={modal} account={account} stays={stays} state={state} world={world} circleEvents={circleEvents} onAccountChange={setAccount} onClose={() => setModal(null)} onDelete={() => { setModal(null); setFlow("delete"); }} />
+      <FlowModal
+        flow={flow}
+        world={world}
+        guestName={guestName}
+        activeStayId={connectedStay?.id}
+        state={state}
+        orderStep={orderStep}
+        circleEvents={circleEvents}
+        circleDetail={circleDetail}
+        onCircleDetail={setCircleDetail}
+        onStep={setOrderStep}
+        onClose={() => { setFlow(null); setCircleDetail(null); }}
+        onSave={updateState}
+      />
     </main>
   );
 }
@@ -267,12 +313,23 @@ function RitualSection({ active, onRitual, onOil }: { active: boolean; onRitual:
   );
 }
 
-function CommunitySection({ world, guest, state, onOpen }: { world: HospitalityWorld; guest: boolean; state: SpaceState; onOpen: () => void }) {
-  const circleItems = [
-    ["Event", "Stillness Evening", "Friday · 19:00"],
-    ["Guest invitation", "Tea House Invitation", "Saturday · 16:00"],
-    ["News", "Seasonal fragrance note", "Now open"],
-  ];
+function CommunitySection({
+  world,
+  guest,
+  state,
+  circleEvents,
+  onOpen,
+}: {
+  world: HospitalityWorld;
+  guest: boolean;
+  state: SpaceState;
+  circleEvents: CommunityCircleEvent[];
+  onOpen: (eventId?: string) => void;
+}) {
+  const ordered = (["event", "invite", "news"] as const)
+    .map((category) => circleEvents.find((event) => event.category === category))
+    .filter((event): event is CommunityCircleEvent => Boolean(event));
+
   return (
     <article className="sec reveal in" id="sec-community">
       <p className="c-eye">My Community</p>
@@ -281,13 +338,28 @@ function CommunitySection({ world, guest, state, onOpen }: { world: HospitalityW
       <div className="sec-act"><Link className="tlink" href="/discover?mode=dash">{guest ? "Plan your next stay" : "Plan your stay"}</Link></div>
       <div className="cmap"><CommunityGlobe /></div>
       <p className="c-eye small from-stay">Property Circle · {world.property}</p>
-      {guest ? circleItems.map(([label, title, timing], index) => (
-        <button className="w-row" type="button" key={label} onClick={onOpen}>
-          <span className="w-k">{label}{state.rsvps?.[["event", "invite", "news"][index]] ? " · Saved" : ""}</span>
-          <span className="w-t">{title}</span>
-          <span className="w-l">{timing}</span>
-        </button>
-      )) : <><p className="pc-lead">Reserved for guests of the house.</p><p className="sec-text pc-text">Private evenings, guest invitations and news from {world.property} open after your stay.</p></>}
+      {guest ? (
+        ordered.length ? ordered.map((event) => (
+          <button className="w-row" type="button" key={event.id} onClick={() => onOpen(event.id)}>
+            <span className="w-k">
+              {CATEGORY_LABELS[event.category]}
+              {(state.rsvps?.[event.id] || state.rsvps?.[event.category]) ? " · Saved" : ""}
+            </span>
+            <span className="w-t">{event.title}</span>
+            <span className="w-l">{event.timing}</span>
+          </button>
+        )) : (
+          <>
+            <p className="pc-lead">Nothing published yet.</p>
+            <p className="sec-text pc-text">When {world.property} shares an evening, invitation, or note, it will appear here.</p>
+          </>
+        )
+      ) : (
+        <>
+          <p className="pc-lead">Reserved for guests of the house.</p>
+          <p className="sec-text pc-text">Private evenings, guest invitations and news from {world.property} open after your stay.</p>
+        </>
+      )}
     </article>
   );
 }
@@ -313,9 +385,30 @@ function CommunityGlobe() {
   );
 }
 
-function ProfileModal({ modal, account, stays, state, world, onAccountChange, onClose, onDelete }: { modal: ProfileMenu; account: AccountSummary; stays: ConnectedStay[]; state: SpaceState; world: HospitalityWorld; onAccountChange: (account: AccountSummary) => void; onClose: () => void; onDelete: () => void }) {
+function ProfileModal({
+  modal,
+  account,
+  stays,
+  state,
+  world,
+  circleEvents,
+  onAccountChange,
+  onClose,
+  onDelete,
+}: {
+  modal: ProfileMenu;
+  account: AccountSummary;
+  stays: ConnectedStay[];
+  state: SpaceState;
+  world: HospitalityWorld;
+  circleEvents: CommunityCircleEvent[];
+  onAccountChange: (account: AccountSummary) => void;
+  onClose: () => void;
+  onDelete: () => void;
+}) {
   if (!modal) return null;
   const title = { account: "My account", orders: "My orders", stays: "My stays", events: "My events", reminders: "Reminders", legal: "Terms & Privacy", delete: "Delete account" }[modal];
+  const savedEvents = circleEvents.filter((event) => state.rsvps?.[event.id] || state.rsvps?.[event.category]);
   return (
     <div className="jmodal open" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}>
       <section className="jm-in glass" role="dialog" aria-modal="true" aria-label={title}>
@@ -324,7 +417,17 @@ function ProfileModal({ modal, account, stays, state, world, onAccountChange, on
           {modal === "account" && <AccountSettings account={account} onAccountChange={onAccountChange} />}
           {modal === "orders" && <p>{state.order ? `${state.order.property} · ${state.order.state}` : "No orders yet."}<br />Scented card status: {statusLabel(state.cardStatus || "none")}.</p>}
           {modal === "stays" && (stays.length ? stays.map((stay) => <p key={stay.id}><strong>{stay.property.name}</strong><br />{stay.checkIn || "Date pending"}{stay.checkOut ? ` — ${stay.checkOut}` : ""}</p>) : <p>{state.code ? `${world.property} is connected.` : "No activated stays yet."}</p>)}
-          {modal === "events" && <p>{Object.values(state.rsvps || {}).some(Boolean) ? "You have accepted or reserved Property Circle items." : "No events yet."}</p>}
+          {modal === "events" && (
+            savedEvents.length
+              ? savedEvents.map((event) => (
+                <p key={event.id}>
+                  <strong>{event.title}</strong>
+                  <br />
+                  {CATEGORY_LABELS[event.category]} · {event.timing}
+                </p>
+              ))
+              : <p>No saved Property Circle items yet.</p>
+          )}
           {modal === "reminders" && <p>{state.reminder?.action ? `${state.reminder.action} · ${state.reminder.frequency}` : "No reminder set."}</p>}
           {modal === "legal" && <p>Jardin du Désert uses the information needed to provide your account, activated stays, and private Space experience.</p>}
           {modal === "delete" && <><p>Delete your account and private Space data?</p><button className="tlink danger" type="button" onClick={onDelete}>Continue</button></>}
@@ -335,13 +438,41 @@ function ProfileModal({ modal, account, stays, state, world, onAccountChange, on
   );
 }
 
-function FlowModal({ flow, world, guestName, activeStayId, state, orderStep, circleDetail, onCircleDetail, onStep, onClose, onSave }: { flow: Flow; world: HospitalityWorld; guestName: string; activeStayId?: string; state: SpaceState; orderStep: number; circleDetail: string | null; onCircleDetail: (value: string | null) => void; onStep: (step: number) => void; onClose: () => void; onSave: (next: SpaceState) => void }) {
+function FlowModal({
+  flow,
+  world,
+  guestName,
+  activeStayId,
+  state,
+  orderStep,
+  circleEvents,
+  circleDetail,
+  onCircleDetail,
+  onStep,
+  onClose,
+  onSave,
+}: {
+  flow: Flow;
+  world: HospitalityWorld;
+  guestName: string;
+  activeStayId?: string;
+  state: SpaceState;
+  orderStep: number;
+  circleEvents: CommunityCircleEvent[];
+  circleDetail: string | null;
+  onCircleDetail: (value: string | null) => void;
+  onStep: (step: number) => void;
+  onClose: () => void;
+  onSave: (next: SpaceState) => void;
+}) {
   const [action, setAction] = useState(state.reminder?.action || "");
   const [frequency, setFrequency] = useState<"off" | "once" | "daily">(state.reminder?.frequency || "off");
   const [recipientName, setRecipientName] = useState(guestName);
   const [shippingAddress, setShippingAddress] = useState("");
   const [orderError, setOrderError] = useState("");
   const [ordering, setOrdering] = useState(false);
+  const [rsvpError, setRsvpError] = useState("");
+  const [rsvping, setRsvping] = useState(false);
   if (!flow) return null;
 
   async function completeOrder() {
@@ -357,17 +488,44 @@ function FlowModal({ flow, world, guestName, activeStayId, state, orderStep, cir
     onClose();
   }
 
-  function rsvp(key: string) {
-    onSave({ ...state, rsvps: { ...(state.rsvps || {}), [key]: true } });
+  async function rsvp(event: CommunityCircleEvent) {
+    if (!activeStayId) {
+      setRsvpError("Activate a stay before responding.");
+      return;
+    }
+    if (state.rsvps?.[event.id] || state.rsvps?.[event.category]) {
+      onCircleDetail(null);
+      return;
+    }
+    setRsvping(true);
+    setRsvpError("");
+    const response = await fetch("/api/community/rsvp", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ eventId: event.id, stayId: activeStayId }),
+    });
+    const result = await response.json().catch(() => ({}));
+    setRsvping(false);
+    if (!response.ok) {
+      setRsvpError(result.error || "Unable to save your response.");
+      return;
+    }
+    onSave({
+      ...state,
+      rsvps: {
+        ...(state.rsvps || {}),
+        [event.id]: true,
+        [event.category]: true,
+      },
+    });
     onCircleDetail(null);
   }
 
-  const circleItems = [
-    { key: "event", label: "Event", title: "Stillness Evening", when: "Friday · 19:00", body: `An evening for guests connected by ${world.state}.`, action: "Reserve my place" },
-    { key: "invite", label: "Guest invitation", title: "Tea House Invitation", when: "Saturday · 16:00", body: `A quiet invitation for guests of ${world.property}.`, action: "Accept invitation" },
-    { key: "news", label: "News", title: "Seasonal fragrance note", when: "Now open", body: `${world.property} introduces its latest sensory ritual.`, action: "Save" },
-  ];
-  const detail = circleItems.find((item) => item.key === circleDetail);
+  const orderedEvents = (["event", "invite", "news"] as const)
+    .map((category) => circleEvents.find((event) => event.category === category))
+    .filter((event): event is CommunityCircleEvent => Boolean(event));
+  const detail = orderedEvents.find((event) => event.id === circleDetail) || null;
+  const detailSaved = detail ? Boolean(state.rsvps?.[detail.id] || state.rsvps?.[detail.category]) : false;
 
   return (
     <div className="jmodal open" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}>
@@ -382,7 +540,39 @@ function FlowModal({ flow, world, guestName, activeStayId, state, orderStep, cir
         {flow === "ritual" && <RitualContent state={state} onAction={() => onSave({ ...state, reminder: { action: state.reminder?.action || "One quiet action today", frequency: state.reminder?.frequency || "once" } })} />}
         {flow === "oil" && <><p className="g-label">Perfume oil ritual</p><h2 className="jm-title">Your State, on skin.</h2><ol className="rit-preview"><li><span>01</span>Remember. Recall your intention.</li><li><span>02</span>Apply. Place the oil on pulse points.</li><li><span>03</span>Return. Let the scent bring you back to your State.</li></ol><p className="sec-text">Wear alone, layer beneath your favourite perfume, or combine oils collected from different hospitality worlds.</p></>}
         {flow === "action" && <><p className="g-label">Reminder</p><h2 className="jm-title">Choose one action.</h2><div className="field"><input value={action} onChange={(event) => setAction(event.target.value)} placeholder="One action that supports your intention" /></div><div className="seg"><button className={frequency === "off" ? "sel" : ""} onClick={() => setFrequency("off")}>Off</button><button className={frequency === "once" ? "sel" : ""} onClick={() => setFrequency("once")}>Once</button><button className={frequency === "daily" ? "sel" : ""} onClick={() => setFrequency("daily")}>Daily</button></div><button className="btn primary" onClick={() => { onSave({ ...state, reminder: { action: action || "One quiet action today", frequency } }); onClose(); }}>Save</button></>}
-        {flow === "circle" && <><p className="g-label">Property Circle · {world.property}</p>{detail ? <><h2 className="jm-title">{detail.title}</h2><p className="country">{detail.when}</p><p className="jm-text">{detail.body}</p><button className="btn primary" onClick={() => rsvp(detail.key)}>{state.rsvps?.[detail.key] ? "Saved" : detail.action}</button><p className="links"><button className="tlink" onClick={() => onCircleDetail(null)}>Back</button></p></> : <div className="circle-list">{circleItems.map((item) => <button key={item.key} className="circle-item" onClick={() => onCircleDetail(item.key)}><span>{item.label}</span><strong>{item.title}</strong><em>{state.rsvps?.[item.key] ? "Saved" : item.when}</em></button>)}</div>}</>}
+        {flow === "circle" && (
+          <>
+            <p className="g-label">Property Circle · {world.property}</p>
+            {detail ? (
+              <>
+                <h2 className="jm-title">{detail.title}</h2>
+                <p className="country">{detail.timing}</p>
+                {detail.thumbnailUrl && (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img className="circle-thumb" src={detail.thumbnailUrl} alt="" />
+                )}
+                <p className="jm-text">{detail.body}</p>
+                <button className="btn primary" type="button" disabled={rsvping || detailSaved} onClick={() => void rsvp(detail)}>
+                  {detailSaved ? "Saved" : rsvping ? "Saving…" : CATEGORY_ACTIONS[detail.category]}
+                </button>
+                {rsvpError && <p className="feedback-error" role="alert">{rsvpError}</p>}
+                <p className="links"><button className="tlink" type="button" onClick={() => { setRsvpError(""); onCircleDetail(null); }}>Back</button></p>
+              </>
+            ) : orderedEvents.length ? (
+              <div className="circle-list">
+                {orderedEvents.map((event) => (
+                  <button key={event.id} className="circle-item" type="button" onClick={() => onCircleDetail(event.id)}>
+                    <span>{CATEGORY_LABELS[event.category]}</span>
+                    <strong>{event.title}</strong>
+                    <em>{(state.rsvps?.[event.id] || state.rsvps?.[event.category]) ? "Saved" : event.timing}</em>
+                  </button>
+                ))}
+              </div>
+            ) : (
+              <p className="jm-text">Nothing is published in this Property Circle yet.</p>
+            )}
+          </>
+        )}
         {flow === "delete" && <DeleteAccountDialog />}
         <p className="links small"><button className="tlink" type="button" onClick={onClose}>Close</button></p>
       </section>

@@ -4,6 +4,7 @@ import { FormEvent, useEffect, useRef, useState } from "react";
 import { EyeIcon, EyeOffIcon } from "../icons/AccountIcons";
 import { usePasswordVisibility } from "../../lib/password-visibility";
 import { createClient } from "../../lib/supabase/client";
+import AuthenticatorHelpNote from "./AuthenticatorHelpNote";
 
 type Mode = "password" | "checking" | "enroll" | "challenge" | "ready";
 
@@ -147,7 +148,7 @@ export default function AdminMfaSetup({ requirePassword = false }: { requirePass
       <section className="admin-security-card">
         <p className="admin-kicker">Accept your invitation</p>
         <h1>{passwordStep === "new" ? "Create your password." : "Confirm your password."}</h1>
-        <p>This account cannot self-register. It was invited and assigned by Jardin du Désert.</p>
+        <p>This account cannot self-register. It was invited and assigned by Jardin du Désert. Next, you’ll set up a free authenticator app on your phone for the 6-digit security code.</p>
         <form onSubmit={savePassword}>
           <div className={`credential-question ${passwordTransitioning ? "leaving" : ""}`} key={passwordStep}>
             <label>
@@ -199,8 +200,40 @@ export default function AdminMfaSetup({ requirePassword = false }: { requirePass
     <section className="admin-security-card">
       <p className="admin-kicker">Required security step</p>
       <h1>{mode === "enroll" ? "Set up your authenticator." : "Enter your authenticator code."}</h1>
-      {mode === "enroll" ? <><p>Scan this QR code with Google Authenticator, 1Password, Authy, or another TOTP application.</p>{qrCode && <img className="admin-security-qr" src={qrCode} alt="Authenticator setup QR code" />}<details><summary>Enter the setup key manually</summary><code>{secret}</code></details></> : <p>Open your authenticator application and enter its current six-digit code.</p>}
-      <form onSubmit={verifyCode}><label>Authenticator code<input inputMode="numeric" autoComplete="one-time-code" pattern="[0-9]{6}" maxLength={6} value={code} onChange={(event) => setCode(event.target.value.replace(/\D/g, ""))} placeholder="000000" required autoFocus={mode === "challenge"} /></label><button className="admin-security-primary" type="submit">Verify and continue</button></form>
+      {mode === "enroll" ? (
+        <>
+          <p>This keeps your admin account safe with a code from an app on your phone.</p>
+          <AuthenticatorHelpNote variant="enroll" className="authenticator-help admin-security-help" />
+          {qrCode && <img className="admin-security-qr" src={qrCode} alt="Authenticator setup QR code" />}
+          <details>
+            <summary>Can’t scan? Enter the setup key manually</summary>
+            <p>In your authenticator app, choose Add account → Enter a setup key, then paste this key:</p>
+            <code>{secret}</code>
+          </details>
+        </>
+      ) : (
+        <>
+          <p>Open the authenticator app on your phone and enter the current 6-digit code.</p>
+          <AuthenticatorHelpNote variant="verify" className="authenticator-help admin-security-help" />
+        </>
+      )}
+      <form onSubmit={verifyCode}>
+        <label>
+          6-digit code from your phone
+          <input
+            inputMode="numeric"
+            autoComplete="one-time-code"
+            pattern="[0-9]{6}"
+            maxLength={6}
+            value={code}
+            onChange={(event) => setCode(event.target.value.replace(/\D/g, ""))}
+            placeholder="000000"
+            required
+            autoFocus={mode === "challenge"}
+          />
+        </label>
+        <button className="admin-security-primary" type="submit">Verify and continue</button>
+      </form>
       {error && <p className="admin-security-error">{error}</p>}
       <button className="admin-security-link" type="button" onClick={signOut}>Sign out</button>
     </section>

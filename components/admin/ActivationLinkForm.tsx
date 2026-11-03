@@ -20,7 +20,14 @@ export default function ActivationLinkForm({ stayId }: { stayId: string }) {
   if (state.activationUrl) {
     return (
       <div className="admin-generated-link" role="status">
-        <p>Activation link created. It is shown only in this response.</p>
+        {state.emailSent ? (
+          <p>Invitation emailed to <strong>{state.guestEmail}</strong>. The link is also shown once below.</p>
+        ) : (
+          <p>
+            Activation link created.
+            {state.emailWarning ? ` ${state.emailWarning}` : " It is shown only in this response."}
+          </p>
+        )}
         <code>{state.activationUrl}</code>
         <button type="button" onClick={copyLink}>{copied ? "Copied" : "Copy link"}</button>
       </div>
@@ -39,7 +46,7 @@ export default function ActivationLinkForm({ stayId }: { stayId: string }) {
           <option value="30">30 days</option>
         </select>
       </label>
-      <button type="submit" disabled={pending}>{pending ? "Generating…" : "Generate link"}</button>
+      <button type="submit" disabled={pending}>{pending ? "Sending…" : "Generate link"}</button>
       {state.error && <p className="admin-action-error" role="alert">{state.error}</p>}
     </form>
   );

@@ -38,6 +38,12 @@ export default function AuthFlow() {
     const message = search.get("error");
     if (message) setError(message);
     if (search.get("reset") === "success") setNotice("Your password has been updated. Sign in with your new password.");
+    if (search.get("mode") === "sign-up") {
+      setMode("sign-up");
+      setCredentialStep("name");
+    }
+    const emailParam = search.get("email");
+    if (emailParam) setEmail(emailParam.trim());
   }, []);
 
   function requireTerms() {

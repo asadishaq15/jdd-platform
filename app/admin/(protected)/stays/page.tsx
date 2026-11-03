@@ -1,5 +1,6 @@
 import Link from "next/link";
 import ActivationLinkForm from "../../../../components/admin/ActivationLinkForm";
+import AddGuestStayForm from "../../../../components/admin/AddGuestStayForm";
 import { canOperateProperty, requireAdmin } from "../../../../lib/admin-auth";
 import { createAdminClient } from "../../../../lib/supabase/admin";
 
@@ -25,15 +26,17 @@ export default async function AdminStaysPage({ searchParams }: StaysPageProps) {
   const selectedProperty = params.property && context.properties.some((property) => property.id === params.property)
     ? params.property
     : null;
-  const scopedPropertyIds = selectedProperty
-    ? [selectedProperty]
-    : context.properties.map((property) => property.id);
+  const scopedProperties = selectedProperty
+    ? context.properties.filter((property) => property.id === selectedProperty)
+    : context.properties;
+  const scopedPropertyIds = scopedProperties.map((property) => property.id);
+  const operableProperties = scopedProperties.filter((property) => canOperateProperty(context, property.id));
 
   const admin = createAdminClient();
   let query = admin
     .from("stays")
     .select("id, property_id, guest_name, guest_email, external_reference, check_in, check_out, activated_at, property:properties(name, country)")
-    .in("property_id", scopedPropertyIds)
+    .in("property_id", scopedPropertyIds.length ? scopedPropertyIds : ["00000000-0000-0000-0000-000000000000"])
     .order("check_out", { ascending: false, nullsFirst: false })
     .limit(250);
 
@@ -54,9 +57,22 @@ export default async function AdminStaysPage({ searchParams }: StaysPageProps) {
   return (
     <section>
       <div className="admin-page-heading">
-        <div><p className="admin-kicker">Operations</p><h1>Stays</h1><p>Search PMS stays, inspect connection status, and create secure guest invitations.</p></div>
+        <div>
+          <p className="admin-kicker">Operations</p>
+          <h1>Stays</h1>
+          <p>
+            Search stays, add a guest manually until PMS sync is live, and create secure activation links.
+          </p>
+        </div>
         <span className="admin-access-badge">{stays.length} shown</span>
       </div>
+
+      {operableProperties.length > 0 && (
+        <AddGuestStayForm
+          properties={operableProperties}
+          defaultPropertyId={selectedProperty}
+        />
+      )}
 
       <form className="admin-filterbar" method="get">
         {params.property && <input type="hidden" name="property" value={params.property} />}
@@ -72,19 +88,51 @@ export default async function AdminStaysPage({ searchParams }: StaysPageProps) {
 
       <div className="admin-table-wrap">
         <table className="admin-table">
-          <thead><tr><th>Guest</th><th>Property</th><th>Stay</th><th>PMS reference</th><th>Status</th><th>Invitation</th></tr></thead>
+          <thead>
+            <tr>
+              <th>Guest</th>
+              <th>Property</th>
+              <th>Stay</th>
+              <th>PMS reference</th>
+              <th>Status</th>
+              <th>Invitation</th>
+            </tr>
+          </thead>
           <tbody>
             {stays.map((stay) => (
               <tr key={stay.id}>
-                <td><strong>{stay.guest_name || "Guest name pending"}</strong><small>{stay.guest_email || "No email"}</small></td>
-                <td>{stay.property?.name || "Unknown property"}<small>{stay.property?.country}</small></td>
-                <td>{formatDate(stay.check_in)}<small>to {formatDate(stay.check_out)}</small></td>
+                <td>
+                  <strong>{stay.guest_name || "Guest name pending"}</strong>
+                  <small>{stay.guest_email || "No email"}</small>
+                </td>
+                <td>
+                  {stay.property?.name || "Unknown property"}
+                  <small>{stay.property?.country}</small>
+                </td>
+                <td>
+                  {formatDate(stay.check_in)}
+                  <small>to {formatDate(stay.check_out)}</small>
+                </td>
                 <td>{stay.external_reference || "—"}</td>
-                <td><span className={`admin-status ${stay.activated_at ? "success" : "neutral"}`}>{stay.activated_at ? "Activated" : "Not activated"}</span></td>
-                <td>{canOperateProperty(context, stay.property_id) && !stay.activated_at ? <ActivationLinkForm stayId={stay.id} /> : <span className="admin-muted">{stay.activated_at ? "Connected" : "Read only"}</span>}</td>
+                <td>
+                  <span className={`admin-status ${stay.activated_at ? "success" : "neutral"}`}>
+                    {stay.activated_at ? "Activated" : "Not activated"}
+                  </span>
+                </td>
+                <td>
+                  {canOperateProperty(context, stay.property_id) && !stay.activated_at ? (
+                    <ActivationLinkForm stayId={stay.id} />
+                  ) : (
+                    <span className="admin-muted">{stay.activated_at ? "Connected" : "Read only"}</span>
+                  )}
+                </td>
               </tr>
             ))}
-            {!stays.length && <tr><td colSpan={6} className="admin-empty">No stays match these filters.</td></tr>}
+            {!stays.length && (
+              <tr>
+                <td colSpan={6} className="admin-empty">No stays match these filters.</td>
+              </tr>
+            )}
           </tbody>
         </table>
       </div>
@@ -94,5 +142,10 @@ export default async function AdminStaysPage({ searchParams }: StaysPageProps) {
 
 function formatDate(value: string | null) {
   if (!value) return "Date pending";
-  return new Intl.DateTimeFormat("en", { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" }).format(new Date(`${value}T00:00:00Z`));
+  return new Intl.DateTimeFormat("en", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    timeZone: "UTC",
+  }).format(new Date(`${value}T00:00:00Z`));
 }

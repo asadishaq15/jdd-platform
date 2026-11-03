@@ -8,6 +8,10 @@ import {
   type AdminContext,
   type AdminProperty,
 } from "./admin-auth";
+import {
+  deleteCommunityThumbnailByUrl,
+  uploadCommunityThumbnail,
+} from "./community-thumbnail-upload";
 import { createAdminClient } from "./supabase/admin";
 
 export type CommunityEventCategory = "event" | "invite" | "news";
@@ -22,6 +26,7 @@ export type CommunityEventView = {
   thumbnailUrl: string | null;
   isPublished: boolean;
   updatedAt: string;
+  rsvpCount: number;
 };
 
 export type CommunityPropertyBoard = {
@@ -54,7 +59,7 @@ function isCategory(value: string): value is CommunityEventCategory {
   return (CATEGORIES as readonly string[]).includes(value);
 }
 
-function mapEvent(row: CommunityEventRow): CommunityEventView {
+function mapEvent(row: CommunityEventRow, rsvpCount = 0): CommunityEventView {
   return {
     id: row.id,
     propertyId: row.property_id,
@@ -65,21 +70,18 @@ function mapEvent(row: CommunityEventRow): CommunityEventView {
     thumbnailUrl: row.thumbnail_url,
     isPublished: row.is_published,
     updatedAt: row.updated_at,
+    rsvpCount,
   };
-}
-
-function normalizeThumbnailUrl(value: string): { url: string | null; error?: string } {
-  const trimmed = value.trim();
-  if (!trimmed) return { url: null };
-  if (trimmed.length > 2000) return { url: null, error: "Thumbnail URL is too long." };
-  if (!/^https?:\/\//i.test(trimmed)) {
-    return { url: null, error: "Thumbnail must be an http or https URL." };
-  }
-  return { url: trimmed };
 }
 
 function canManageCommunity(context: AdminContext, propertyId: string) {
   return canOperateProperty(context, propertyId);
+}
+
+function readThumbnailFile(formData: FormData) {
+  const value = formData.get("thumbnail");
+  if (!(value instanceof File) || value.size <= 0) return null;
+  return value;
 }
 
 export async function loadCommunityBoards(
@@ -106,10 +108,26 @@ export async function loadCommunityBoards(
 
   if (error) throw new Error(`Unable to load community events: ${error.message}`);
 
+  const rows = (data || []) as CommunityEventRow[];
+  const eventIds = rows.map((row) => row.id);
+  const rsvpCounts = new Map<string, number>();
+
+  if (eventIds.length) {
+    const { data: rsvpRows, error: rsvpError } = await admin
+      .from("community_event_rsvps")
+      .select("event_id")
+      .in("event_id", eventIds);
+    if (rsvpError) throw new Error(`Unable to load community RSVPs: ${rsvpError.message}`);
+    for (const row of rsvpRows || []) {
+      const eventId = String((row as { event_id: string }).event_id);
+      rsvpCounts.set(eventId, (rsvpCounts.get(eventId) || 0) + 1);
+    }
+  }
+
   const byProperty = new Map<string, Partial<Record<CommunityEventCategory, CommunityEventView>>>();
-  for (const row of (data || []) as CommunityEventRow[]) {
+  for (const row of rows) {
     const bucket = byProperty.get(row.property_id) || {};
-    bucket[row.category] = mapEvent(row);
+    bucket[row.category] = mapEvent(row, rsvpCounts.get(row.id) || 0);
     byProperty.set(row.property_id, bucket);
   }
 
@@ -130,7 +148,9 @@ export async function upsertCommunityEvent(
   const title = String(formData.get("title") || "").trim();
   const timing = String(formData.get("timing") || "").trim();
   const body = String(formData.get("body") || "").trim();
-  const thumbnail = normalizeThumbnailUrl(String(formData.get("thumbnailUrl") || ""));
+  const removeThumbnail = String(formData.get("removeThumbnail") || "") === "true"
+    || String(formData.get("removeThumbnail") || "") === "on";
+  const thumbnailFile = readThumbnailFile(formData);
   const isPublished = String(formData.get("isPublished") || "") === "on"
     || String(formData.get("isPublished") || "") === "true";
 
@@ -142,17 +162,33 @@ export async function upsertCommunityEvent(
   if (title.length < 2 || title.length > 160) return { error: "Title must be between 2 and 160 characters." };
   if (timing.length < 1 || timing.length > 120) return { error: "Enter timing or schedule text." };
   if (body.length < 1 || body.length > 2000) return { error: "Body must be between 1 and 2000 characters." };
-  if (thumbnail.error) return { error: thumbnail.error };
 
   const admin = createAdminClient();
   const { data: existing, error: loadError } = await admin
     .from("community_events")
-    .select("id")
+    .select("id, thumbnail_url")
     .eq("property_id", propertyId)
     .eq("category", categoryRaw)
     .maybeSingle();
 
   if (loadError) return { error: loadError.message };
+
+  let thumbnailUrl = (existing?.thumbnail_url as string | null | undefined) ?? null;
+  if (thumbnailFile) {
+    const uploaded = await uploadCommunityThumbnail({
+      propertyId,
+      category: categoryRaw,
+      file: thumbnailFile,
+    });
+    if (uploaded.error || !uploaded.url) {
+      return { error: uploaded.error || "Unable to upload thumbnail." };
+    }
+    if (thumbnailUrl) await deleteCommunityThumbnailByUrl(thumbnailUrl);
+    thumbnailUrl = uploaded.url;
+  } else if (removeThumbnail) {
+    if (thumbnailUrl) await deleteCommunityThumbnailByUrl(thumbnailUrl);
+    thumbnailUrl = null;
+  }
 
   let eventId = existing?.id as string | undefined;
   if (existing) {
@@ -162,7 +198,7 @@ export async function upsertCommunityEvent(
         title,
         timing,
         body,
-        thumbnail_url: thumbnail.url,
+        thumbnail_url: thumbnailUrl,
         is_published: isPublished,
       })
       .eq("id", existing.id);
@@ -176,7 +212,7 @@ export async function upsertCommunityEvent(
         title,
         timing,
         body,
-        thumbnail_url: thumbnail.url,
+        thumbnail_url: thumbnailUrl,
         is_published: isPublished,
         created_by: context.user.id,
       })
@@ -215,7 +251,7 @@ export async function deleteCommunityEvent(
   const admin = createAdminClient();
   const { data: existing, error: loadError } = await admin
     .from("community_events")
-    .select("id")
+    .select("id, thumbnail_url")
     .eq("property_id", propertyId)
     .eq("category", categoryRaw)
     .maybeSingle();
@@ -230,6 +266,7 @@ export async function deleteCommunityEvent(
     .eq("category", categoryRaw);
 
   if (error) return { error: error.message || "Unable to clear community event." };
+  await deleteCommunityThumbnailByUrl(existing.thumbnail_url);
 
   await recordAdminAudit({
     action: "community_event.deleted",

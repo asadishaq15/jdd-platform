@@ -2,18 +2,26 @@
 
 import { revalidatePath } from "next/cache";
 import { canOperateProperty, getAdminContext, recordAdminAudit, requireAdmin, requireAdminRole } from "./admin-auth";
+import { sendGuestActivationEmail } from "./email/guest-activation";
 import { createAdminClient } from "./supabase/admin";
 
 export type ActivationActionState = {
   error?: string;
   activationUrl?: string;
   expiresAt?: string;
+  guestEmail?: string;
+  emailSent?: boolean;
+  emailWarning?: string;
 };
 
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export type AdminInviteActionState = { error?: string; success?: string };
+
+export type ManualStayActionState = { error?: string; success?: string };
+
+const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 
 async function getAuthorizedStay(stayId: string) {
   if (!UUID_PATTERN.test(stayId)) return { error: "Invalid stay identifier." } as const;
@@ -48,6 +56,17 @@ export async function createActivationLink(
   const authorized = await getAuthorizedStay(stayId);
   if ("error" in authorized) return { error: authorized.error };
 
+  const guestEmail = authorized.stay.guest_email?.trim().toLowerCase() || "";
+  if (!EMAIL_PATTERN.test(guestEmail)) {
+    return { error: "Add a guest email on this stay before generating an invitation." };
+  }
+
+  const { data: property } = await authorized.admin
+    .from("properties")
+    .select("name")
+    .eq("id", authorized.stay.property_id)
+    .maybeSingle();
+
   const expiresAt = new Date(Date.now() + expiryDays * 86_400_000).toISOString();
   const { data, error } = await authorized.admin.rpc("create_guest_activation", {
     p_stay_id: stayId,
@@ -58,20 +77,39 @@ export async function createActivationLink(
     return { error: error?.message || "Supabase did not return an activation link." };
   }
 
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+  const activationUrl = new URL(`/activate/${data[0].token}`, siteUrl).toString();
+  const emailResult = await sendGuestActivationEmail({
+    to: guestEmail,
+    guestName: authorized.stay.guest_name,
+    propertyName: property?.name || "your property",
+    activationUrl,
+    expiresAt: data[0].expires_at || expiresAt,
+  });
+
   await recordAdminAudit({
     action: "activation.created",
     resourceType: "stay",
     resourceId: stayId,
     propertyId: authorized.stay.property_id,
-    metadata: { expires_at: data[0].expires_at, expiry_days: expiryDays },
+    metadata: {
+      expires_at: data[0].expires_at,
+      expiry_days: expiryDays,
+      guest_email: guestEmail,
+      email_sent: emailResult.sent,
+    },
   });
 
   revalidatePath("/admin/stays");
   revalidatePath("/admin/activations");
 
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
-  const activationUrl = new URL(`/activate/${data[0].token}`, siteUrl).toString();
-  return { activationUrl, expiresAt: data[0].expires_at };
+  return {
+    activationUrl,
+    expiresAt: data[0].expires_at,
+    guestEmail,
+    emailSent: emailResult.sent,
+    emailWarning: emailResult.sent ? undefined : emailResult.warning,
+  };
 }
 
 export async function revokeActivationLink(formData: FormData) {
@@ -110,6 +148,78 @@ export async function revokeActivationLink(formData: FormData) {
   revalidatePath("/admin/activations");
 }
 
+export async function createManualStay(
+  _previousState: ManualStayActionState,
+  formData: FormData,
+): Promise<ManualStayActionState> {
+  const context = await requireAdmin();
+  const propertyId = String(formData.get("propertyId") || "");
+  const guestName = String(formData.get("guestName") || "").trim();
+  const guestEmail = String(formData.get("guestEmail") || "").trim().toLowerCase();
+  const checkIn = String(formData.get("checkIn") || "").trim();
+  const checkOut = String(formData.get("checkOut") || "").trim();
+
+  if (!UUID_PATTERN.test(propertyId)) return { error: "Choose a property." };
+  if (!canOperateProperty(context, propertyId)) {
+    return { error: "You do not have permission to manage this property." };
+  }
+  if (guestName.length < 2 || guestName.length > 120) {
+    return { error: "Enter the guest’s full name." };
+  }
+  if (!EMAIL_PATTERN.test(guestEmail) || guestEmail.length > 254) {
+    return { error: "Enter a valid guest email." };
+  }
+  if (!DATE_PATTERN.test(checkIn) || !DATE_PATTERN.test(checkOut)) {
+    return { error: "Enter valid check-in and check-out dates." };
+  }
+  if (checkOut < checkIn) {
+    return { error: "Check-out must be on or after check-in." };
+  }
+
+  const admin = createAdminClient();
+  const { data: property, error: propertyError } = await admin
+    .from("properties")
+    .select("id, name")
+    .eq("id", propertyId)
+    .maybeSingle();
+  if (propertyError || !property) return { error: "The selected property was not found." };
+
+  const { data: stay, error } = await admin
+    .from("stays")
+    .insert({
+      property_id: propertyId,
+      guest_name: guestName,
+      guest_email: guestEmail,
+      check_in: checkIn,
+      check_out: checkOut,
+    })
+    .select("id")
+    .maybeSingle();
+
+  if (error || !stay) {
+    return { error: error?.message || "Unable to create the guest stay." };
+  }
+
+  await recordAdminAudit({
+    action: "stay.manual_created",
+    resourceType: "stay",
+    resourceId: stay.id,
+    propertyId,
+    metadata: {
+      guest_email: guestEmail,
+      check_in: checkIn,
+      check_out: checkOut,
+      source: "manual",
+    },
+  });
+
+  revalidatePath("/admin/stays");
+  revalidatePath("/admin/overview");
+  return {
+    success: `Stay created for ${guestName} at ${property.name}. Generate an activation link from the list below.`,
+  };
+}
+
 export async function inviteAdminAccount(
   _previousState: AdminInviteActionState,
   formData: FormData,
@@ -123,7 +233,7 @@ export async function inviteAdminAccount(
   if (!EMAIL_PATTERN.test(email)) return { error: "Enter a valid email address." };
   if (fullName.length < 2) return { error: "Enter the account holder's full name." };
   if (accountType !== "staff" && accountType !== "property") return { error: "Choose a valid account type." };
-  if (accountType === "property" && !UUID_PATTERN.test(propertyId)) return { error: "Choose a property." };
+  if (accountType === "property" && !UUID_PATTERN.test(propertyId)) return { error: "Choose a State." };
 
   const admin = createAdminClient();
   let propertyName = "all properties";

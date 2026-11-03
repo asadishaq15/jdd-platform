@@ -156,6 +156,36 @@
   margin-top: 14px;
 }
 
+.authenticator-help {
+  max-width: 38ch;
+  margin: 16px 0 0;
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  background: color-mix(in srgb, var(--bg) 88%, var(--fg) 4%);
+  text-align: left;
+}
+
+.authenticator-help-title {
+  margin: 0 0 8px;
+  color: var(--fg);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+
+.authenticator-help ol {
+  margin: 0;
+  padding-left: 18px;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+.authenticator-help li + li {
+  margin-top: 6px;
+}
+
 .recovery-form,
 .reset-password-form {
   margin-top: 28px;

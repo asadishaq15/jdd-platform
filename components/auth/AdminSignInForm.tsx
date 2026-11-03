@@ -148,7 +148,7 @@ export default function AdminSignInForm({ audience }: AdminSignInFormProps) {
     <section className="auth-view" aria-label={`${label} sign in`}>
       <p className="eyebrow">{label} access</p>
       <h1 className="title">Enter the <em className="cu">administration</em>.</h1>
-      <p className="body">Use the account invited by Jardin du Désert. Administrative access requires an authenticator code after your password.</p>
+      <p className="body">Use the account invited by Jardin du Désert.</p>
       <form className="email-auth-form recovery-form" onSubmit={signIn}>
         {/* Keep username in the DOM on the password step so password managers can autofill correctly. */}
         {credentialStep === "password" && (

@@ -31,7 +31,7 @@ export default async function AdminCommunityPage({ searchParams }: CommunityPage
           <h1>Community</h1>
           <p>
             Manage one Event, one Guest invitation, and one News item per property.
-            Guest Space will use these slots in a later release.
+            Published slots appear in guest Space Property Circle, and RSVPs are counted here.
           </p>
         </div>
         <span className="admin-access-badge">
@@ -117,6 +117,7 @@ function slotCell(event: CommunityEventView | undefined) {
       <small>
         {event.timing}
         {event.isPublished ? "" : " · Draft"}
+        {` · ${event.rsvpCount} RSVP${event.rsvpCount === 1 ? "" : "s"}`}
       </small>
     </>
   );

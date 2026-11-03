@@ -13,10 +13,21 @@ export type ConnectedStay = {
   checkOut: string | null;
   activatedAt: string | null;
   property: {
+    id: string;
     name: string;
     country: string | null;
     worldNumber: number;
   };
+};
+
+export type CommunityCircleEvent = {
+  id: string;
+  propertyId: string;
+  category: "event" | "invite" | "news";
+  title: string;
+  timing: string;
+  body: string;
+  thumbnailUrl: string | null;
 };
 
 export type CardOrder = {

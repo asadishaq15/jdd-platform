@@ -25,6 +25,12 @@ can be assigned to each property.
 5. Configure and verify custom SMTP before sending invitations.
 6. Customize the Supabase **Invite user** email template for property and staff
    invitations.
+7. For **guest activation emails** (Stays → Generate link), set Resend in the
+   app environment (separate from Supabase Auth SMTP):
+   - `RESEND_API_KEY`
+   - `EMAIL_FROM` (verified sender, e.g. `Jardin du Désert <onboarding@yourdomain.com>`)
+   If these are missing, admins can still copy the activation link; email is
+   skipped with a warning.
 
 ## First use
 

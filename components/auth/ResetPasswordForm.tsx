@@ -6,6 +6,7 @@ import { friendlyAuthError } from "../../lib/auth-errors";
 import { PasswordResetReturnTo } from "../../lib/password-reset";
 import { usePasswordVisibility } from "../../lib/password-visibility";
 import { createClient } from "../../lib/supabase/client";
+import AuthenticatorHelpNote from "./AuthenticatorHelpNote";
 
 type ResetPasswordFormProps = {
   returnTo?: PasswordResetReturnTo;
@@ -110,7 +111,7 @@ export default function ResetPasswordForm({ returnTo = "/sign-in" }: ResetPasswo
   const stepCopy = passwordStep === "mfa"
     ? {
       title: <>Confirm with your <em className="cu">authenticator</em>.</>,
-      body: "This account uses two-step verification. Enter your current six-digit code to finish resetting the password.",
+      body: "This account is protected with a phone app. Enter the current 6-digit code to finish resetting your password.",
       submit: saving ? "Updating…" : "Verify and update password",
     }
     : {
@@ -124,6 +125,7 @@ export default function ResetPasswordForm({ returnTo = "/sign-in" }: ResetPasswo
       <p className="eyebrow">Account recovery</p>
       <h1 className="title">{stepCopy.title}</h1>
       <p className="body recovery-copy">{stepCopy.body}</p>
+      {passwordStep === "mfa" && <AuthenticatorHelpNote variant="verify" />}
       <form className="email-auth-form reset-password-form" onSubmit={updatePassword}>
         <div className={`credential-question reset-password-question ${transitioning ? "leaving" : ""}`} key={passwordStep}>
           {passwordStep === "new" && (
@@ -146,7 +148,7 @@ export default function ResetPasswordForm({ returnTo = "/sign-in" }: ResetPasswo
           )}
           {passwordStep === "mfa" && (
             <div className="field">
-              <label htmlFor="recovery-mfa-code">Authenticator code</label>
+              <label htmlFor="recovery-mfa-code">6-digit code from your phone</label>
               <input
                 id="recovery-mfa-code"
                 inputMode="numeric"
