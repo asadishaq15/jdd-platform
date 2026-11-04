@@ -27,6 +27,8 @@ export type CommunityEventView = {
   isPublished: boolean;
   updatedAt: string;
   rsvpCount: number;
+  inviteeCount: number;
+  acceptedCount: number;
 };
 
 export type CommunityPropertyBoard = {
@@ -59,7 +61,12 @@ function isCategory(value: string): value is CommunityEventCategory {
   return (CATEGORIES as readonly string[]).includes(value);
 }
 
-function mapEvent(row: CommunityEventRow, rsvpCount = 0): CommunityEventView {
+function mapEvent(
+  row: CommunityEventRow,
+  rsvpCount = 0,
+  inviteeCount = 0,
+  acceptedCount = 0,
+): CommunityEventView {
   return {
     id: row.id,
     propertyId: row.property_id,
@@ -71,6 +78,8 @@ function mapEvent(row: CommunityEventRow, rsvpCount = 0): CommunityEventView {
     isPublished: row.is_published,
     updatedAt: row.updated_at,
     rsvpCount,
+    inviteeCount,
+    acceptedCount,
   };
 }
 
@@ -111,23 +120,46 @@ export async function loadCommunityBoards(
   const rows = (data || []) as CommunityEventRow[];
   const eventIds = rows.map((row) => row.id);
   const rsvpCounts = new Map<string, number>();
+  const inviteeCounts = new Map<string, number>();
+  const acceptedCounts = new Map<string, number>();
 
   if (eventIds.length) {
-    const { data: rsvpRows, error: rsvpError } = await admin
-      .from("community_event_rsvps")
-      .select("event_id")
-      .in("event_id", eventIds);
+    const [{ data: rsvpRows, error: rsvpError }, { data: inviteeRows, error: inviteeError }] = await Promise.all([
+      admin.from("community_event_rsvps").select("event_id, guest_id").in("event_id", eventIds),
+      admin.from("community_event_invitees").select("event_id, guest_id").in("event_id", eventIds),
+    ]);
     if (rsvpError) throw new Error(`Unable to load community RSVPs: ${rsvpError.message}`);
+    if (inviteeError) throw new Error(`Unable to load community invitees: ${inviteeError.message}`);
+
+    const inviteesByEvent = new Map<string, Set<string>>();
+    for (const row of inviteeRows || []) {
+      const eventId = String((row as { event_id: string }).event_id);
+      const guestId = String((row as { guest_id: string }).guest_id);
+      inviteeCounts.set(eventId, (inviteeCounts.get(eventId) || 0) + 1);
+      const set = inviteesByEvent.get(eventId) || new Set<string>();
+      set.add(guestId);
+      inviteesByEvent.set(eventId, set);
+    }
+
     for (const row of rsvpRows || []) {
       const eventId = String((row as { event_id: string }).event_id);
+      const guestId = String((row as { guest_id: string }).guest_id);
       rsvpCounts.set(eventId, (rsvpCounts.get(eventId) || 0) + 1);
+      if (inviteesByEvent.get(eventId)?.has(guestId)) {
+        acceptedCounts.set(eventId, (acceptedCounts.get(eventId) || 0) + 1);
+      }
     }
   }
 
   const byProperty = new Map<string, Partial<Record<CommunityEventCategory, CommunityEventView>>>();
   for (const row of rows) {
     const bucket = byProperty.get(row.property_id) || {};
-    bucket[row.category] = mapEvent(row, rsvpCounts.get(row.id) || 0);
+    bucket[row.category] = mapEvent(
+      row,
+      rsvpCounts.get(row.id) || 0,
+      inviteeCounts.get(row.id) || 0,
+      acceptedCounts.get(row.id) || 0,
+    );
     byProperty.set(row.property_id, bucket);
   }
 

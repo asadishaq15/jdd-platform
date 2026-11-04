@@ -8,11 +8,13 @@ import {
   type CommunityEventCategory,
   type CommunityEventView,
 } from "../../lib/community-events";
+import type { EventInviteeView, InviteCandidate } from "../../lib/community-invitees";
 import {
   assertCommunityThumbnail,
   communityThumbnailHelpText,
   COMMUNITY_THUMBNAIL_TYPES,
 } from "../../lib/community-thumbnail";
+import CommunityInviteesPanel from "./CommunityInviteesPanel";
 
 const initialState: CommunityEventActionState = {};
 
@@ -23,8 +25,8 @@ const CATEGORY_LABELS: Record<CommunityEventCategory, string> = {
 };
 
 const CATEGORY_HINTS: Record<CommunityEventCategory, string> = {
-  event: "One private evening or gathering for guests of the house.",
-  invite: "One guest-only invitation for this property.",
+  event: "One private evening or gathering for all activated guests of the house.",
+  invite: "Private invitation. Only guests you invite can see it in Space.",
   news: "One news note for guests connected to this property.",
 };
 
@@ -35,11 +37,15 @@ export default function CommunityEventForm({
   category,
   event,
   canManage,
+  inviteCandidates = [],
+  invitees = [],
 }: {
   propertyId: string;
   category: CommunityEventCategory;
   event: CommunityEventView | null;
   canManage: boolean;
+  inviteCandidates?: InviteCandidate[];
+  invitees?: EventInviteeView[];
 }) {
   const [saveState, saveAction, savePending] = useActionState(upsertCommunityEvent, initialState);
   const [clearState, clearAction, clearPending] = useActionState(deleteCommunityEvent, initialState);
@@ -48,6 +54,7 @@ export default function CommunityEventForm({
   const [removeThumbnail, setRemoveThumbnail] = useState(false);
   const [thumbnailError, setThumbnailError] = useState("");
   const [fileInputKey, setFileInputKey] = useState(0);
+  const [inviteModalOpen, setInviteModalOpen] = useState(false);
 
   useEffect(() => {
     return () => {
@@ -115,7 +122,9 @@ export default function CommunityEventForm({
           </span>
           {event && (
             <small className="admin-muted">
-              {event.rsvpCount} RSVP{event.rsvpCount === 1 ? "" : "s"}
+              {category === "invite"
+                ? `${event.inviteeCount} invited · ${event.acceptedCount} accepted`
+                : `${event.rsvpCount} RSVP${event.rsvpCount === 1 ? "" : "s"}`}
             </small>
           )}
         </div>
@@ -230,6 +239,53 @@ export default function CommunityEventForm({
           ) : (
             <p className="admin-muted">No {CATEGORY_LABELS[category].toLowerCase()} yet.</p>
           )}
+        </div>
+      )}
+
+      {category === "invite" && event && (
+        <div className="admin-invite-trigger">
+          <p className="admin-muted">
+            {event.inviteeCount} invited · {event.acceptedCount} accepted
+          </p>
+          <button
+            className="admin-invite-open"
+            type="button"
+            onClick={() => setInviteModalOpen(true)}
+          >
+            Invite guests
+          </button>
+        </div>
+      )}
+
+      {category === "invite" && event && inviteModalOpen && (
+        <div
+          className="admin-modal open"
+          role="presentation"
+          onMouseDown={(mouseEvent) => {
+            if (mouseEvent.target === mouseEvent.currentTarget) setInviteModalOpen(false);
+          }}
+        >
+          <section
+            className="admin-modal-in"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Invite guests"
+          >
+            <div className="admin-modal-scroll">
+              <CommunityInviteesPanel
+                eventId={event.id}
+                candidates={inviteCandidates}
+                invitees={invitees}
+                canManage={canManage}
+                isPublished={event.isPublished}
+              />
+            </div>
+            <p className="admin-modal-close">
+              <button className="admin-danger-link" type="button" onClick={() => setInviteModalOpen(false)}>
+                Close
+              </button>
+            </p>
+          </section>
         </div>
       )}
     </article>

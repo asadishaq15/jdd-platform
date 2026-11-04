@@ -43,6 +43,17 @@ export async function POST(request: Request) {
   if (event.property_id !== stay.property_id) {
     return NextResponse.json({ error: "This item belongs to a different property." }, { status: 403 });
   }
+  if (event.category === "invite") {
+    const { data: invitee } = await admin
+      .from("community_event_invitees")
+      .select("id")
+      .eq("event_id", event.id)
+      .eq("guest_id", userData.user.id)
+      .maybeSingle();
+    if (!invitee) {
+      return NextResponse.json({ error: "This invitation is not available for your stay." }, { status: 403 });
+    }
+  }
 
   const { data: rsvp, error } = await admin
     .from("community_event_rsvps")

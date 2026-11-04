@@ -6,6 +6,12 @@ import {
   type CommunityEventCategory,
   type CommunityEventView,
 } from "../../../../lib/community-events";
+import {
+  loadEventInvitees,
+  loadInviteCandidates,
+  type EventInviteeView,
+  type InviteCandidate,
+} from "../../../../lib/community-invitees";
 
 type CommunityPageProps = {
   searchParams: Promise<{ property?: string }>;
@@ -23,6 +29,15 @@ export default async function AdminCommunityPage({ searchParams }: CommunityPage
   );
   const singleBoard = boards.length === 1 ? boards[0] : null;
 
+  let inviteCandidates: InviteCandidate[] = [];
+  let invitees: EventInviteeView[] = [];
+  if (singleBoard?.events.invite) {
+    [inviteCandidates, invitees] = await Promise.all([
+      loadInviteCandidates(singleBoard.property.id),
+      loadEventInvitees(singleBoard.events.invite.id),
+    ]);
+  }
+
   return (
     <section>
       <div className="admin-page-heading">
@@ -31,7 +46,8 @@ export default async function AdminCommunityPage({ searchParams }: CommunityPage
           <h1>Community</h1>
           <p>
             Manage one Event, one Guest invitation, and one News item per property.
-            Published slots appear in guest Space Property Circle, and RSVPs are counted here.
+            Event and News appear for all activated guests when published.
+            Guest invitation is private—only invited guests see it in Space.
           </p>
         </div>
         <span className="admin-access-badge">
@@ -48,6 +64,8 @@ export default async function AdminCommunityPage({ searchParams }: CommunityPage
               category={category}
               event={singleBoard.events[category] || null}
               canManage={singleBoard.canManage}
+              inviteCandidates={category === "invite" ? inviteCandidates : []}
+              invitees={category === "invite" ? invitees : []}
             />
           ))}
         </div>
@@ -111,13 +129,16 @@ export default async function AdminCommunityPage({ searchParams }: CommunityPage
 
 function slotCell(event: CommunityEventView | undefined) {
   if (!event) return <span className="admin-muted">Empty</span>;
+  const counts = event.category === "invite"
+    ? `${event.inviteeCount} invited · ${event.acceptedCount} accepted`
+    : `${event.rsvpCount} RSVP${event.rsvpCount === 1 ? "" : "s"}`;
   return (
     <>
       <strong>{event.title}</strong>
       <small>
         {event.timing}
         {event.isPublished ? "" : " · Draft"}
-        {` · ${event.rsvpCount} RSVP${event.rsvpCount === 1 ? "" : "s"}`}
+        {` · ${counts}`}
       </small>
     </>
   );
