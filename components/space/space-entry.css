@@ -370,12 +370,54 @@ body.night .jm-in { border-color: rgba(255,255,255,.08); background: rgba(30,30,
 .seg { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; margin: 24px 0 0; }
 .seg button { height: 42px; border: 1px solid var(--line); background: transparent; color: var(--fg); cursor: pointer; }
 .seg button.sel { border-color: var(--copper); background: var(--copper-gradient-light); color: var(--neutral-7); }
-.circle-list { display: grid; gap: 12px; margin-top: 24px; }
-.circle-item { display: grid; gap: 8px; padding: 18px; border: 1px solid var(--line); background: transparent; color: var(--fg); cursor: pointer; text-align: left; }
-.circle-item span { color: var(--copper); font-size: 10px; letter-spacing: .22em; text-transform: uppercase; }
-.circle-item strong { font-family: var(--serif); font-size: 25px; font-weight: 300; }
-.circle-item em { color: var(--muted); font-size: 12px; font-style: normal; }
-.circle-thumb { display: block; width: 100%; max-width: 320px; max-height: 180px; margin: 12px auto 18px; object-fit: cover; border: 1px solid var(--line); }
+.circle-detail {
+  display: flex;
+  flex-direction: column;
+  min-height: calc(100dvh - 120px);
+  max-width: 520px;
+  margin: 0 auto;
+  padding: 24px 0 0;
+  text-align: center;
+}
+.circle-detail > :first-child { margin-top: auto; }
+.circle-detail .title { margin: 0 0 14px; }
+.circle-detail .body { max-width: 42ch; }
+.circle-detail .stay-actions { margin-top: 40px; }
+.circle-detail .stay-actions .tlink {
+  font-size: 13px;
+  letter-spacing: .06em;
+  padding: 12px 6px 16px;
+}
+.circle-detail .stay-actions .tlink[disabled] {
+  color: var(--muted);
+  cursor: default;
+}
+.circle-detail .stay-actions .tlink[disabled]::after { opacity: .35; }
+.circle-detail .links.small:last-child {
+  margin-top: auto !important;
+  padding-top: 40px;
+  padding-bottom: 0;
+}
+.confirm-line {
+  margin: 24px 0 0;
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: 19px;
+}
+.ret-note {
+  margin: 14px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+}
+.circle-thumb {
+  display: block;
+  width: 100%;
+  max-width: 320px;
+  max-height: 180px;
+  margin: 16px auto 0;
+  object-fit: cover;
+  border: 1px solid var(--line);
+}
 .rit-preview { max-width: 420px; margin: 22px auto 0; padding: 0; list-style: none; text-align: left; }
 .rit-preview li { display: flex; gap: 16px; padding: 12px 0; border-bottom: 1px solid var(--line); color: var(--muted); }
 .rit-preview span { color: var(--copper); font-size: 11px; letter-spacing: .22em; }

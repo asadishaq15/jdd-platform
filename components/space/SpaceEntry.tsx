@@ -25,10 +25,14 @@ const CATEGORY_LABELS: Record<CommunityCircleEvent["category"], string> = {
   news: "News",
 };
 
-const CATEGORY_ACTIONS: Record<CommunityCircleEvent["category"], string> = {
+const CATEGORY_ACTIONS: Record<"event" | "invite", string> = {
   event: "Reserve my place",
   invite: "Accept invitation",
-  news: "Save",
+};
+
+const CATEGORY_DONE: Record<"event" | "invite", string> = {
+  event: "Place reserved",
+  invite: "Invitation accepted",
 };
 
 type SpaceEntryProps = {
@@ -85,6 +89,9 @@ export default function SpaceEntry({
   const guest = Boolean(connectedStay || (state.visited && state.code));
   const guestName = connectedStay?.guestName || account.fullName;
   const ritualActive = Boolean(guest || state.cardStatus === "received");
+  const activeCircleEvent = flow === "circle" && circleDetail
+    ? circleEvents.find((item) => item.id === circleDetail) || null
+    : null;
 
   function updateState(next: SpaceState) {
     setState(next);
@@ -114,80 +121,90 @@ export default function SpaceEntry({
       />
 
       <div className="space-stage">
-        <section className="space-view" aria-label="My Space">
-          <div className="calm">
-            <div className="calm-head reveal in">
-              <svg className="emblem" viewBox="0 0 140 140" aria-hidden="true">
-                <circle className="em-c" cx="70" cy="70" r="66" pathLength="1" />
-                <path className="em-t" d="M70 36 L99 90 L41 90 Z" pathLength="1" />
-              </svg>
-              {guest && <p className="calm-status">Guest access · {world.property}</p>}
-              <h1 className="calm-name">{account.fullName}</h1>
-              <Link className="calm-world" href="/discover?mode=dash" aria-label="Open your hospitality world">
-                <span className="calm-state"><span>State</span><span className="sep">·</span><em className="cu">{world.state}</em></span>
-              </Link>
+        {activeCircleEvent ? (
+          <CircleDetailView
+            world={world}
+            event={activeCircleEvent}
+            state={state}
+            activeStayId={connectedStay?.id}
+            onSave={updateState}
+            onBack={() => { setFlow(null); setCircleDetail(null); }}
+          />
+        ) : (
+          <section className="space-view" aria-label="My Space">
+            <div className="calm">
+              <div className="calm-head reveal in">
+                <svg className="emblem" viewBox="0 0 140 140" aria-hidden="true">
+                  <circle className="em-c" cx="70" cy="70" r="66" pathLength="1" />
+                  <path className="em-t" d="M70 36 L99 90 L41 90 Z" pathLength="1" />
+                </svg>
+                {guest && <p className="calm-status">Guest access · {world.property}</p>}
+                <h1 className="calm-name">{account.fullName}</h1>
+                <Link className="calm-world" href="/discover?mode=dash" aria-label="Open your hospitality world">
+                  <span className="calm-state"><span>State</span><span className="sep">·</span><em className="cu">{world.state}</em></span>
+                </Link>
+              </div>
+
+              <div className="secs">
+                <WorldSection world={world} guest={guest} />
+                <ScentSection world={world} guest={guest} guestName={guestName} state={state} onOrder={() => { setOrderStep(1); setFlow("order"); }} canOrder={Boolean(connectedStay)} />
+                {/* My Intention is temporarily hidden from My Space. */}
+                <RitualSection
+                  active={ritualActive}
+                  onRitual={() => { void trackProductEvent({ name: "ritual_opened", stayId: connectedStay?.id, worldNumber: world.n }); setFlow("ritual"); }}
+                  onOil={() => setFlow("oil")}
+                />
+                <CommunitySection
+                  world={world}
+                  guest={guest}
+                  state={state}
+                  circleEvents={circleEvents}
+                  onOpen={(eventId) => {
+                    void trackProductEvent({ name: "property_circle_opened", stayId: connectedStay?.id, worldNumber: world.n });
+                    setCircleDetail(eventId || null);
+                    setFlow("circle");
+                  }}
+                />
+                {connectedStay && <GuestFeedbackCard stayId={connectedStay.id} propertyName={world.property} checkOut={connectedStay.checkOut} />}
+              </div>
+
+              <button className="wide-world reveal in" type="button" aria-label={`Open ${world.property}`} onClick={() => window.location.assign("/discover?mode=dash")}>
+                <PropertyImage world={world} wide />
+              </button>
+
+              <div className="sp-note reveal in">
+                <p className="hw5-note">Your card introduces you to the scent. A stay lets you experience the place, its rituals and its way of hospitality.</p>
+              </div>
+
+              {/* The legacy access-code block stays intentionally hidden. Guest access is handled by secure activation links. */}
+
+              <div className="calm-explore reveal in">
+                <p className="c-eye">Hospitality Worlds</p>
+                <div className="sec-act"><Link className="tlink" href="/discover?mode=dash">Explore all States</Link></div>
+              </div>
+
+              <p className="links small demo-ctl">
+                <button className="tlink" type="button" onClick={signOut}>Sign out</button>
+              </p>
             </div>
-
-            <div className="secs">
-              <WorldSection world={world} guest={guest} />
-              <ScentSection world={world} guest={guest} guestName={guestName} state={state} onOrder={() => { setOrderStep(1); setFlow("order"); }} canOrder={Boolean(connectedStay)} />
-              {/* My Intention is temporarily hidden from My Space. */}
-              <RitualSection
-                active={ritualActive}
-                onRitual={() => { void trackProductEvent({ name: "ritual_opened", stayId: connectedStay?.id, worldNumber: world.n }); setFlow("ritual"); }}
-                onOil={() => setFlow("oil")}
-              />
-              <CommunitySection
-                world={world}
-                guest={guest}
-                state={state}
-                circleEvents={circleEvents}
-                onOpen={(eventId) => {
-                  void trackProductEvent({ name: "property_circle_opened", stayId: connectedStay?.id, worldNumber: world.n });
-                  setCircleDetail(eventId || null);
-                  setFlow("circle");
-                }}
-              />
-              {connectedStay && <GuestFeedbackCard stayId={connectedStay.id} propertyName={world.property} checkOut={connectedStay.checkOut} />}
-            </div>
-
-            <button className="wide-world reveal in" type="button" aria-label={`Open ${world.property}`} onClick={() => window.location.assign("/discover?mode=dash")}>
-              <PropertyImage world={world} wide />
-            </button>
-
-            <div className="sp-note reveal in">
-              <p className="hw5-note">Your card introduces you to the scent. A stay lets you experience the place, its rituals and its way of hospitality.</p>
-            </div>
-
-            {/* The legacy access-code block stays intentionally hidden. Guest access is handled by secure activation links. */}
-
-            <div className="calm-explore reveal in">
-              <p className="c-eye">Hospitality Worlds</p>
-              <div className="sec-act"><Link className="tlink" href="/discover?mode=dash">Explore all States</Link></div>
-            </div>
-
-            <p className="links small demo-ctl">
-              <button className="tlink" type="button" onClick={signOut}>Sign out</button>
-            </p>
-          </div>
-        </section>
+          </section>
+        )}
       </div>
 
       <ProfileModal modal={modal} account={account} stays={stays} state={state} world={world} circleEvents={circleEvents} onAccountChange={setAccount} onClose={() => setModal(null)} onDelete={() => { setModal(null); setFlow("delete"); }} />
-      <FlowModal
-        flow={flow}
-        world={world}
-        guestName={guestName}
-        activeStayId={connectedStay?.id}
-        state={state}
-        orderStep={orderStep}
-        circleEvents={circleEvents}
-        circleDetail={circleDetail}
-        onCircleDetail={setCircleDetail}
-        onStep={setOrderStep}
-        onClose={() => { setFlow(null); setCircleDetail(null); }}
-        onSave={updateState}
-      />
+      {flow && flow !== "circle" && (
+        <FlowModal
+          flow={flow}
+          world={world}
+          guestName={guestName}
+          activeStayId={connectedStay?.id}
+          state={state}
+          orderStep={orderStep}
+          onStep={setOrderStep}
+          onClose={() => setFlow(null)}
+          onSave={updateState}
+        />
+      )}
     </main>
   );
 }
@@ -438,65 +455,33 @@ function ProfileModal({
   );
 }
 
-function FlowModal({
-  flow,
+function CircleDetailView({
   world,
-  guestName,
-  activeStayId,
+  event,
   state,
-  orderStep,
-  circleEvents,
-  circleDetail,
-  onCircleDetail,
-  onStep,
-  onClose,
+  activeStayId,
   onSave,
+  onBack,
 }: {
-  flow: Flow;
   world: HospitalityWorld;
-  guestName: string;
-  activeStayId?: string;
+  event: CommunityCircleEvent;
   state: SpaceState;
-  orderStep: number;
-  circleEvents: CommunityCircleEvent[];
-  circleDetail: string | null;
-  onCircleDetail: (value: string | null) => void;
-  onStep: (step: number) => void;
-  onClose: () => void;
+  activeStayId?: string;
   onSave: (next: SpaceState) => void;
+  onBack: () => void;
 }) {
-  const [action, setAction] = useState(state.reminder?.action || "");
-  const [frequency, setFrequency] = useState<"off" | "once" | "daily">(state.reminder?.frequency || "off");
-  const [recipientName, setRecipientName] = useState(guestName);
-  const [shippingAddress, setShippingAddress] = useState("");
-  const [orderError, setOrderError] = useState("");
-  const [ordering, setOrdering] = useState(false);
   const [rsvpError, setRsvpError] = useState("");
   const [rsvping, setRsvping] = useState(false);
-  if (!flow) return null;
+  const saved = Boolean(state.rsvps?.[event.id] || state.rsvps?.[event.category]);
+  const rsvpCategory = event.category === "news" ? null : event.category;
 
-  async function completeOrder() {
-    if (!activeStayId) { setOrderError("Activate a stay before requesting a card."); return; }
-    if (recipientName.trim().length < 2 || shippingAddress.trim().length < 8) { setOrderError("Enter the recipient and complete delivery address."); return; }
-    setOrdering(true);
-    setOrderError("");
-    const response = await fetch("/api/card-orders", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ stayId: activeStayId, recipientName, shippingAddress }) });
-    const result = await response.json();
-    if (!response.ok) { setOrderError(result.error || "The order request could not be saved."); setOrdering(false); return; }
-    onSave({ ...state, cardStatus: "preparing", order: { property: world.property, state: world.state, recipient: recipientName.trim(), address: shippingAddress.trim() } });
-    setOrdering(false);
-    onClose();
-  }
-
-  async function rsvp(event: CommunityCircleEvent) {
+  async function rsvp() {
+    if (!rsvpCategory) return;
     if (!activeStayId) {
       setRsvpError("Activate a stay before responding.");
       return;
     }
-    if (state.rsvps?.[event.id] || state.rsvps?.[event.category]) {
-      onCircleDetail(null);
-      return;
-    }
+    if (saved) return;
     setRsvping(true);
     setRsvpError("");
     const response = await fetch("/api/community/rsvp", {
@@ -518,14 +503,80 @@ function FlowModal({
         [event.category]: true,
       },
     });
-    onCircleDetail(null);
   }
 
-  const orderedEvents = (["event", "invite", "news"] as const)
-    .map((category) => circleEvents.find((event) => event.category === category))
-    .filter((event): event is CommunityCircleEvent => Boolean(event));
-  const detail = orderedEvents.find((event) => event.id === circleDetail) || null;
-  const detailSaved = detail ? Boolean(state.rsvps?.[detail.id] || state.rsvps?.[detail.category]) : false;
+  return (
+    <section className="space-view circle-detail" aria-label={`${CATEGORY_LABELS[event.category]} detail`}>
+      <p className="eyebrow">{CATEGORY_LABELS[event.category]} · {world.property}</p>
+      <h1 className="title">{event.title}</h1>
+      <p className="country">{event.timing}</p>
+      {event.thumbnailUrl && (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img className="circle-thumb" src={event.thumbnailUrl} alt="" />
+      )}
+      <p className="body dob-intro">{event.body}</p>
+      {rsvpCategory && (
+        saved ? (
+          <>
+            <p className="confirm-line">{CATEGORY_DONE[rsvpCategory]}</p>
+            <p className="ret-note">Saved in My events.</p>
+          </>
+        ) : (
+          <div className="stay-actions">
+            <button className="tlink" type="button" disabled={rsvping} onClick={() => void rsvp()}>
+              {rsvping ? "Saving…" : CATEGORY_ACTIONS[rsvpCategory]}
+            </button>
+          </div>
+        )
+      )}
+      {rsvpError && <p className="feedback-error" role="alert">{rsvpError}</p>}
+      <p className="links small">
+        <button className="tlink" type="button" onClick={onBack}>Back</button>
+      </p>
+    </section>
+  );
+}
+
+function FlowModal({
+  flow,
+  world,
+  guestName,
+  activeStayId,
+  state,
+  orderStep,
+  onStep,
+  onClose,
+  onSave,
+}: {
+  flow: Exclude<Flow, "circle" | null>;
+  world: HospitalityWorld;
+  guestName: string;
+  activeStayId?: string;
+  state: SpaceState;
+  orderStep: number;
+  onStep: (step: number) => void;
+  onClose: () => void;
+  onSave: (next: SpaceState) => void;
+}) {
+  const [action, setAction] = useState(state.reminder?.action || "");
+  const [frequency, setFrequency] = useState<"off" | "once" | "daily">(state.reminder?.frequency || "off");
+  const [recipientName, setRecipientName] = useState(guestName);
+  const [shippingAddress, setShippingAddress] = useState("");
+  const [orderError, setOrderError] = useState("");
+  const [ordering, setOrdering] = useState(false);
+
+  async function completeOrder() {
+    if (!activeStayId) { setOrderError("Activate a stay before requesting a card."); return; }
+    if (recipientName.trim().length < 2 || shippingAddress.trim().length < 8) { setOrderError("Enter the recipient and complete delivery address."); return; }
+    setOrdering(true);
+    setOrderError("");
+    const response = await fetch("/api/card-orders", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ stayId: activeStayId, recipientName, shippingAddress }) });
+    const result = await response.json();
+    if (!response.ok) { setOrderError(result.error || "The order request could not be saved."); setOrdering(false); return; }
+    onSave({ ...state, cardStatus: "preparing", order: { property: world.property, state: world.state, recipient: recipientName.trim(), address: shippingAddress.trim() } });
+    setOrdering(false);
+    onClose();
+  }
 
   return (
     <div className="jmodal open" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}>
@@ -540,39 +591,6 @@ function FlowModal({
         {flow === "ritual" && <RitualContent state={state} onAction={() => onSave({ ...state, reminder: { action: state.reminder?.action || "One quiet action today", frequency: state.reminder?.frequency || "once" } })} />}
         {flow === "oil" && <><p className="g-label">Perfume oil ritual</p><h2 className="jm-title">Your State, on skin.</h2><ol className="rit-preview"><li><span>01</span>Remember. Recall your intention.</li><li><span>02</span>Apply. Place the oil on pulse points.</li><li><span>03</span>Return. Let the scent bring you back to your State.</li></ol><p className="sec-text">Wear alone, layer beneath your favourite perfume, or combine oils collected from different hospitality worlds.</p></>}
         {flow === "action" && <><p className="g-label">Reminder</p><h2 className="jm-title">Choose one action.</h2><div className="field"><input value={action} onChange={(event) => setAction(event.target.value)} placeholder="One action that supports your intention" /></div><div className="seg"><button className={frequency === "off" ? "sel" : ""} onClick={() => setFrequency("off")}>Off</button><button className={frequency === "once" ? "sel" : ""} onClick={() => setFrequency("once")}>Once</button><button className={frequency === "daily" ? "sel" : ""} onClick={() => setFrequency("daily")}>Daily</button></div><button className="btn primary" onClick={() => { onSave({ ...state, reminder: { action: action || "One quiet action today", frequency } }); onClose(); }}>Save</button></>}
-        {flow === "circle" && (
-          <>
-            <p className="g-label">Property Circle · {world.property}</p>
-            {detail ? (
-              <>
-                <h2 className="jm-title">{detail.title}</h2>
-                <p className="country">{detail.timing}</p>
-                {detail.thumbnailUrl && (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img className="circle-thumb" src={detail.thumbnailUrl} alt="" />
-                )}
-                <p className="jm-text">{detail.body}</p>
-                <button className="btn primary" type="button" disabled={rsvping || detailSaved} onClick={() => void rsvp(detail)}>
-                  {detailSaved ? "Saved" : rsvping ? "Saving…" : CATEGORY_ACTIONS[detail.category]}
-                </button>
-                {rsvpError && <p className="feedback-error" role="alert">{rsvpError}</p>}
-                <p className="links"><button className="tlink" type="button" onClick={() => { setRsvpError(""); onCircleDetail(null); }}>Back</button></p>
-              </>
-            ) : orderedEvents.length ? (
-              <div className="circle-list">
-                {orderedEvents.map((event) => (
-                  <button key={event.id} className="circle-item" type="button" onClick={() => onCircleDetail(event.id)}>
-                    <span>{CATEGORY_LABELS[event.category]}</span>
-                    <strong>{event.title}</strong>
-                    <em>{(state.rsvps?.[event.id] || state.rsvps?.[event.category]) ? "Saved" : event.timing}</em>
-                  </button>
-                ))}
-              </div>
-            ) : (
-              <p className="jm-text">Nothing is published in this Property Circle yet.</p>
-            )}
-          </>
-        )}
         {flow === "delete" && <DeleteAccountDialog />}
         <p className="links small"><button className="tlink" type="button" onClick={onClose}>Close</button></p>
       </section>
