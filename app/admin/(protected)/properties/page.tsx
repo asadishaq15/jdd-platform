@@ -1,3 +1,4 @@
+import PropertyWorldGrid from "../../../../components/admin/PropertyWorldGrid";
 import { requireAdmin } from "../../../../lib/admin-auth";
 
 export default async function AdminPropertiesPage() {
@@ -5,19 +6,14 @@ export default async function AdminPropertiesPage() {
   return (
     <section>
       <div className="admin-page-heading">
-        <div><p className="admin-kicker">Network</p><h1>Properties</h1><p>The hospitality properties available within your administrative scope.</p></div>
+        <div>
+          <p className="admin-kicker">Network</p>
+          <h1>Properties</h1>
+          <p>The hospitality worlds available within your administrative scope. Open a card to view State details.</p>
+        </div>
         <span className="admin-access-badge">{context.properties.length} properties</span>
       </div>
-      <div className="admin-property-grid">
-        {context.properties.map((property) => (
-          <article key={property.id}>
-            <span>World {property.worldNumber}</span>
-            <h2>{property.name}</h2>
-            <p>{property.country || "Country pending"}</p>
-            <small className={`admin-status ${property.isActive ? "success" : "neutral"}`}>{property.isActive ? "Active" : "Inactive"}</small>
-          </article>
-        ))}
-      </div>
+      <PropertyWorldGrid properties={context.properties} />
     </section>
   );
 }

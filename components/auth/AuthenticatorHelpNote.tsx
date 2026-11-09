@@ -1,3 +1,7 @@
+"use client";
+
+import { useId, useState } from "react";
+
 type AuthenticatorHelpVariant = "enroll" | "verify";
 
 const COPY: Record<AuthenticatorHelpVariant, { title: string; steps: string[] }> = {
@@ -27,15 +31,31 @@ export default function AuthenticatorHelpNote({
   className?: string;
 }) {
   const copy = COPY[variant];
+  const panelId = useId();
+  const [open, setOpen] = useState(false);
 
   return (
-    <aside className={className} aria-label={copy.title}>
-      <p className="authenticator-help-title">{copy.title}</p>
-      <ol>
-        {copy.steps.map((step) => (
-          <li key={step}>{step}</li>
-        ))}
-      </ol>
-    </aside>
+    <div className="authenticator-help-wrap">
+      <button
+        type="button"
+        className="authenticator-help-trigger"
+        aria-label={copy.title}
+        aria-expanded={open}
+        aria-controls={panelId}
+        onClick={() => setOpen((current) => !current)}
+      >
+        ?
+      </button>
+      {open && (
+        <aside id={panelId} className={className} aria-label={copy.title}>
+          <p className="authenticator-help-title">{copy.title}</p>
+          <ol>
+            {copy.steps.map((step) => (
+              <li key={step}>{step}</li>
+            ))}
+          </ol>
+        </aside>
+      )}
+    </div>
   );
 }

@@ -225,7 +225,11 @@ function DashboardHeader({ account, guest, menuOpen, onToggleMenu, onOpenModal, 
       <div className="dash-brand"><BrandMark className="dash-logo" /><span className="dash-title">My Space</span></div>
       <ThemeToggle />
       <div className="pmenu-wrap">
-        <button className="profile" type="button" aria-label="Account menu" aria-haspopup="true" aria-expanded={menuOpen} onClick={onToggleMenu}>{initial}</button>
+        <button className="profile" type="button" aria-label="Account menu" aria-haspopup="true" aria-expanded={menuOpen} onClick={onToggleMenu}>
+          {account.avatarUrl
+            ? <img src={account.avatarUrl} alt="" referrerPolicy="no-referrer" />
+            : initial}
+        </button>
         {menuOpen && (
           <div className="pmenu" role="menu">
             <div className="pm-head"><p className="pm-name">{account.fullName}</p><p className="pm-mail">{account.email}</p></div>
@@ -474,6 +478,17 @@ function CircleDetailView({
   const [rsvping, setRsvping] = useState(false);
   const saved = Boolean(state.rsvps?.[event.id] || state.rsvps?.[event.category]);
   const rsvpCategory = event.category === "news" ? null : event.category;
+
+  useEffect(() => {
+    if (event.category !== "news" || !activeStayId) return;
+    void fetch("/api/community/view", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ eventId: event.id, stayId: activeStayId }),
+    }).catch(() => {
+      // Fire-and-forget: view counting should not interrupt reading news.
+    });
+  }, [event.category, event.id, activeStayId]);
 
   async function rsvp() {
     if (!rsvpCategory) return;

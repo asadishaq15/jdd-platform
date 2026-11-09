@@ -1,6 +1,8 @@
 "use client";
 
-import { FormEvent, InputHTMLAttributes, Ref, useState } from "react";
+import { ChangeEvent, FormEvent, InputHTMLAttributes, Ref, useRef, useState } from "react";
+import { avatarHelpText, isCustomAvatarUrl } from "../../lib/avatar";
+import { deleteAvatarByUrl, uploadAvatar } from "../../lib/avatar-upload";
 import type { AccountSummary } from "../../lib/space-data";
 import { friendlyAuthError } from "../../lib/auth-errors";
 import { usePasswordVisibility } from "../../lib/password-visibility";
@@ -22,7 +24,11 @@ export default function AccountSettings({ account, onAccountChange }: {
   const passwordField = usePasswordVisibility(password, setPassword);
   const confirmationField = usePasswordVisibility(passwordConfirmation, setPasswordConfirmation);
   const [saving, setSaving] = useState(false);
+  const [photoSaving, setPhotoSaving] = useState(false);
   const [notice, setNotice] = useState<Notice>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const hasCustomPhoto = isCustomAvatarUrl(account.avatarUrl);
+  const initial = account.fullName.trim().charAt(0).toUpperCase() || "G";
 
   function openEditor(next: Exclude<Editor, null>) {
     setEditor(next);
@@ -108,8 +114,108 @@ export default function AccountSettings({ account, onAccountChange }: {
     setNotice({ kind: "success", text: "Your password has been updated." });
   }
 
+  async function persistAvatarUrl(avatarUrl: string | null) {
+    const supabase = createClient();
+    const { error: profileError } = await supabase.from("profiles").update({ avatar_url: avatarUrl }).eq("id", account.id);
+    if (profileError) return { error: "We could not update your photo. Please try again." };
+
+    const { error: metadataError } = await supabase.auth.updateUser({ data: { avatar_url: avatarUrl } });
+    if (metadataError) {
+      return { error: "Your photo was saved, but account metadata could not be synchronized." };
+    }
+    return {};
+  }
+
+  async function onPhotoSelected(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file) return;
+
+    setPhotoSaving(true);
+    setNotice(null);
+    const supabase = createClient();
+    const uploaded = await uploadAvatar({
+      supabase,
+      userId: account.id,
+      file,
+      previousUrl: account.avatarUrl,
+    });
+    if (uploaded.error || !uploaded.url) {
+      setPhotoSaving(false);
+      return setNotice({ kind: "error", text: uploaded.error || "Unable to upload photo." });
+    }
+
+    const persisted = await persistAvatarUrl(uploaded.url);
+    setPhotoSaving(false);
+    if (persisted.error) return setNotice({ kind: "error", text: persisted.error });
+
+    onAccountChange({ ...account, avatarUrl: uploaded.url });
+    setNotice({ kind: "success", text: "Your photo has been updated." });
+  }
+
+  async function removePhoto() {
+    if (!hasCustomPhoto) return;
+    setPhotoSaving(true);
+    setNotice(null);
+    const supabase = createClient();
+    await deleteAvatarByUrl(supabase, account.avatarUrl);
+    const fallback = account.providerAvatarUrl || null;
+
+    const { error: profileError } = await supabase.from("profiles").update({ avatar_url: null }).eq("id", account.id);
+    if (profileError) {
+      setPhotoSaving(false);
+      return setNotice({ kind: "error", text: "We could not remove your photo. Please try again." });
+    }
+
+    const { error: metadataError } = await supabase.auth.updateUser({ data: { avatar_url: fallback } });
+    setPhotoSaving(false);
+    if (metadataError) {
+      return setNotice({ kind: "error", text: "Your photo was removed, but account metadata could not be synchronized." });
+    }
+
+    onAccountChange({ ...account, avatarUrl: fallback });
+    setNotice({
+      kind: "success",
+      text: fallback ? "Custom photo removed. Your Google photo is showing again." : "Your photo has been removed.",
+    });
+  }
+
   return (
     <div className="account-settings">
+      <div className="account-section account-photo-section">
+        <div className="account-photo">
+          <div className="account-photo-preview" aria-hidden="true">
+            {account.avatarUrl
+              ? <img src={account.avatarUrl} alt="" referrerPolicy="no-referrer" />
+              : <span>{initial}</span>}
+          </div>
+          <div className="account-photo-actions">
+            <span className="account-photo-label">Photo</span>
+            <button
+              type="button"
+              className="account-photo-edit"
+              disabled={photoSaving}
+              onClick={() => fileInputRef.current?.click()}
+            >
+              {photoSaving ? "Saving…" : account.avatarUrl ? "Edit photo" : "Add photo"}
+            </button>
+            {hasCustomPhoto && (
+              <button type="button" className="account-photo-remove" disabled={photoSaving} onClick={removePhoto}>
+                Remove photo
+              </button>
+            )}
+            <p className="account-photo-help">{avatarHelpText()}</p>
+          </div>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/jpeg,image/png,image/webp"
+            hidden
+            onChange={onPhotoSelected}
+          />
+        </div>
+      </div>
+
       <div className="account-section">
         {editor === "name" ? <form className="account-form" onSubmit={saveName}>
           <label htmlFor="account-name">Name</label>

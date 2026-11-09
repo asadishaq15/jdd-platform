@@ -17,9 +17,10 @@ export default function RootLayout({
       <head>
         <link rel="icon" href="/assets/favicon.png" type="image/png" />
         <meta name="theme-color" content="#111110" />
+        {/* Temporary serif until licensed The Seasons is self-hosted. */}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
-        <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=Inter:wght@300;400;500&display=swap" rel="stylesheet" />
+        <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&display=swap" rel="stylesheet" />
       </head>
       <body className="night" suppressHydrationWarning>
         <script

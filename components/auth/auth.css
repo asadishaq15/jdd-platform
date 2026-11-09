@@ -32,7 +32,7 @@
   margin: 24px 0 18px;
   color: var(--muted);
   font-size: 10px;
-  letter-spacing: .2em;
+  letter-spacing: 0.04em;
   text-transform: uppercase;
 }
 
@@ -85,7 +85,7 @@
   margin: 4px 0 6px;
   color: var(--muted);
   font-size: 9.5px;
-  letter-spacing: .22em;
+  letter-spacing: 0.04em;
   text-align: center;
   text-transform: uppercase;
 }
@@ -156,9 +156,34 @@
   margin-top: 14px;
 }
 
+.authenticator-help-wrap {
+  margin: 16px 0 0;
+}
+
+.authenticator-help-trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--bg) 88%, var(--fg) 4%);
+  color: var(--fg);
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.authenticator-help-trigger[aria-expanded="true"] {
+  border-color: var(--fg);
+}
+
 .authenticator-help {
   max-width: 38ch;
-  margin: 16px 0 0;
+  margin: 10px 0 0;
   padding: 14px 16px;
   border: 1px solid var(--line);
   background: color-mix(in srgb, var(--bg) 88%, var(--fg) 4%);
@@ -170,7 +195,7 @@
   color: var(--fg);
   font-size: 11px;
   font-weight: 600;
-  letter-spacing: .06em;
+  letter-spacing: 0.04em;
   text-transform: uppercase;
 }
 

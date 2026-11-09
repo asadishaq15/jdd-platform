@@ -1,3 +1,5 @@
+@import "./fonts.css";
+
 :root {
   --neutral-0: #ffffff;
   --neutral-1: #f4f4f2;
@@ -19,8 +21,9 @@
   --copper-star: radial-gradient(circle at 40% 40%, #fff0da 0%, #f0c79b 40%, #e6b98a 75%, #d6a06d 100%);
   --ease-lux: cubic-bezier(0.22, 1, 0.36, 1);
   --ease-line: cubic-bezier(0.5, 0, 0.2, 1);
+  /* Temporary heading font until licensed The Seasons Regular/Italic is added. */
   --serif: "Cormorant Garamond", Georgia, serif;
-  --sans: Inter, "Helvetica Neue", Arial, sans-serif;
+  --sans: "Helvetica Neue", Helvetica, Arial, sans-serif;
   --bg: var(--neutral-1);
   --fg: var(--neutral-7);
   --muted: var(--muted-grey);
@@ -62,7 +65,7 @@ body.night .cu { background: var(--copper-gradient-light); background-clip: text
 .title { font-family: var(--serif); font-weight: 300; font-size: clamp(30px, 8vw, 38px); line-height: 1.14; margin: 0; text-wrap: balance; }
 .body { font-size: 14.5px; line-height: 1.7; color: var(--muted); margin: 0 auto; }
 body.night .body { color: var(--warm-white); opacity: .78; }
-.eyebrow { font-size: 11px; letter-spacing: .24em; text-transform: uppercase; color: var(--muted); margin: 0 0 18px; }
+.eyebrow { font-size: 11px; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); margin: 0 0 18px; }
 
 .tlink {
   position: relative;
@@ -124,12 +127,12 @@ body.night .theme .sunic { display: block; }
 .btn:hover { border-color: var(--copper-light); }
 .btn:active { transform: scale(.995); }
 body.night .btn { border-color: rgba(233, 228, 217, .2); }
-.btn.primary { height: 48px; margin-top: 22px; background: transparent; border-color: rgba(17, 17, 16, .7); font-size: 10.5px; font-weight: 400; letter-spacing: .3em; text-transform: uppercase; }
+.btn.primary { height: 48px; margin-top: 22px; background: transparent; border-color: rgba(17, 17, 16, .7); font-size: 10.5px; font-weight: 400; letter-spacing: 0.04em; text-transform: uppercase; }
 body.night .btn.primary { border-color: rgba(233, 228, 217, .6); }
 .btn.primary:hover { border-color: var(--copper); color: var(--copper-dark); }
 
 .field { position: relative; text-align: center; }
-.field label { display: block; font-size: 10.5px; letter-spacing: .24em; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; }
+.field label { display: block; font-size: 10.5px; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; }
 .field input { width: 100%; height: 44px; border: 0; border-bottom: 1px solid rgba(17, 17, 16, .25); background: transparent; padding: 0 2px; font-size: 16px; font-weight: 300; text-align: center; outline: none; border-radius: 0; transition: border-color .4s var(--ease-lux); }
 body.night .field input { border-bottom-color: rgba(255, 255, 255, .3); }
 body.night input:-webkit-autofill,

@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import SpaceEntry from "../../components/space/SpaceEntry";
+import { resolveProviderAvatarUrl } from "../../lib/avatar";
 import type { CardOrder, CommunityCircleEvent, ConnectedStay } from "../../lib/space-data";
 import { createClient } from "../../lib/supabase/server";
 import "../../components/discovery/discovery.css";
@@ -76,7 +77,7 @@ export default async function SpacePage({ searchParams }: SpacePageProps) {
     const [{ data: eventRows }, { data: rsvpRows }] = await Promise.all([
       supabase
         .from("community_events")
-        .select("id, property_id, category, title, timing, body, thumbnail_url")
+        .select("id, property_id, category, title, timing, body, thumbnail_url, visible_from, visible_until")
         .in("property_id", propertyIds)
         .eq("is_published", true),
       supabase
@@ -85,6 +86,7 @@ export default async function SpacePage({ searchParams }: SpacePageProps) {
         .eq("guest_id", userData.user.id),
     ]);
 
+    const now = Date.now();
     circleEvents = ((eventRows || []) as Array<{
       id: string;
       property_id: string;
@@ -93,15 +95,26 @@ export default async function SpacePage({ searchParams }: SpacePageProps) {
       timing: string;
       body: string;
       thumbnail_url: string | null;
-    }>).map((row) => ({
-      id: row.id,
-      propertyId: row.property_id,
-      category: row.category,
-      title: row.title,
-      timing: row.timing,
-      body: row.body,
-      thumbnailUrl: row.thumbnail_url,
-    }));
+      visible_from: string | null;
+      visible_until: string | null;
+    }>)
+      .filter((row) => {
+        if (row.category !== "news") return true;
+        if (!row.visible_from || !row.visible_until) return false;
+        const from = Date.parse(row.visible_from);
+        const until = Date.parse(row.visible_until);
+        if (Number.isNaN(from) || Number.isNaN(until)) return false;
+        return now >= from && now < until;
+      })
+      .map((row) => ({
+        id: row.id,
+        propertyId: row.property_id,
+        category: row.category,
+        title: row.title,
+        timing: row.timing,
+        body: row.body,
+        thumbnailUrl: row.thumbnail_url,
+      }));
 
     const rsvpEventIds = new Set((rsvpRows || []).map((row: { event_id: string }) => row.event_id));
     for (const event of circleEvents) {
@@ -134,6 +147,9 @@ export default async function SpacePage({ searchParams }: SpacePageProps) {
     createdAt: order.created_at,
   }));
 
+  const providerAvatarUrl = resolveProviderAvatarUrl(userData.user.user_metadata);
+  const avatarUrl = profile?.avatar_url || providerAvatarUrl || null;
+
   return (
     <SpaceEntry
       account={{
@@ -144,7 +160,8 @@ export default async function SpacePage({ searchParams }: SpacePageProps) {
           || "Guest",
         email: userData.user.email || "",
         pendingEmail: userData.user.new_email || undefined,
-        avatarUrl: profile?.avatar_url || userData.user.user_metadata.avatar_url || null,
+        avatarUrl,
+        providerAvatarUrl,
       }}
       stays={stays}
       activeStayId={activeStayId}

@@ -46,7 +46,8 @@ export default async function AdminCommunityPage({ searchParams }: CommunityPage
           <h1>Community</h1>
           <p>
             Manage one Event, one Guest invitation, and one News item per property.
-            Event and News appear for all activated guests when published.
+            Event appears for all activated guests when published.
+            News is shown to activated guests only between its Show from and Show until times.
             Guest invitation is private—only invited guests see it in Space.
           </p>
         </div>
@@ -131,7 +132,9 @@ function slotCell(event: CommunityEventView | undefined) {
   if (!event) return <span className="admin-muted">Empty</span>;
   const counts = event.category === "invite"
     ? `${event.inviteeCount} invited · ${event.acceptedCount} accepted`
-    : `${event.rsvpCount} RSVP${event.rsvpCount === 1 ? "" : "s"}`;
+    : event.category === "news"
+      ? `${event.viewCount} view${event.viewCount === 1 ? "" : "s"}`
+      : `${event.rsvpCount} RSVP${event.rsvpCount === 1 ? "" : "s"}`;
   return (
     <>
       <strong>{event.title}</strong>

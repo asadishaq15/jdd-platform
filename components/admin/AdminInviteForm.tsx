@@ -28,7 +28,7 @@ export default function AdminInviteForm({ properties }: { properties: AdminPrope
             <option value="">Choose State</option>
             {states.map((property) => (
               <option value={property.id} key={property.id}>
-                {getWorld(property.worldNumber).state} — {property.name}
+                {getWorld(property.worldNumber).state}
               </option>
             ))}
           </select>

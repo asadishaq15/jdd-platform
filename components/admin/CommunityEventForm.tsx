@@ -3,6 +3,7 @@
 import { FormEvent, useActionState, useEffect, useState } from "react";
 import {
   deleteCommunityEvent,
+  newsVisibilityStatus,
   upsertCommunityEvent,
   type CommunityEventActionState,
   type CommunityEventCategory,
@@ -32,6 +33,28 @@ const CATEGORY_HINTS: Record<CommunityEventCategory, string> = {
 
 const ACCEPT = COMMUNITY_THUMBNAIL_TYPES.join(",");
 
+function toDatetimeLocalValue(iso: string | null | undefined): string {
+  if (!iso) return "";
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return "";
+  const pad = (value: number) => String(value).padStart(2, "0");
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+}
+
+function statusLabel(event: CommunityEventView | null, category: CommunityEventCategory) {
+  if (!event) return { text: "Empty", tone: "neutral" as const };
+  if (category === "news") {
+    const status = newsVisibilityStatus(event);
+    if (status === "scheduled") return { text: "Scheduled", tone: "pending" as const };
+    if (status === "expired") return { text: "Expired", tone: "expired" as const };
+    if (status === "live") return { text: "Published", tone: "success" as const };
+    return { text: "Draft", tone: "pending" as const };
+  }
+  return event.isPublished
+    ? { text: "Published", tone: "success" as const }
+    : { text: "Draft", tone: "pending" as const };
+}
+
 export default function CommunityEventForm({
   propertyId,
   category,
@@ -55,6 +78,7 @@ export default function CommunityEventForm({
   const [thumbnailError, setThumbnailError] = useState("");
   const [fileInputKey, setFileInputKey] = useState(0);
   const [inviteModalOpen, setInviteModalOpen] = useState(false);
+  const status = statusLabel(event, category);
 
   useEffect(() => {
     return () => {
@@ -117,14 +141,22 @@ export default function CommunityEventForm({
           <p>{CATEGORY_HINTS[category]}</p>
         </div>
         <div className="admin-community-status">
-          <span className={`admin-status ${event ? (event.isPublished ? "success" : "pending") : "neutral"}`}>
-            {event ? (event.isPublished ? "Published" : "Draft") : "Empty"}
-          </span>
-          {event && (
+          <span className={`admin-status ${status.tone}`}>{status.text}</span>
+          {event && category !== "news" && (
             <small className="admin-muted">
               {category === "invite"
                 ? `${event.inviteeCount} invited · ${event.acceptedCount} accepted`
                 : `${event.rsvpCount} RSVP${event.rsvpCount === 1 ? "" : "s"}`}
+            </small>
+          )}
+          {event && category === "news" && (
+            <small className="admin-muted">
+              {event.viewCount} view{event.viewCount === 1 ? "" : "s"}
+            </small>
+          )}
+          {event && category === "news" && event.visibleFrom && event.visibleUntil && (
+            <small className="admin-muted">
+              Guests: {new Date(event.visibleFrom).toLocaleString()} → {new Date(event.visibleUntil).toLocaleString()}
             </small>
           )}
         </div>
@@ -156,6 +188,27 @@ export default function CommunityEventForm({
                 maxLength={120}
               />
             </label>
+            {category === "news" && (
+              <div className="admin-community-window">
+                <p className="admin-muted">Guests only see this news between these times. You can schedule it ahead.</p>
+                <label>
+                  <span>Show from</span>
+                  <input
+                    type="datetime-local"
+                    name="visibleFrom"
+                    defaultValue={toDatetimeLocalValue(event?.visibleFrom)}
+                  />
+                </label>
+                <label>
+                  <span>Show until</span>
+                  <input
+                    type="datetime-local"
+                    name="visibleUntil"
+                    defaultValue={toDatetimeLocalValue(event?.visibleUntil)}
+                  />
+                </label>
+              </div>
+            )}
             <label className="admin-community-body">
               <span>Description</span>
               <textarea
@@ -234,6 +287,11 @@ export default function CommunityEventForm({
               )}
               <p><strong>{event.title}</strong></p>
               <p className="admin-muted">{event.timing}</p>
+              {category === "news" && event.visibleFrom && event.visibleUntil && (
+                <p className="admin-muted">
+                  Guests: {new Date(event.visibleFrom).toLocaleString()} → {new Date(event.visibleUntil).toLocaleString()}
+                </p>
+              )}
               <p>{event.body}</p>
             </>
           ) : (

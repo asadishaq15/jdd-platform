@@ -4,6 +4,8 @@ export type AccountSummary = {
   email: string;
   pendingEmail?: string;
   avatarUrl: string | null;
+  /** Google (or other OAuth) photo URL used when no custom upload is set. */
+  providerAvatarUrl?: string | null;
 };
 
 export type ConnectedStay = {

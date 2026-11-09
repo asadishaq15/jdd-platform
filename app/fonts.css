@@ -1,0 +1,48 @@
+/* Brand UI font — Helvetica Neue (Used_In_Design weights only). */
+@font-face {
+  font-family: "Helvetica Neue";
+  src: url("/fonts/helvetica-neue/HelveticaNeue-Light.otf") format("opentype");
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Helvetica Neue";
+  src: url("/fonts/helvetica-neue/HelveticaNeueLightItalic.ttf") format("truetype");
+  font-weight: 300;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Helvetica Neue";
+  src: url("/fonts/helvetica-neue/HelveticaNeue-Roman.otf") format("opentype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Helvetica Neue";
+  src: url("/fonts/helvetica-neue/HelveticaNeueItalic.ttf") format("truetype");
+  font-weight: 400;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Helvetica Neue";
+  src: url("/fonts/helvetica-neue/HelveticaNeue-Medium.otf") format("opentype");
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+/*
+  The Seasons (licensed Regular + Italic only) — add @font-face here when
+  WOFF2 files are placed in /public/fonts/the-seasons/, then set:
+  --serif: "The Seasons", Georgia, serif;
+  and remove the Cormorant Garamond Google Fonts link from app/layout.tsx.
+  Do not use DEMO files from assets/03_Fonts/The_Seasons_DEMO_Not_For_Production/.
+*/

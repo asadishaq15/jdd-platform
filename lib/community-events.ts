@@ -25,11 +25,42 @@ export type CommunityEventView = {
   body: string;
   thumbnailUrl: string | null;
   isPublished: boolean;
+  visibleFrom: string | null;
+  visibleUntil: string | null;
   updatedAt: string;
   rsvpCount: number;
+  viewCount: number;
   inviteeCount: number;
   acceptedCount: number;
 };
+
+export type NewsVisibilityStatus = "draft" | "scheduled" | "live" | "expired" | "empty";
+
+export function newsVisibilityStatus(event: CommunityEventView | null, now = Date.now()): NewsVisibilityStatus {
+  if (!event) return "empty";
+  if (!event.isPublished) return "draft";
+  if (event.category !== "news") return "live";
+  if (!event.visibleFrom || !event.visibleUntil) return "draft";
+  const from = Date.parse(event.visibleFrom);
+  const until = Date.parse(event.visibleUntil);
+  if (Number.isNaN(from) || Number.isNaN(until)) return "draft";
+  if (now < from) return "scheduled";
+  if (now >= until) return "expired";
+  return "live";
+}
+
+export function isNewsVisibleNow(input: {
+  category: CommunityEventCategory | string;
+  visibleFrom?: string | null;
+  visibleUntil?: string | null;
+}, now = Date.now()): boolean {
+  if (input.category !== "news") return true;
+  if (!input.visibleFrom || !input.visibleUntil) return false;
+  const from = Date.parse(input.visibleFrom);
+  const until = Date.parse(input.visibleUntil);
+  if (Number.isNaN(from) || Number.isNaN(until)) return false;
+  return now >= from && now < until;
+}
 
 export type CommunityPropertyBoard = {
   property: AdminProperty;
@@ -54,6 +85,8 @@ type CommunityEventRow = {
   body: string;
   thumbnail_url: string | null;
   is_published: boolean;
+  visible_from: string | null;
+  visible_until: string | null;
   updated_at: string;
 };
 
@@ -66,6 +99,7 @@ function mapEvent(
   rsvpCount = 0,
   inviteeCount = 0,
   acceptedCount = 0,
+  viewCount = 0,
 ): CommunityEventView {
   return {
     id: row.id,
@@ -76,11 +110,23 @@ function mapEvent(
     body: row.body,
     thumbnailUrl: row.thumbnail_url,
     isPublished: row.is_published,
+    visibleFrom: row.visible_from,
+    visibleUntil: row.visible_until,
     updatedAt: row.updated_at,
     rsvpCount,
+    viewCount,
     inviteeCount,
     acceptedCount,
   };
+}
+
+/** Parse datetime-local / ISO form values into an ISO timestamptz string. */
+function parseVisibilityInput(value: string): string | null {
+  const raw = value.trim();
+  if (!raw) return null;
+  const parsed = Date.parse(raw);
+  if (Number.isNaN(parsed)) return null;
+  return new Date(parsed).toISOString();
 }
 
 function canManageCommunity(context: AdminContext, propertyId: string) {
@@ -111,7 +157,7 @@ export async function loadCommunityBoards(
   const admin = createAdminClient();
   const { data, error } = await admin
     .from("community_events")
-    .select("id, property_id, category, title, timing, body, thumbnail_url, is_published, updated_at")
+    .select("id, property_id, category, title, timing, body, thumbnail_url, is_published, visible_from, visible_until, updated_at")
     .in("property_id", propertyIds)
     .order("updated_at", { ascending: false });
 
@@ -120,16 +166,23 @@ export async function loadCommunityBoards(
   const rows = (data || []) as CommunityEventRow[];
   const eventIds = rows.map((row) => row.id);
   const rsvpCounts = new Map<string, number>();
+  const viewCounts = new Map<string, number>();
   const inviteeCounts = new Map<string, number>();
   const acceptedCounts = new Map<string, number>();
 
   if (eventIds.length) {
-    const [{ data: rsvpRows, error: rsvpError }, { data: inviteeRows, error: inviteeError }] = await Promise.all([
+    const [
+      { data: rsvpRows, error: rsvpError },
+      { data: inviteeRows, error: inviteeError },
+      { data: viewRows, error: viewError },
+    ] = await Promise.all([
       admin.from("community_event_rsvps").select("event_id, guest_id").in("event_id", eventIds),
       admin.from("community_event_invitees").select("event_id, guest_id").in("event_id", eventIds),
+      admin.from("community_event_views").select("event_id").in("event_id", eventIds),
     ]);
     if (rsvpError) throw new Error(`Unable to load community RSVPs: ${rsvpError.message}`);
     if (inviteeError) throw new Error(`Unable to load community invitees: ${inviteeError.message}`);
+    if (viewError) throw new Error(`Unable to load community news views: ${viewError.message}`);
 
     const inviteesByEvent = new Map<string, Set<string>>();
     for (const row of inviteeRows || []) {
@@ -149,6 +202,11 @@ export async function loadCommunityBoards(
         acceptedCounts.set(eventId, (acceptedCounts.get(eventId) || 0) + 1);
       }
     }
+
+    for (const row of viewRows || []) {
+      const eventId = String((row as { event_id: string }).event_id);
+      viewCounts.set(eventId, (viewCounts.get(eventId) || 0) + 1);
+    }
   }
 
   const byProperty = new Map<string, Partial<Record<CommunityEventCategory, CommunityEventView>>>();
@@ -159,6 +217,7 @@ export async function loadCommunityBoards(
       rsvpCounts.get(row.id) || 0,
       inviteeCounts.get(row.id) || 0,
       acceptedCounts.get(row.id) || 0,
+      viewCounts.get(row.id) || 0,
     );
     byProperty.set(row.property_id, bucket);
   }
@@ -195,6 +254,29 @@ export async function upsertCommunityEvent(
   if (timing.length < 1 || timing.length > 120) return { error: "Enter timing or schedule text." };
   if (body.length < 1 || body.length > 2000) return { error: "Body must be between 1 and 2000 characters." };
 
+  let visibleFrom: string | null = null;
+  let visibleUntil: string | null = null;
+  if (categoryRaw === "news") {
+    const fromRaw = String(formData.get("visibleFrom") || "");
+    const untilRaw = String(formData.get("visibleUntil") || "");
+    visibleFrom = parseVisibilityInput(fromRaw);
+    visibleUntil = parseVisibilityInput(untilRaw);
+
+    if (isPublished) {
+      if (!visibleFrom || !visibleUntil) {
+        return { error: "Set Show from and Show until so guests know when this news appears." };
+      }
+    } else if ((fromRaw.trim() && !visibleFrom) || (untilRaw.trim() && !visibleUntil)) {
+      return { error: "Enter valid Show from and Show until date and times." };
+    } else if ((visibleFrom && !visibleUntil) || (!visibleFrom && visibleUntil)) {
+      return { error: "Provide both Show from and Show until, or leave both empty for a draft." };
+    }
+
+    if (visibleFrom && visibleUntil && Date.parse(visibleUntil) <= Date.parse(visibleFrom)) {
+      return { error: "Show until must be after Show from." };
+    }
+  }
+
   const admin = createAdminClient();
   const { data: existing, error: loadError } = await admin
     .from("community_events")
@@ -222,17 +304,21 @@ export async function upsertCommunityEvent(
     thumbnailUrl = null;
   }
 
+  const payload = {
+    title,
+    timing,
+    body,
+    thumbnail_url: thumbnailUrl,
+    is_published: isPublished,
+    visible_from: visibleFrom,
+    visible_until: visibleUntil,
+  };
+
   let eventId = existing?.id as string | undefined;
   if (existing) {
     const { error } = await admin
       .from("community_events")
-      .update({
-        title,
-        timing,
-        body,
-        thumbnail_url: thumbnailUrl,
-        is_published: isPublished,
-      })
+      .update(payload)
       .eq("id", existing.id);
     if (error) return { error: error.message || "Unable to update community event." };
   } else {
@@ -241,11 +327,7 @@ export async function upsertCommunityEvent(
       .insert({
         property_id: propertyId,
         category: categoryRaw,
-        title,
-        timing,
-        body,
-        thumbnail_url: thumbnailUrl,
-        is_published: isPublished,
+        ...payload,
         created_by: context.user.id,
       })
       .select("id")
@@ -259,7 +341,12 @@ export async function upsertCommunityEvent(
     resourceType: "community_event",
     resourceId: eventId,
     propertyId,
-    metadata: { category: categoryRaw, is_published: isPublished },
+    metadata: {
+      category: categoryRaw,
+      is_published: isPublished,
+      visible_from: visibleFrom,
+      visible_until: visibleUntil,
+    },
   });
 
   revalidatePath("/admin/community");
