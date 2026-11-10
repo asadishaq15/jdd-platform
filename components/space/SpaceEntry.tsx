@@ -134,10 +134,19 @@ export default function SpaceEntry({
           <section className="space-view" aria-label="My Space">
             <div className="calm">
               <div className="calm-head reveal in">
-                <svg className="emblem" viewBox="0 0 140 140" aria-hidden="true">
-                  <circle className="em-c" cx="70" cy="70" r="66" pathLength="1" />
-                  <path className="em-t" d="M70 36 L99 90 L41 90 Z" pathLength="1" />
-                </svg>
+                {account.avatarUrl ? (
+                  <img
+                    className="calm-photo"
+                    src={account.avatarUrl}
+                    alt=""
+                    referrerPolicy="no-referrer"
+                  />
+                ) : (
+                  <svg className="emblem" viewBox="0 0 140 140" aria-hidden="true">
+                    <circle className="em-c" cx="70" cy="70" r="66" pathLength="1" />
+                    <path className="em-t" d="M70 36 L99 90 L41 90 Z" pathLength="1" />
+                  </svg>
+                )}
                 {guest && <p className="calm-status">Guest access · {world.property}</p>}
                 <h1 className="calm-name">{account.fullName}</h1>
                 <Link className="calm-world" href="/discover?mode=dash" aria-label="Open your hospitality world">

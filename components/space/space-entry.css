@@ -118,6 +118,13 @@ body.night .space-entry .pmenu { background: rgba(30,30,29,.95); }
 .space-view { width: 100%; max-width: 1080px; }
 .calm { padding: 24px 0 10px; text-align: center; }
 .calm-head { display: flex; flex-direction: column; align-items: center; }
+.calm-photo {
+  display: block;
+  width: 112px;
+  height: 112px;
+  border-radius: 50%;
+  object-fit: cover;
+}
 .emblem { width: 112px; height: 112px; overflow: visible; }
 .emblem .em-c,
 .emblem .em-t {
