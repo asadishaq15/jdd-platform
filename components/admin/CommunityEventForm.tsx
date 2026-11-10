@@ -3,12 +3,12 @@
 import { FormEvent, useActionState, useEffect, useState } from "react";
 import {
   deleteCommunityEvent,
-  newsVisibilityStatus,
   upsertCommunityEvent,
   type CommunityEventActionState,
   type CommunityEventCategory,
   type CommunityEventView,
 } from "../../lib/community-events";
+import { newsVisibilityStatus } from "../../lib/community-news-visibility";
 import type { EventInviteeView, InviteCandidate } from "../../lib/community-invitees";
 import {
   assertCommunityThumbnail,

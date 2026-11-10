@@ -39,10 +39,35 @@
   font-display: swap;
 }
 
-/*
-  The Seasons (licensed Regular + Italic only) — add @font-face here when
-  WOFF2 files are placed in /public/fonts/the-seasons/, then set:
-  --serif: "The Seasons", Georgia, serif;
-  and remove the Cormorant Garamond Google Fonts link from app/layout.tsx.
-  Do not use DEMO files from assets/03_Fonts/The_Seasons_DEMO_Not_For_Production/.
-*/
+/* Brand serif — Cormorant Garamond (Light + Regular, normal/italic). */
+@font-face {
+  font-family: "Cormorant Garamond";
+  src: url("/fonts/cormorant-garamond/CormorantGaramond-Light.ttf") format("truetype");
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Cormorant Garamond";
+  src: url("/fonts/cormorant-garamond/CormorantGaramond-LightItalic.ttf") format("truetype");
+  font-weight: 300;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Cormorant Garamond";
+  src: url("/fonts/cormorant-garamond/CormorantGaramond-Regular.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Cormorant Garamond";
+  src: url("/fonts/cormorant-garamond/CormorantGaramond-Italic.ttf") format("truetype");
+  font-weight: 400;
+  font-style: italic;
+  font-display: swap;
+}

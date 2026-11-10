@@ -21,7 +21,6 @@
   --copper-star: radial-gradient(circle at 40% 40%, #fff0da 0%, #f0c79b 40%, #e6b98a 75%, #d6a06d 100%);
   --ease-lux: cubic-bezier(0.22, 1, 0.36, 1);
   --ease-line: cubic-bezier(0.5, 0, 0.2, 1);
-  /* Temporary heading font until licensed The Seasons Regular/Italic is added. */
   --serif: "Cormorant Garamond", Georgia, serif;
   --sans: "Helvetica Neue", Helvetica, Arial, sans-serif;
   --bg: var(--neutral-1);
