@@ -2,6 +2,8 @@ export type SpaceState = {
   recommended?: number;
   chosen?: number;
   visited?: number;
+  /** ISO date `YYYY-MM-DD` captured during discovery DOB step. */
+  dateOfBirth?: string;
   code?: string;
   intention?: string;
   becoming?: string;

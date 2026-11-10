@@ -6,6 +6,7 @@ import BrandMark from "../brand/BrandMark";
 import GradientDefs from "../layout/GradientDefs";
 import ThemeToggle from "../layout/ThemeToggle";
 import { demoCodes, getWorld, HospitalityWorld, normalizeAccessCode, numberFromDob, worldDetails, worlds } from "../../lib/worlds";
+import { formatDateOfBirth } from "../../lib/zodiac";
 import { loadSpaceState, saveSpaceState, SpaceState } from "../../lib/space-state";
 import { createClient } from "../../lib/supabase/client";
 import { trackProductEvent } from "../../lib/product-events";
@@ -25,10 +26,18 @@ async function persistDiscoveryProfile(state: SpaceState) {
       recommended_world_number: state.recommended || null,
       chosen_world_number: chosenWorld || null,
       discovery_completed_at: new Date().toISOString(),
+      ...(state.dateOfBirth ? { date_of_birth: state.dateOfBirth } : {}),
     })
     .eq("id", userData.user.id);
 
   return profileError ? "We could not save your discovery. Please try again." : null;
+}
+
+async function persistDateOfBirth(dateOfBirth: string) {
+  const supabase = createClient();
+  const { data: userData, error: userError } = await supabase.auth.getUser();
+  if (userError || !userData.user) return;
+  await supabase.from("profiles").update({ date_of_birth: dateOfBirth }).eq("id", userData.user.id);
 }
 
 export default function DiscoveryFlow() {
@@ -98,7 +107,13 @@ export default function DiscoveryFlow() {
       return;
     }
     const recommended = numberFromDob(day, month, year);
-    setState((value) => ({ ...value, recommended }));
+    const dateOfBirth = formatDateOfBirth(day, month, year);
+    setState((value) => {
+      const next = { ...value, recommended, dateOfBirth };
+      saveSpaceState(next);
+      return next;
+    });
+    void persistDateOfBirth(dateOfBirth);
     setError("");
     go("result");
   }

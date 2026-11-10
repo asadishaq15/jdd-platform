@@ -14,6 +14,7 @@ import { loadSpaceState, saveSpaceState, SpaceState } from "../../lib/space-stat
 import type { AccountSummary, CardOrder, CommunityCircleEvent, ConnectedStay } from "../../lib/space-data";
 import { createClient } from "../../lib/supabase/client";
 import { trackProductEvent } from "../../lib/product-events";
+import { zodiacFromDateOfBirth } from "../../lib/zodiac";
 
 type ProfileMenu = "account" | "orders" | "stays" | "events" | "reminders" | "legal" | "delete" | null;
 type Flow = "order" | "ritual" | "oil" | "action" | "circle" | "delete" | null;
@@ -42,7 +43,7 @@ type SpaceEntryProps = {
   initialOrders?: CardOrder[];
   circleEvents?: CommunityCircleEvent[];
   initialRsvps?: Record<string, boolean>;
-  initialState?: Pick<SpaceState, "recommended" | "chosen">;
+  initialState?: Pick<SpaceState, "recommended" | "chosen" | "dateOfBirth">;
 };
 
 export default function SpaceEntry({
@@ -69,6 +70,7 @@ export default function SpaceEntry({
       ...loaded,
       ...(initialState.recommended ? { recommended: initialState.recommended } : {}),
       ...(initialState.chosen ? { chosen: initialState.chosen } : {}),
+      ...(initialState.dateOfBirth ? { dateOfBirth: initialState.dateOfBirth } : {}),
       rsvps: { ...(loaded.rsvps || {}), ...initialRsvps },
     };
     const latestOrder = initialOrders[0];
@@ -79,7 +81,7 @@ export default function SpaceEntry({
     const next = connectedStay ? { ...synced, ...persistedOrder, visited: connectedStay.property.worldNumber } : { ...synced, ...persistedOrder };
     setState(next);
     saveSpaceState(next);
-  }, [connectedStay, initialOrders, initialRsvps, initialState.chosen, initialState.recommended]);
+  }, [connectedStay, initialOrders, initialRsvps, initialState.chosen, initialState.dateOfBirth, initialState.recommended]);
 
   const activeNumber = connectedStay?.property.worldNumber || state.visited || state.chosen || state.recommended || 9;
   const baseWorld = getWorld(activeNumber);
@@ -88,6 +90,7 @@ export default function SpaceEntry({
     : baseWorld;
   const guest = Boolean(connectedStay || (state.visited && state.code));
   const guestName = connectedStay?.guestName || account.fullName;
+  const zodiac = zodiacFromDateOfBirth(account.dateOfBirth || state.dateOfBirth);
   const ritualActive = Boolean(guest || state.cardStatus === "received");
   const activeCircleEvent = flow === "circle" && circleDetail
     ? circleEvents.find((item) => item.id === circleDetail) || null
@@ -149,6 +152,13 @@ export default function SpaceEntry({
                 )}
                 {guest && <p className="calm-status">Guest access · {world.property}</p>}
                 <h1 className="calm-name">{account.fullName}</h1>
+                {zodiac && (
+                  <p className="calm-zodiac">
+                    <span>Zodiac</span>
+                    <span className="sep">·</span>
+                    <em className="cu">{zodiac}</em>
+                  </p>
+                )}
                 <Link className="calm-world" href="/discover?mode=dash" aria-label="Open your hospitality world">
                   <span className="calm-state"><span>State</span><span className="sep">·</span><em className="cu">{world.state}</em></span>
                 </Link>
