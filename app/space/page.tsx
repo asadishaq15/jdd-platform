@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import SpaceEntry from "../../components/space/SpaceEntry";
+import SpaceApp from "../../components/space/SpaceApp";
 import { resolveProviderAvatarUrl } from "../../lib/avatar";
 import type { CardOrder, CommunityCircleEvent, ConnectedStay } from "../../lib/space-data";
 import { createClient } from "../../lib/supabase/server";
@@ -34,7 +34,7 @@ export default async function SpacePage({ searchParams }: SpacePageProps) {
   const [{ data: profile }, { data: stayRows }, { data: orderRows }] = await Promise.all([
     supabase
       .from("profiles")
-      .select("full_name, avatar_url, recommended_world_number, chosen_world_number, date_of_birth")
+      .select("full_name, avatar_url, recommended_world_number, chosen_world_number, date_of_birth, based_in")
       .eq("id", userData.user.id)
       .maybeSingle(),
     supabase
@@ -151,7 +151,7 @@ export default async function SpacePage({ searchParams }: SpacePageProps) {
   const avatarUrl = profile?.avatar_url || providerAvatarUrl || null;
 
   return (
-    <SpaceEntry
+    <SpaceApp
       account={{
         id: userData.user.id,
         fullName: profile?.full_name
@@ -163,6 +163,7 @@ export default async function SpacePage({ searchParams }: SpacePageProps) {
         avatarUrl,
         providerAvatarUrl,
         dateOfBirth: profile?.date_of_birth || null,
+        basedIn: profile?.based_in || null,
       }}
       stays={stays}
       activeStayId={activeStayId}

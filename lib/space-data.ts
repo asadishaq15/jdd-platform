@@ -8,6 +8,8 @@ export type AccountSummary = {
   providerAvatarUrl?: string | null;
   /** ISO date `YYYY-MM-DD` from discovery; used for zodiac in Space. */
   dateOfBirth?: string | null;
+  /** Optional location label for New Space identity (“Based in”). */
+  basedIn?: string | null;
 };
 
 export type ConnectedStay = {

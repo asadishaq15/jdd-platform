@@ -27,14 +27,44 @@
   line-height: 1;
   white-space: nowrap;
 }
-.space-entry .dash-top > .theme {
+.space-entry .dash-controls {
+  display: flex;
   grid-column: 3;
   grid-row: 1;
   justify-self: end;
   align-self: center;
-  min-height: 34px;
+  align-items: center;
+  gap: 8px;
   margin-right: 50px;
 }
+.space-entry .dash-controls .theme {
+  min-height: 34px;
+  margin: 0;
+}
+.space-ui-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 28px;
+  padding: 4px 10px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--muted);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+.space-ui-toggle:hover {
+  color: var(--fg);
+  border-color: #d6a06d;
+}
+.space-ui-toggle[aria-pressed="true"] {
+  color: var(--fg);
+  border-color: rgba(197, 132, 82, 0.55);
+}
+.space-ui-toggle-label { line-height: 1; }
 .space-entry .pmenu-wrap {
   position: relative;
   display: flex;
@@ -580,7 +610,7 @@ body.night .jm-in { border-color: rgba(255,255,255,.08); background: rgba(30,30,
 
 @media (max-width: 620px) {
   .space-entry .dash-top { padding-right: 18px; padding-left: 18px; }
-  .space-entry .dash-top > .theme { margin-right: 44px; }
+  .space-entry .dash-controls { margin-right: 44px; }
   .space-entry .dash-title { display: none; }
   .space-entry .dash-brand { gap: 0; }
   .space-entry .dash-logo { height: 26px; }

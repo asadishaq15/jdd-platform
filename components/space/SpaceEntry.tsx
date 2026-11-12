@@ -9,9 +9,11 @@ import ThemeToggle from "../layout/ThemeToggle";
 import AccountSettings from "./AccountSettings";
 import DeleteAccountDialog from "./DeleteAccountDialog";
 import GuestFeedbackCard from "./GuestFeedbackCard";
+import SpaceUiToggle from "./SpaceUiToggle";
 import { getWorld, HospitalityWorld, worldDetails } from "../../lib/worlds";
 import { loadSpaceState, saveSpaceState, SpaceState } from "../../lib/space-state";
 import type { AccountSummary, CardOrder, CommunityCircleEvent, ConnectedStay } from "../../lib/space-data";
+import type { SpaceUiVersion } from "../../lib/space-ui-version";
 import { createClient } from "../../lib/supabase/client";
 import { trackProductEvent } from "../../lib/product-events";
 import { zodiacFromDateOfBirth } from "../../lib/zodiac";
@@ -36,7 +38,7 @@ const CATEGORY_DONE: Record<"event" | "invite", string> = {
   invite: "Invitation accepted",
 };
 
-type SpaceEntryProps = {
+export type SpaceEntryProps = {
   account: AccountSummary;
   stays: ConnectedStay[];
   activeStayId?: string;
@@ -44,6 +46,8 @@ type SpaceEntryProps = {
   circleEvents?: CommunityCircleEvent[];
   initialRsvps?: Record<string, boolean>;
   initialState?: Pick<SpaceState, "recommended" | "chosen" | "dateOfBirth">;
+  uiVersion?: SpaceUiVersion;
+  onUiVersionChange?: (version: SpaceUiVersion) => void;
 };
 
 export default function SpaceEntry({
@@ -54,6 +58,8 @@ export default function SpaceEntry({
   circleEvents = [],
   initialRsvps = {},
   initialState = {},
+  uiVersion = "classic",
+  onUiVersionChange,
 }: SpaceEntryProps) {
   const [account, setAccount] = useState(initialAccount);
   const [state, setState] = useState<SpaceState>({});
@@ -115,6 +121,8 @@ export default function SpaceEntry({
         account={account}
         guest={guest}
         menuOpen={menuOpen}
+        uiVersion={uiVersion}
+        onUiVersionChange={onUiVersionChange}
         onToggleMenu={() => setMenuOpen((value) => !value)}
         onOpenModal={(next) => {
           setModal(next);
@@ -228,10 +236,12 @@ export default function SpaceEntry({
   );
 }
 
-function DashboardHeader({ account, guest, menuOpen, onToggleMenu, onOpenModal, onSignOut }: {
+function DashboardHeader({ account, guest, menuOpen, uiVersion, onUiVersionChange, onToggleMenu, onOpenModal, onSignOut }: {
   account: AccountSummary;
   guest: boolean;
   menuOpen: boolean;
+  uiVersion: SpaceUiVersion;
+  onUiVersionChange?: (version: SpaceUiVersion) => void;
   onToggleMenu: () => void;
   onOpenModal: (modal: Exclude<ProfileMenu, null>) => void;
   onSignOut: () => void;
@@ -242,7 +252,12 @@ function DashboardHeader({ account, guest, menuOpen, onToggleMenu, onOpenModal, 
     <header className="top dash-top">
       <span aria-hidden="true" />
       <div className="dash-brand"><BrandMark className="dash-logo" /><span className="dash-title">My Space</span></div>
-      <ThemeToggle />
+      <div className="dash-controls">
+        {onUiVersionChange && (
+          <SpaceUiToggle version={uiVersion} onChange={onUiVersionChange} />
+        )}
+        <ThemeToggle />
+      </div>
       <div className="pmenu-wrap">
         <button className="profile" type="button" aria-label="Account menu" aria-haspopup="true" aria-expanded={menuOpen} onClick={onToggleMenu}>
           {account.avatarUrl

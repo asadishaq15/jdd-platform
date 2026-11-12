@@ -9,7 +9,7 @@ import { usePasswordVisibility } from "../../lib/password-visibility";
 import { createClient } from "../../lib/supabase/client";
 import { EyeIcon, EyeOffIcon, PencilIcon } from "../icons/AccountIcons";
 
-type Editor = "name" | "email" | "password" | null;
+type Editor = "name" | "basedIn" | "email" | "password" | null;
 type Notice = { kind: "success" | "error"; text: string } | null;
 
 export default function AccountSettings({ account, onAccountChange }: {
@@ -18,6 +18,7 @@ export default function AccountSettings({ account, onAccountChange }: {
 }) {
   const [editor, setEditor] = useState<Editor>(null);
   const [name, setName] = useState(account.fullName);
+  const [basedIn, setBasedIn] = useState(account.basedIn || "");
   const [email, setEmail] = useState(account.email);
   const [password, setPassword] = useState("");
   const [passwordConfirmation, setPasswordConfirmation] = useState("");
@@ -34,6 +35,7 @@ export default function AccountSettings({ account, onAccountChange }: {
     setEditor(next);
     setNotice(null);
     if (next === "name") setName(account.fullName);
+    if (next === "basedIn") setBasedIn(account.basedIn || "");
     if (next === "email") setEmail(account.email);
     if (next === "password") {
       setPassword("");
@@ -63,6 +65,22 @@ export default function AccountSettings({ account, onAccountChange }: {
       kind: metadataError ? "error" : "success",
       text: metadataError ? "Your displayed name was saved, but account metadata could not be synchronized." : "Your name has been updated.",
     });
+  }
+
+  async function saveBasedIn(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const nextBasedIn = basedIn.trim().slice(0, 80) || null;
+
+    setSaving(true);
+    setNotice(null);
+    const supabase = createClient();
+    const { error: profileError } = await supabase.from("profiles").update({ based_in: nextBasedIn }).eq("id", account.id);
+    setSaving(false);
+    if (profileError) return setNotice({ kind: "error", text: "We could not update your location. Please try again." });
+
+    onAccountChange({ ...account, basedIn: nextBasedIn });
+    setEditor(null);
+    setNotice({ kind: "success", text: "Your location has been updated." });
   }
 
   async function saveEmail(event: FormEvent<HTMLFormElement>) {
@@ -222,6 +240,14 @@ export default function AccountSettings({ account, onAccountChange }: {
           <input id="account-name" value={name} onChange={(event) => setName(event.target.value)} autoComplete="name" maxLength={100} required autoFocus />
           <FormActions saving={saving} onCancel={() => setEditor(null)} />
         </form> : <AccountRow label="Name" value={account.fullName} onEdit={() => openEditor("name")} />}
+      </div>
+
+      <div className="account-section">
+        {editor === "basedIn" ? <form className="account-form" onSubmit={saveBasedIn}>
+          <label htmlFor="account-based-in">Based in</label>
+          <input id="account-based-in" value={basedIn} onChange={(event) => setBasedIn(event.target.value)} autoComplete="address-level2" maxLength={80} placeholder="City or place" autoFocus />
+          <FormActions saving={saving} onCancel={() => setEditor(null)} />
+        </form> : <AccountRow label="Based in" value={account.basedIn?.trim() || "Not set"} onEdit={() => openEditor("basedIn")} />}
       </div>
 
       <div className="account-section">
