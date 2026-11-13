@@ -1229,8 +1229,10 @@ body:not(.night) .beta-ritual-video-wrap {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  gap: 20px;
+  justify-content: space-between;
+  gap: 0;
+  padding-block: 8px;
+  box-sizing: border-box;
   text-align: center;
 }
 
@@ -1258,17 +1260,24 @@ body:not(.night) .beta-ritual-video-wrap {
 
 .beta-community-desc {
   margin: 0;
+  max-width: 52ch;
   color: var(--beta-soft-text);
-  font-size: 14.5px;
+  font-size: 13px;
+  font-weight: 300;
   line-height: 1.7;
 }
 
+/* Ambient mid-layer: out of flex flow so the globe can be tall without cropping copy */
 .beta-community-video-band {
-  position: relative;
-  flex-shrink: 0;
-  width: 100%;
-  height: clamp(320px, 42vh, 460px);
-  margin: 4px 0;
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  z-index: 0;
+  width: min(100%, 1100px);
+  height: min(42vh, 360px);
+  margin: 0;
+  transform: translate(-50%, -50%) scale(0.92);
+  transform-origin: center center;
   overflow: hidden;
   pointer-events: none;
   opacity: 1;
@@ -1276,7 +1285,7 @@ body:not(.night) .beta-ritual-video-wrap {
   mask-image: none;
 }
 
-/* All-edge merge into --beta-bg (top/bottom/left/right + wide radial) */
+/* All-edge merge into --beta-bg */
 .beta-community-video-band::after {
   content: "";
   position: absolute;
@@ -1287,14 +1296,14 @@ body:not(.night) .beta-ritual-video-wrap {
     linear-gradient(
       180deg,
       var(--beta-bg) 0%,
-      color-mix(in srgb, var(--beta-bg) 70%, transparent) 16%,
-      transparent 38%
+      color-mix(in srgb, var(--beta-bg) 70%, transparent) 12%,
+      transparent 28%
     ),
     linear-gradient(
       0deg,
       var(--beta-bg) 0%,
-      color-mix(in srgb, var(--beta-bg) 70%, transparent) 16%,
-      transparent 38%
+      color-mix(in srgb, var(--beta-bg) 70%, transparent) 12%,
+      transparent 28%
     ),
     linear-gradient(
       90deg,
