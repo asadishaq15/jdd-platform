@@ -173,7 +173,7 @@ export default function SpaceEntryBeta({
             />
           )}
           {slide.id === "intention" && (
-            <IntentionSlide world={world} state={state} onSave={updateState} />
+            <IntentionSlide state={state} onSave={updateState} />
           )}
           {slide.id === "ritual" && (
             <RitualSlide

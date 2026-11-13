@@ -281,12 +281,29 @@ body.night .space-entry-beta {
 
 .beta-deck-stage-inner > .beta-identity,
 .beta-deck-stage-inner > .beta-ritual,
-.beta-deck-stage-inner > .beta-community {
+.beta-deck-stage-inner > .beta-community,
+.beta-deck-stage-inner > .beta-scent,
+.beta-deck-stage-inner > .beta-intention {
   justify-self: stretch;
   align-self: stretch;
   width: 100%;
   height: 100%;
   min-height: 0;
+}
+
+/* Scent / Intention: allow photo to bleed behind chrome + pips */
+.beta-deck:has(.beta-scent) .beta-deck-stage,
+.beta-deck:has(.beta-intention) .beta-deck-stage {
+  overflow: visible;
+  padding-block: 0;
+}
+
+.beta-deck:has(.beta-scent) .beta-deck-top,
+.beta-deck:has(.beta-scent) .beta-pips,
+.beta-deck:has(.beta-intention) .beta-deck-top,
+.beta-deck:has(.beta-intention) .beta-pips {
+  position: relative;
+  z-index: 4;
 }
 
 .beta-stage--exit-next {
@@ -832,6 +849,102 @@ body.night .beta-arch-btn {
   );
 }
 
+/* Scent / Intention: full-page left visual behind navbar + pips */
+.beta-split.beta-scent,
+.beta-split.beta-intention {
+  width: 100%;
+  height: 100%;
+  margin-block: 0;
+  min-height: 0;
+  box-sizing: border-box;
+  padding-inline: 0 var(--pad-x); /* flush left image; keep right inset for copy */
+  grid-template-columns: minmax(0, 1.35fr) minmax(0, 0.9fr);
+  gap: 0;
+  align-items: stretch;
+}
+
+.beta-scent .beta-split-copy,
+.beta-intention .beta-split-copy {
+  position: relative;
+  z-index: 2;
+  align-self: center;
+  padding-left: 28px;
+}
+
+.beta-scent .beta-split-media,
+.beta-intention .beta-split-media {
+  position: relative;
+  height: 100%;
+  min-height: 0;
+  z-index: 1;
+  /* Reach under the copy so the fade lands on UI black, not a hard column edge */
+  width: calc(100% + 96px);
+}
+
+.beta-scent .beta-invite-visual,
+.beta-intention .beta-intention-preview {
+  position: absolute;
+  left: 0;
+  width: 100%;
+  /* header min-height + deck pad-top + deck-top band */
+  top: calc(-1 * (env(safe-area-inset-top, 0px) + 64px + 8px + 48px));
+  /* deck pad-bottom + pips band */
+  bottom: calc(-1 * (28px + 18px));
+  height: auto;
+  min-height: 0;
+  aspect-ratio: auto;
+  overflow: hidden;
+}
+
+.beta-intention .beta-intention-preview {
+  container-type: size;
+}
+
+/* Cover-sized frame so overlay % match image space (left + bottom anchored) */
+.beta-intention-frame {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: max(100cqw, calc(100cqh * 1565 / 1308));
+  height: max(100cqh, calc(100cqw * 1308 / 1565));
+}
+
+/* Fade on the visible media’s right edge into the UI bg (avoids hard column seam) */
+.beta-scent .beta-invite-visual::after,
+.beta-intention .beta-intention-preview::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 48%;
+  z-index: 2;
+  pointer-events: none;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    color-mix(in srgb, var(--beta-bg) 35%, transparent) 45%,
+    color-mix(in srgb, var(--beta-bg) 75%, transparent) 75%,
+    var(--beta-bg) 100%
+  );
+}
+
+.beta-scent .beta-scene-img {
+  object-fit: cover;
+  object-position: left bottom;
+  /* Fade handled on .beta-invite-visual so it matches the visible edge */
+  -webkit-mask-image: none;
+  mask-image: none;
+}
+
+.beta-intention .beta-scene-img {
+  object-fit: fill;
+  object-position: center;
+  /* Mask is handled on the preview clip so the fade matches the visible edge */
+  -webkit-mask-image: none;
+  mask-image: none;
+}
+
 .beta-scent-title {
   margin: 0;
   font-family: var(--serif);
@@ -841,9 +954,11 @@ body.night .beta-arch-btn {
 }
 
 .beta-scent-body {
-  margin: 0;
+  margin: 18px 0 22px;
+  max-width: 34ch;
   color: var(--beta-soft-text);
-  font-size: 14.5px;
+  font-size: 13px;
+  font-weight: 200;
   line-height: 1.7;
 }
 
@@ -893,17 +1008,19 @@ body.night .beta-arch-btn {
 
 .beta-intention-card {
   position: absolute;
-  left: 13%;
-  top: 57%;
+  /* Measured cream card bounds in source image space */
+  left: 12.3%;
+  top: 59.7%;
   z-index: 1;
   display: flex;
-  width: 42%;
-  height: 30%;
+  width: 45.5%;
+  height: 29.5%;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  padding: 4% 5%;
+  gap: 14px;
+  padding: 5% 6%;
+  box-sizing: border-box;
   border: 0;
   background: transparent;
   color: #1e1e1d;
@@ -930,19 +1047,12 @@ body.night .beta-arch-btn {
 }
 
 .beta-preview-label {
-  margin: 8px 0 0;
+  margin: 0;
   font-size: clamp(8px, 0.9vw, 10px);
+  font-weight: 400;
   letter-spacing: 0.04em;
   text-transform: uppercase;
   color: #6e6e6b;
-}
-
-.beta-preview-cap {
-  margin-top: 8px;
-  font-size: clamp(8px, 0.95vw, 11px);
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: #8c8c88;
 }
 
 .beta-intention-title {
@@ -953,8 +1063,24 @@ body.night .beta-arch-btn {
   line-height: 1.15;
 }
 
+.beta-field-shell {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+  margin-top: 12px;
+  padding: 12px 16px 14px;
+  border: 1px solid var(--beta-field-border);
+  box-sizing: border-box;
+  background: transparent;
+}
+
+.beta-field-shell:focus-within {
+  border-color: rgba(197, 132, 82, 0.7);
+}
+
 .beta-field-label {
-  margin-top: 8px;
+  margin: 0;
   color: var(--beta-muted);
   font-size: 10px;
   letter-spacing: 0.04em;
@@ -963,8 +1089,9 @@ body.night .beta-arch-btn {
 
 .beta-field {
   width: 100%;
-  padding: 14px 16px;
-  border: 1px solid var(--beta-field-border);
+  margin: 0;
+  padding: 0;
+  border: 0;
   background: transparent;
   color: inherit;
   font-family: var(--serif);
@@ -977,13 +1104,6 @@ body.night .beta-arch-btn {
 
 .beta-field:focus {
   outline: none;
-  border-color: rgba(197, 132, 82, 0.7);
-}
-
-.beta-saved {
-  margin: 0;
-  color: var(--beta-accent-soft);
-  font-size: 12px;
 }
 
 .beta-ritual {
@@ -999,28 +1119,48 @@ body.night .beta-arch-btn {
 }
 
 .beta-ritual-video-wrap {
+  position: relative;
   grid-area: ritual;
-  place-self: center;
+  place-self: stretch;
+  justify-self: stretch;
   z-index: 0;
   width: 100%;
-  aspect-ratio: 1670 / 1396;
+  height: 100%;
+  min-width: 100%;
+  margin-inline: 0;
   overflow: hidden;
   pointer-events: none;
-  opacity: 0.95;
-  mask-image: linear-gradient(
-    180deg,
-    transparent 0%,
-    #000 10%,
-    #000 90%,
-    transparent 100%
-  );
-  -webkit-mask-image: linear-gradient(
-    180deg,
-    transparent 0%,
-    #000 10%,
-    #000 90%,
-    transparent 100%
-  );
+  opacity: 1;
+  -webkit-mask-image: none;
+  mask-image: none;
+}
+
+/* Top/bottom merge into --beta-bg; wide radial so sides stay full-bleed */
+.beta-ritual-video-wrap::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background:
+    linear-gradient(
+      180deg,
+      var(--beta-bg) 0%,
+      color-mix(in srgb, var(--beta-bg) 70%, transparent) 14%,
+      transparent 34%
+    ),
+    linear-gradient(
+      0deg,
+      var(--beta-bg) 0%,
+      color-mix(in srgb, var(--beta-bg) 70%, transparent) 14%,
+      transparent 34%
+    ),
+    radial-gradient(
+      ellipse 160% 78% at 50% 48%,
+      transparent 52%,
+      color-mix(in srgb, var(--beta-bg) 35%, transparent) 78%,
+      var(--beta-bg) 96%
+    );
 }
 
 .beta-ritual-video {
@@ -1039,7 +1179,7 @@ body:not(.night) .beta-ritual-video-wrap {
 .beta-ritual-shell {
   grid-area: ritual;
   position: relative;
-  z-index: 1;
+  z-index: 2;
   width: min(720px, 100%);
   height: 100%;
   padding: 40px var(--pad-x);
@@ -1096,7 +1236,7 @@ body:not(.night) .beta-ritual-video-wrap {
 
 .beta-community-hero {
   position: relative;
-  z-index: 1;
+  z-index: 2;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -1131,21 +1271,49 @@ body:not(.night) .beta-ritual-video-wrap {
   margin: 4px 0;
   overflow: hidden;
   pointer-events: none;
-  opacity: 0.95;
-  mask-image: linear-gradient(
-    180deg,
-    transparent 0%,
-    #000 12%,
-    #000 88%,
-    transparent 100%
-  );
-  -webkit-mask-image: linear-gradient(
-    180deg,
-    transparent 0%,
-    #000 12%,
-    #000 88%,
-    transparent 100%
-  );
+  opacity: 1;
+  -webkit-mask-image: none;
+  mask-image: none;
+}
+
+/* All-edge merge into --beta-bg (top/bottom/left/right + wide radial) */
+.beta-community-video-band::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background:
+    linear-gradient(
+      180deg,
+      var(--beta-bg) 0%,
+      color-mix(in srgb, var(--beta-bg) 70%, transparent) 16%,
+      transparent 38%
+    ),
+    linear-gradient(
+      0deg,
+      var(--beta-bg) 0%,
+      color-mix(in srgb, var(--beta-bg) 70%, transparent) 16%,
+      transparent 38%
+    ),
+    linear-gradient(
+      90deg,
+      var(--beta-bg) 0%,
+      color-mix(in srgb, var(--beta-bg) 55%, transparent) 10%,
+      transparent 28%
+    ),
+    linear-gradient(
+      270deg,
+      var(--beta-bg) 0%,
+      color-mix(in srgb, var(--beta-bg) 55%, transparent) 10%,
+      transparent 28%
+    ),
+    radial-gradient(
+      ellipse 160% 85% at 50% 50%,
+      transparent 48%,
+      color-mix(in srgb, var(--beta-bg) 35%, transparent) 78%,
+      var(--beta-bg) 96%
+    );
 }
 
 .beta-community-video {
@@ -1164,7 +1332,7 @@ body:not(.night) .beta-community-video-band {
 .beta-community-locked,
 .beta-community-unlocked {
   position: relative;
-  z-index: 1;
+  z-index: 2;
   width: min(960px, 100%);
   padding-inline: var(--pad-x);
   box-sizing: border-box;
@@ -1379,6 +1547,56 @@ body:not(.night) .beta-community-video-band {
 
   .beta-split-copy { align-items: stretch; }
 
+  .beta-deck:has(.beta-scent) .beta-deck-stage,
+  .beta-deck:has(.beta-intention) .beta-deck-stage {
+    overflow: hidden;
+    padding-block: 12px 24px;
+  }
+
+  .beta-split.beta-scent,
+  .beta-split.beta-intention {
+    grid-template-columns: 1fr;
+    height: auto;
+    margin-block: 0;
+    gap: 28px;
+  }
+
+  .beta-scent .beta-split-copy,
+  .beta-intention .beta-split-copy {
+    padding-left: 0;
+  }
+
+  .beta-scent .beta-split-media,
+  .beta-intention .beta-split-media {
+    width: 100%;
+    height: auto;
+    min-height: min(58vh, 520px);
+    z-index: auto;
+  }
+
+  .beta-scent .beta-invite-visual,
+  .beta-intention .beta-intention-preview {
+    position: relative;
+    left: auto;
+    top: auto;
+    bottom: auto;
+    width: 100%;
+    height: auto;
+    min-height: min(58vh, 520px);
+  }
+
+  .beta-scent .beta-invite-visual::after,
+  .beta-intention .beta-intention-preview::after {
+    left: 0;
+    background: linear-gradient(
+      180deg,
+      transparent 0%,
+      transparent 55%,
+      color-mix(in srgb, var(--beta-bg) 55%, transparent) 78%,
+      var(--beta-bg) 100%
+    );
+  }
+
   .beta-scene-img {
     -webkit-mask-image: linear-gradient(
       180deg,
@@ -1397,11 +1615,11 @@ body:not(.night) .beta-community-video-band {
   }
 
   .beta-intention-card {
-    left: 12%;
-    top: 56%;
-    width: 44%;
-    height: 32%;
-    padding: 3% 4%;
+    left: 12.3%;
+    top: 59.7%;
+    width: 45.5%;
+    height: 29.5%;
+    padding: 5% 6%;
   }
 
   .beta-preview-intent,
@@ -1409,8 +1627,7 @@ body:not(.night) .beta-community-video-band {
     font-size: clamp(14px, 3.6vw, 20px);
   }
 
-  .beta-preview-label,
-  .beta-preview-cap {
+  .beta-preview-label {
     font-size: clamp(9px, 2.2vw, 11px);
   }
 
