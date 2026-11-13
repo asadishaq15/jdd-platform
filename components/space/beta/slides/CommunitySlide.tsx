@@ -3,9 +3,13 @@
 import Link from "next/link";
 import { FormEvent, useState } from "react";
 import type { CommunityCircleEvent } from "../../../../lib/space-data";
+import { SPACE_ICON_PIN } from "../../../../lib/space-icons";
 import type { SpaceState } from "../../../../lib/space-state";
 import { demoCodes, normalizeAccessCode, type HospitalityWorld } from "../../../../lib/worlds";
-import CommunityGlobe from "../CommunityGlobe";
+import BetaLoopVideo from "../BetaLoopVideo";
+
+const COMMUNITY_SRC = "/assets/bg-06-my-community-globe-stars-loop-15s.mp4";
+const COMMUNITY_POSTER = "/assets/bg-06-my-community-globe-stars-poster.jpg";
 
 const CATEGORY_LABELS: Record<CommunityCircleEvent["category"], string> = {
   event: "Event",
@@ -78,14 +82,20 @@ export default function CommunitySlide({
         </Link>
       </div>
 
-      <CommunityGlobe />
+      <div className="beta-community-video-band" aria-hidden="true">
+        <BetaLoopVideo
+          className="beta-community-video"
+          src={COMMUNITY_SRC}
+          poster={COMMUNITY_POSTER}
+        />
+      </div>
 
       {guest ? (
         <div className="beta-community-unlocked">
           <div className="beta-community-place">
             <p className="beta-community-property">{world.property}</p>
             <p className="beta-world-place">
-              <span className="beta-pin" aria-hidden="true" />
+              <img className="beta-inline-icon" src={SPACE_ICON_PIN} alt="" aria-hidden="true" />
               {world.country}
             </p>
           </div>

@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { SPACE_ICON_PIN, SPACE_ICON_SCENT } from "../../../../lib/space-icons";
 import type { HospitalityWorld } from "../../../../lib/worlds";
 import { worldDetails } from "../../../../lib/worlds";
 
@@ -34,7 +35,7 @@ export default function ChosenWorldSlide({
         <p className="beta-eyebrow">{guest ? "Your stay" : "Your chosen world"}</p>
         <h2 className="beta-world-name">{world.property}</h2>
         <p className="beta-world-place">
-          <span className="beta-pin" aria-hidden="true" />
+          <img className="beta-inline-icon" src={SPACE_ICON_PIN} alt="" aria-hidden="true" />
           {world.country}
         </p>
         <p className="beta-world-lead">
@@ -49,7 +50,10 @@ export default function ChosenWorldSlide({
           Book your stay <span aria-hidden="true">→</span>
         </Link>
         <div className="beta-scent-foot">
-          <p className="beta-label">Scent introduction</p>
+          <p className="beta-label beta-scent-label">
+            <img className="beta-inline-icon" src={SPACE_ICON_SCENT} alt="" aria-hidden="true" />
+            Scent introduction
+          </p>
           <p className="beta-scent-line">{detail.scent}</p>
         </div>
       </div>

@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="221.66 123.35 556.69 777.29" role="img" aria-label="Location">
+  <title>Location</title>
+  <defs>
+    <linearGradient id="icon-location-pin-gold-2" x1="391.25" y1="401.68" x2="608.75" y2="401.68" xlink:href="#icon-location-pin-gold-1"/>
+    <linearGradient id="icon-location-pin-gold-1" x1="250.44" y1="512" x2="749.56" y2="512" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#91572d"/>
+      <stop offset=".13" stop-color="#c07841"/>
+      <stop offset=".27" stop-color="#e29f63"/>
+      <stop offset=".41" stop-color="#ffd39a"/>
+      <stop offset=".54" stop-color="#f1b374"/>
+      <stop offset=".69" stop-color="#f1b374"/>
+      <stop offset=".85" stop-color="#ce864b"/>
+      <stop offset="1" stop-color="#804e2d"/>
+    </linearGradient>
+  </defs>
+  <path fill="url(#icon-location-pin-gold-1)" d="M500.01,871.85l-11-12.1c-220.61-242.67-238.56-351.02-238.56-458.06,0-135.28,114.28-249.55,249.56-249.55s249.55,114.27,249.55,249.55c0,107.04-17.95,215.39-238.55,458.06l-11,12.1ZM500.01,181.87c-119.17,0-219.84,100.66-219.84,219.83,0,99,16.78,199.69,219.84,425.9,203.05-226.21,219.83-326.9,219.83-425.9,0-119.17-100.67-219.83-219.83-219.83Z"/>
+  <path fill="url(#icon-location-pin-gold-2)" d="M500.01,510.42c-59.96,0-108.75-48.76-108.75-108.72s48.79-108.75,108.75-108.75,108.74,48.79,108.74,108.75-48.77,108.72-108.74,108.72ZM500.01,322.66c-43.58,0-79.03,35.47-79.03,79.03s35.45,79,79.03,79,79.02-35.44,79.02-79-35.45-79.03-79.02-79.03Z"/>
+</svg>

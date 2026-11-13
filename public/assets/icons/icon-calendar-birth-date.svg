@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="154.81 163.52 690.40 696.98" role="img" aria-label="Birth date">
+  <title>Birth date</title>
+  <defs>
+    <linearGradient id="icon-calendar-birth-date-gold-8" x1="545.71" y1="689.17" x2="628.14" y2="689.17" xlink:href="#icon-calendar-birth-date-gold-1"/>
+    <linearGradient id="icon-calendar-birth-date-gold-7" x1="371.86" y1="689.17" x2="454.29" y2="689.17" xlink:href="#icon-calendar-birth-date-gold-1"/>
+    <linearGradient id="icon-calendar-birth-date-gold-6" x1="545.71" y1="580.5" x2="628.14" y2="580.5" xlink:href="#icon-calendar-birth-date-gold-1"/>
+    <linearGradient id="icon-calendar-birth-date-gold-5" x1="371.86" y1="580.5" x2="454.29" y2="580.5" xlink:href="#icon-calendar-birth-date-gold-1"/>
+    <linearGradient id="icon-calendar-birth-date-gold-4" x1="615.26" y1="265.39" x2="645.53" y2="265.39" xlink:href="#icon-calendar-birth-date-gold-1"/>
+    <linearGradient id="icon-calendar-birth-date-gold-3" x1="354.47" y1="265.39" x2="384.74" y2="265.39" xlink:href="#icon-calendar-birth-date-gold-1"/>
+    <linearGradient id="icon-calendar-birth-date-gold-2" x1="195.75" y1="450.1" x2="804.25" y2="450.1" xlink:href="#icon-calendar-birth-date-gold-1"/>
+    <linearGradient id="icon-calendar-birth-date-gold-1" x1="180.62" y1="547.89" x2="819.38" y2="547.89" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#91572d"/>
+      <stop offset=".13" stop-color="#c07841"/>
+      <stop offset=".27" stop-color="#e29f63"/>
+      <stop offset=".41" stop-color="#ffd39a"/>
+      <stop offset=".54" stop-color="#f1b374"/>
+      <stop offset=".69" stop-color="#f1b374"/>
+      <stop offset=".85" stop-color="#ce864b"/>
+      <stop offset="1" stop-color="#804e2d"/>
+    </linearGradient>
+  </defs>
+  <path fill="url(#icon-calendar-birth-date-gold-1)" d="M819.38,834.67H180.62V261.11h638.77v573.57ZM210.89,804.4h578.22V291.38H210.89v513.02Z"/>
+  <path fill="url(#icon-calendar-birth-date-gold-2)" d="M195.75,434.96h608.49v30.27h-608.49Z"/>
+  <path fill="url(#icon-calendar-birth-date-gold-3)" d="M354.47,189.33h30.27v152.13h-30.27Z"/>
+  <path fill="url(#icon-calendar-birth-date-gold-4)" d="M615.26,189.33h30.27v152.13h-30.27Z"/>
+  <path fill="url(#icon-calendar-birth-date-gold-5)" d="M413.08,621.71c-22.73,0-41.22-18.48-41.22-41.21s18.49-41.21,41.22-41.21,41.21,18.48,41.21,41.21-18.49,41.21-41.21,41.21ZM413.08,569.56c-6.05,0-10.95,4.91-10.95,10.94s4.91,10.94,10.95,10.94,10.94-4.91,10.94-10.94-4.91-10.94-10.94-10.94Z"/>
+  <path fill="url(#icon-calendar-birth-date-gold-6)" d="M586.92,621.71c-22.72,0-41.21-18.48-41.21-41.21s18.49-41.21,41.21-41.21,41.22,18.48,41.22,41.21-18.49,41.21-41.22,41.21ZM586.92,569.56c-6.03,0-10.94,4.91-10.94,10.94s4.91,10.94,10.94,10.94,10.95-4.91,10.95-10.94-4.91-10.94-10.95-10.94Z"/>
+  <path fill="url(#icon-calendar-birth-date-gold-7)" d="M413.08,730.38c-22.73,0-41.22-18.48-41.22-41.21s18.49-41.21,41.22-41.21,41.21,18.48,41.21,41.21-18.49,41.21-41.21,41.21ZM413.08,678.23c-6.05,0-10.95,4.91-10.95,10.94s4.91,10.94,10.95,10.94,10.94-4.91,10.94-10.94-4.91-10.94-10.94-10.94Z"/>
+  <path fill="url(#icon-calendar-birth-date-gold-8)" d="M586.92,730.38c-22.72,0-41.21-18.48-41.21-41.21s18.49-41.21,41.21-41.21,41.22,18.48,41.22,41.21-18.49,41.21-41.22,41.21ZM586.92,678.23c-6.03,0-10.94,4.91-10.94,10.94s4.91,10.94,10.94,10.94,10.95-4.91,10.95-10.94-4.91-10.94-10.95-10.94Z"/>
+</svg>

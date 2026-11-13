@@ -29,14 +29,13 @@
   --beta-arch-well:
     radial-gradient(circle at 30% 25%, hsla(var(--h, 200), 22%, 72%, 0.35), transparent 50%),
     linear-gradient(160deg, hsla(var(--h, 200), 10%, 90%, 1), hsla(calc(var(--h, 200) + 40), 12%, 84%, 1));
-  --beta-ritual-glow:
-    radial-gradient(ellipse at 50% 40%, rgba(197, 132, 82, 0.14), transparent 60%),
-    radial-gradient(ellipse at 30% 70%, rgba(166, 106, 63, 0.1), transparent 55%);
 
-  min-height: 100dvh;
+  height: 100dvh;
+  max-height: 100dvh;
+  min-height: 0;
   display: flex;
   flex-direction: column;
-  overflow-x: hidden;
+  overflow: hidden;
   background: var(--beta-bg);
   color: var(--beta-fg);
 }
@@ -71,9 +70,6 @@ body.night .space-entry-beta {
   --beta-arch-well:
     radial-gradient(circle at 30% 25%, hsla(var(--h, 200), 28%, 62%, 0.55), transparent 50%),
     linear-gradient(160deg, hsla(var(--h, 200), 18%, 22%, 1), hsla(calc(var(--h, 200) + 40), 22%, 12%, 1));
-  --beta-ritual-glow:
-    radial-gradient(ellipse at 50% 40%, rgba(240, 199, 155, 0.22), transparent 60%),
-    radial-gradient(ellipse at 30% 70%, rgba(166, 106, 63, 0.16), transparent 55%);
 }
 
 .space-entry-beta .dash-top {
@@ -96,10 +92,10 @@ body.night .space-entry-beta {
 .space-entry-beta .dash-logo { width: auto; height: 28px; }
 
 .space-entry-beta .dash-title {
-  font-family: var(--serif);
+  font-family: var(--sans);
   font-size: 18px;
-  font-weight: 300;
-  letter-spacing: 0.12em;
+  font-weight: 400;
+  letter-spacing: 0.04em;
   text-transform: uppercase;
   line-height: 1;
   white-space: nowrap;
@@ -237,44 +233,25 @@ body.night .space-entry-beta {
   border-top: 1px solid var(--beta-line);
 }
 
+.beta-slide-chrome-wrap {
+  min-width: 0;
+}
+
 .beta-slide-chrome {
   display: flex;
   align-items: baseline;
   gap: 14px;
   margin: 0;
   font-size: 11px;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.04em;
   text-transform: uppercase;
 }
 
 .beta-slide-index { color: var(--beta-accent); }
 .beta-slide-title { color: var(--beta-soft-text); }
 
-.beta-deck-nav {
-  display: flex;
-  gap: 8px;
-}
-
-.beta-nav-btn {
-  width: 36px;
-  height: 36px;
-  border: 1px solid var(--beta-line-strong);
-  border-radius: 50%;
-  background: transparent;
-  color: inherit;
-  font-size: 20px;
-  line-height: 1;
-  cursor: pointer;
-}
-
-.beta-nav-btn:disabled {
-  opacity: 0.35;
-  cursor: default;
-}
-
-.beta-nav-btn:not(:disabled):hover {
-  border-color: var(--beta-hover-border);
-  color: var(--beta-accent-bright);
+.beta-chrome--fade .beta-slide-chrome {
+  animation: betaChromeFade 0.35s var(--ease-lux) both;
 }
 
 .beta-deck-stage {
@@ -283,7 +260,81 @@ body.night .space-entry-beta {
   align-items: center;
   justify-content: center;
   min-height: 0;
+  margin-inline: calc(-1 * var(--pad-x));
+  width: calc(100% + 2 * var(--pad-x));
   padding: 12px 0 24px;
+  overflow: hidden;
+}
+
+.beta-deck-stage-inner {
+  width: 100%;
+  height: 100%;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr);
+  place-items: center;
+  will-change: opacity, transform;
+}
+
+.beta-deck-stage-inner > .beta-identity,
+.beta-deck-stage-inner > .beta-ritual,
+.beta-deck-stage-inner > .beta-community {
+  justify-self: stretch;
+  align-self: stretch;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+}
+
+.beta-stage--exit-next {
+  animation: betaStageExitNext 0.38s var(--ease-lux) both;
+}
+
+.beta-stage--exit-prev {
+  animation: betaStageExitPrev 0.38s var(--ease-lux) both;
+}
+
+.beta-stage--enter-next {
+  animation: betaStageEnterNext 0.42s var(--ease-lux) both;
+}
+
+.beta-stage--enter-prev {
+  animation: betaStageEnterPrev 0.42s var(--ease-lux) both;
+}
+
+@keyframes betaStageExitNext {
+  from { opacity: 1; transform: translateY(0); }
+  to { opacity: 0; transform: translateY(-16px); }
+}
+
+@keyframes betaStageExitPrev {
+  from { opacity: 1; transform: translateY(0); }
+  to { opacity: 0; transform: translateY(16px); }
+}
+
+@keyframes betaStageEnterNext {
+  from { opacity: 0; transform: translateY(18px); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes betaStageEnterPrev {
+  from { opacity: 0; transform: translateY(-18px); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes betaChromeFade {
+  0% { opacity: 0.35; }
+  100% { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .beta-stage--exit-next,
+  .beta-stage--exit-prev,
+  .beta-stage--enter-next,
+  .beta-stage--enter-prev,
+  .beta-chrome--fade .beta-slide-chrome {
+    animation: none !important;
+  }
 }
 
 .beta-pips {
@@ -305,10 +356,61 @@ body.night .space-entry-beta {
 .beta-pip.active { background: var(--beta-accent); }
 
 .beta-identity {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  isolation: isolate;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.beta-identity-shell {
+  position: relative;
+  z-index: 1;
   width: min(920px, 100%);
+  margin-inline: auto;
+  padding-inline: var(--pad-x);
+  box-sizing: border-box;
   display: flex;
   flex-direction: column;
   gap: 36px;
+}
+
+.beta-identity-dunes {
+  position: absolute;
+  inset: 22% 0 12%;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+  opacity: 0.95;
+  mask-image: linear-gradient(
+    180deg,
+    transparent 0%,
+    #000 14%,
+    #000 82%,
+    transparent 100%
+  );
+  -webkit-mask-image: linear-gradient(
+    180deg,
+    transparent 0%,
+    #000 14%,
+    #000 82%,
+    transparent 100%
+  );
+}
+
+.beta-identity-dunes-video {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center center;
+}
+
+body:not(.night) .beta-identity-dunes {
+  opacity: 0.28;
+  mix-blend-mode: multiply;
 }
 
 .beta-identity-hero {
@@ -364,17 +466,6 @@ body.night .space-entry-beta {
   letter-spacing: 0.01em;
 }
 
-.beta-member-pill {
-  display: inline-flex;
-  padding: 6px 14px;
-  border: 1px solid rgba(197, 132, 82, 0.65);
-  border-radius: 999px;
-  color: var(--beta-accent-soft);
-  font-size: 10px;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-}
-
 .beta-identity-state {
   position: relative;
   display: flex;
@@ -382,37 +473,20 @@ body.night .space-entry-beta {
   align-items: center;
   text-align: center;
   gap: 8px;
-  padding: 28px 12px 8px;
-}
-
-.beta-wave {
-  position: absolute;
-  inset: 0 0 auto;
-  width: 100%;
-  height: 110px;
-  pointer-events: none;
-  opacity: 0.55;
-}
-
-.beta-wave path {
-  fill: none;
-  stroke: url(#cgl);
-  stroke-width: 1.2;
+  padding: 48px 12px 28px;
+  min-height: 220px;
+  justify-content: center;
 }
 
 .beta-label {
-  position: relative;
-  z-index: 1;
   margin: 10px 0 0;
   color: var(--beta-muted);
   font-size: 10px;
-  letter-spacing: 0.14em;
+  letter-spacing: 0.04em;
   text-transform: uppercase;
 }
 
 .beta-state-name {
-  position: relative;
-  z-index: 1;
   margin: 0;
   font-family: var(--serif);
   font-size: clamp(34px, 6vw, 48px);
@@ -422,8 +496,6 @@ body.night .space-entry-beta {
 }
 
 .beta-mantra {
-  position: relative;
-  z-index: 1;
   margin: 0;
   font-family: var(--serif);
   font-size: clamp(20px, 3.5vw, 28px);
@@ -454,10 +526,17 @@ body.night .space-entry-beta {
   border-left: 1px solid var(--beta-line);
 }
 
+.beta-meta-icon {
+  display: block;
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
+}
+
 .beta-identity-meta dt {
   color: var(--beta-muted);
   font-size: 10px;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.04em;
   text-transform: uppercase;
 }
 
@@ -501,7 +580,7 @@ body.night .space-entry-beta {
   margin: 0;
   color: var(--beta-muted);
   font-size: 10px;
-  letter-spacing: 0.14em;
+  letter-spacing: 0.04em;
   text-transform: uppercase;
 }
 
@@ -515,7 +594,7 @@ body.night .space-entry-beta {
   background: var(--beta-cta-bg);
   color: var(--beta-cta-fg);
   font-size: 11px;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.04em;
   text-transform: uppercase;
   text-decoration: none;
   cursor: pointer;
@@ -560,7 +639,7 @@ body.night .space-entry-beta {
   bottom: 18px;
   color: var(--beta-arch-cap);
   font-size: 11px;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.04em;
   text-transform: uppercase;
 }
 
@@ -599,11 +678,12 @@ body.night .space-entry-beta {
   font-size: 13px;
 }
 
-.beta-pin {
-  width: 8px;
-  height: 8px;
-  border: 1px solid currentColor;
-  border-radius: 50%;
+.beta-inline-icon {
+  display: block;
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+  object-fit: contain;
 }
 
 .beta-world-lead {
@@ -626,6 +706,13 @@ body.night .space-entry-beta {
   margin-top: 18px;
   padding-top: 16px;
   border-top: 1px solid var(--beta-line);
+}
+
+.beta-scent-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
 }
 
 .beta-scent-line {
@@ -702,7 +789,7 @@ body.night .space-entry-beta {
   padding-left: 16px;
   color: var(--beta-muted);
   font-size: 11px;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.04em;
   text-transform: uppercase;
 }
 
@@ -772,7 +859,7 @@ body.night .space-entry-beta {
 .beta-preview-label {
   margin: 8px 0 0;
   font-size: clamp(8px, 0.9vw, 10px);
-  letter-spacing: 0.12em;
+  letter-spacing: 0.04em;
   text-transform: uppercase;
   color: #6e6e6b;
 }
@@ -780,7 +867,7 @@ body.night .space-entry-beta {
 .beta-preview-cap {
   margin-top: 8px;
   font-size: clamp(8px, 0.95vw, 11px);
-  letter-spacing: 0.06em;
+  letter-spacing: 0.04em;
   text-transform: uppercase;
   color: #8c8c88;
 }
@@ -797,7 +884,7 @@ body.night .space-entry-beta {
   margin-top: 8px;
   color: var(--beta-muted);
   font-size: 10px;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.04em;
   text-transform: uppercase;
 }
 
@@ -828,27 +915,77 @@ body.night .space-entry-beta {
 
 .beta-ritual {
   position: relative;
-  width: min(720px, 100%);
-  display: flex;
-  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  isolation: isolate;
+  display: grid;
+  grid-template-areas: "ritual";
   align-items: center;
-  gap: 56px;
-  padding: 40px 12px;
+  justify-items: center;
   text-align: center;
 }
 
-.beta-ritual-glow {
-  position: absolute;
-  inset: 10% 10% auto;
-  height: 55%;
-  background: var(--beta-ritual-glow);
+.beta-ritual-video-wrap {
+  grid-area: ritual;
+  place-self: center;
+  z-index: 0;
+  width: 100%;
+  aspect-ratio: 1670 / 1396;
+  overflow: hidden;
   pointer-events: none;
-  filter: blur(2px);
+  opacity: 0.95;
+  mask-image: linear-gradient(
+    180deg,
+    transparent 0%,
+    #000 10%,
+    #000 90%,
+    transparent 100%
+  );
+  -webkit-mask-image: linear-gradient(
+    180deg,
+    transparent 0%,
+    #000 10%,
+    #000 90%,
+    transparent 100%
+  );
+}
+
+.beta-ritual-video {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center center;
+}
+
+body:not(.night) .beta-ritual-video-wrap {
+  opacity: 0.28;
+  mix-blend-mode: multiply;
+}
+
+.beta-ritual-shell {
+  grid-area: ritual;
+  position: relative;
+  z-index: 1;
+  width: min(720px, 100%);
+  height: 100%;
+  padding: 40px var(--pad-x);
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+}
+
+.beta-ritual-star-gap {
+  flex-shrink: 0;
+  width: 100%;
+  height: clamp(72px, 14vh, 140px);
+  pointer-events: none;
 }
 
 .beta-ritual-block {
-  position: relative;
-  z-index: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -873,20 +1010,29 @@ body.night .space-entry-beta {
 }
 
 .beta-community {
-  width: min(960px, 100%);
+  position: relative;
+  width: 100%;
+  height: 100%;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 28px;
+  justify-content: center;
+  gap: 20px;
   text-align: center;
 }
 
 .beta-community-hero {
+  position: relative;
+  z-index: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 14px;
+  gap: 12px;
   max-width: 640px;
+  width: min(960px, 100%);
+  padding-inline: var(--pad-x);
+  box-sizing: border-box;
+  flex-shrink: 0;
 }
 
 .beta-community-title {
@@ -904,60 +1050,56 @@ body.night .space-entry-beta {
   line-height: 1.7;
 }
 
-.beta-globe-wrap {
+.beta-community-video-band {
   position: relative;
-  width: min(320px, 70vw);
-  margin: 8px 0;
-}
-
-.beta-globe-wisps {
-  position: absolute;
-  left: -40%;
-  right: -40%;
-  top: 35%;
-  width: 180%;
-  height: 40%;
-  pointer-events: none;
-  opacity: 0.55;
-}
-
-.beta-globe-wisps path {
-  fill: none;
-  stroke: url(#cgl);
-  stroke-width: 1.2;
-}
-
-.beta-community-globe {
+  flex-shrink: 0;
   width: 100%;
-  height: auto;
-  overflow: visible;
+  height: clamp(320px, 42vh, 460px);
+  margin: 4px 0;
+  overflow: hidden;
+  pointer-events: none;
+  opacity: 0.95;
+  mask-image: linear-gradient(
+    180deg,
+    transparent 0%,
+    #000 12%,
+    #000 88%,
+    transparent 100%
+  );
+  -webkit-mask-image: linear-gradient(
+    180deg,
+    transparent 0%,
+    #000 12%,
+    #000 88%,
+    transparent 100%
+  );
 }
 
-.beta-ggrid,
-.beta-gouter {
-  fill: none;
-  stroke: var(--beta-globe-stroke);
-  stroke-width: 0.9;
+.beta-community-video {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center center;
 }
 
-.beta-gdot {
-  fill: var(--beta-globe-dot);
-  opacity: 0.85;
-  animation: betaGlobePulse var(--tw, 4s) ease-in-out infinite;
-}
-
-@keyframes betaGlobePulse {
-  0%, 100% { opacity: 0.45; transform: scale(0.9); }
-  50% { opacity: 1; transform: scale(1.15); }
+body:not(.night) .beta-community-video-band {
+  opacity: 0.28;
+  mix-blend-mode: multiply;
 }
 
 .beta-community-locked,
 .beta-community-unlocked {
-  width: 100%;
+  position: relative;
+  z-index: 1;
+  width: min(960px, 100%);
+  padding-inline: var(--pad-x);
+  box-sizing: border-box;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 16px;
+  gap: 12px;
+  flex-shrink: 0;
 }
 
 .beta-community-reserved-title {
@@ -1054,7 +1196,7 @@ body.night .space-entry-beta {
 .beta-code-label {
   color: var(--beta-muted);
   font-size: 10px;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.04em;
   text-transform: uppercase;
 }
 
@@ -1206,8 +1348,8 @@ body.night .space-entry-beta {
 }
 
 @media (max-width: 640px) {
-  .space-entry-beta .dash-title { font-size: 15px; letter-spacing: 0.08em; }
+  .space-entry-beta .dash-title { font-size: 15px; letter-spacing: 0.04em; }
   .beta-identity-photo-wrap { width: 112px; height: 112px; }
-  .beta-nav-btn { width: 32px; height: 32px; }
-  .beta-ritual { gap: 40px; padding: 24px 8px; }
+  .beta-ritual-shell { padding: 24px var(--pad-x); }
+  .beta-ritual-star-gap { height: clamp(56px, 12vh, 100px); }
 }

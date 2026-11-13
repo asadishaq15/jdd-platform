@@ -1,8 +1,17 @@
 "use client";
 
 import type { AccountSummary } from "../../../../lib/space-data";
+import {
+  SPACE_ICON_CALENDAR,
+  SPACE_ICON_PIN,
+  zodiacIconSrc,
+} from "../../../../lib/space-icons";
 import type { HospitalityWorld } from "../../../../lib/worlds";
 import { zodiacFromDateOfBirth } from "../../../../lib/zodiac";
+import BetaLoopVideo from "../BetaLoopVideo";
+
+const DUNES_SRC = "/assets/bg-01-my-space-dunes-loop-14s.mp4";
+const DUNES_POSTER = "/assets/bg-01-my-space-dunes-poster.jpg";
 
 function formatBirthDate(iso: string | null | undefined) {
   if (!iso) return null;
@@ -32,50 +41,60 @@ export default function IdentitySlide({
 
   return (
     <article className="beta-identity" aria-label="My Space identity">
-      <div className="beta-identity-hero">
-        <div className="beta-identity-photo-wrap">
-          {account.avatarUrl ? (
-            <img
-              className="beta-identity-photo"
-              src={account.avatarUrl}
-              alt=""
-              referrerPolicy="no-referrer"
-            />
-          ) : (
-            <span className="beta-identity-photo fallback" aria-hidden="true">{initial}</span>
-          )}
-        </div>
-        <div className="beta-identity-person">
-          <h1 className="beta-identity-name">{account.fullName}</h1>
-          <span className="beta-member-pill">Member</span>
-        </div>
+      <div className="beta-identity-dunes" aria-hidden="true">
+        <BetaLoopVideo
+          className="beta-identity-dunes-video"
+          src={DUNES_SRC}
+          poster={DUNES_POSTER}
+        />
       </div>
 
-      <div className="beta-identity-state">
-        <svg className="beta-wave" viewBox="0 0 640 120" aria-hidden="true" preserveAspectRatio="none">
-          <path d="M0 70 C80 20 140 110 220 60 C300 10 360 100 440 55 C520 15 580 90 640 45" />
-          <path d="M0 85 C90 40 150 115 240 75 C330 35 390 110 470 70 C540 40 590 95 640 65" opacity=".45" />
-        </svg>
-        <p className="beta-label">Your State</p>
-        <p className="beta-state-name cu">{world.state}</p>
-        <p className="beta-label">Your mantra</p>
-        <p className="beta-mantra">{world.mantra}</p>
-      </div>
+      <div className="beta-identity-shell">
+        <div className="beta-identity-hero">
+          <div className="beta-identity-photo-wrap">
+            {account.avatarUrl ? (
+              <img
+                className="beta-identity-photo"
+                src={account.avatarUrl}
+                alt=""
+                referrerPolicy="no-referrer"
+              />
+            ) : (
+              <span className="beta-identity-photo fallback" aria-hidden="true">{initial}</span>
+            )}
+          </div>
+          <div className="beta-identity-person">
+            <h1 className="beta-identity-name">{account.fullName}</h1>
+          </div>
+        </div>
 
-      <dl className="beta-identity-meta">
-        <div>
-          <dt>Birth date</dt>
-          <dd>{birthDate || "—"}</dd>
+        <div className="beta-identity-state">
+          <p className="beta-label">Your State</p>
+          <p className="beta-state-name cu">{world.state}</p>
+          <p className="beta-label">Your mantra</p>
+          <p className="beta-mantra">{world.mantra}</p>
         </div>
-        <div>
-          <dt>Zodiac</dt>
-          <dd>{zodiac || "—"}</dd>
-        </div>
-        <div>
-          <dt>Based in</dt>
-          <dd>{basedIn || "—"}</dd>
-        </div>
-      </dl>
+
+        <dl className="beta-identity-meta">
+          <div>
+            <img className="beta-meta-icon" src={SPACE_ICON_CALENDAR} alt="" aria-hidden="true" />
+            <dt>Birth date</dt>
+            <dd>{birthDate || "—"}</dd>
+          </div>
+          <div>
+            {zodiac ? (
+              <img className="beta-meta-icon" src={zodiacIconSrc(zodiac)} alt="" aria-hidden="true" />
+            ) : null}
+            <dt>Zodiac</dt>
+            <dd>{zodiac || "—"}</dd>
+          </div>
+          <div>
+            <img className="beta-meta-icon" src={SPACE_ICON_PIN} alt="" aria-hidden="true" />
+            <dt>Based in</dt>
+            <dd>{basedIn || "—"}</dd>
+          </div>
+        </dl>
+      </div>
     </article>
   );
 }

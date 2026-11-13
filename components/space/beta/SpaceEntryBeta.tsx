@@ -151,7 +151,11 @@ export default function SpaceEntryBeta({
           />
         </div>
       ) : (
-        <SpaceDeck index={slideIndex} onIndexChange={setSlideIndex}>
+        <SpaceDeck
+          index={slideIndex}
+          onIndexChange={setSlideIndex}
+          transitionEnabled={!flow && !accountOpen && !circleDetailId}
+        >
           {slide.id === "identity" && <IdentitySlide account={account} world={world} />}
           {slide.id === "world" && <ChosenWorldSlide world={world} guest={guest} />}
           {slide.id === "scent" && (
