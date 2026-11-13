@@ -157,7 +157,7 @@ export default function SpaceEntryBeta({
           transitionEnabled={!flow && !accountOpen && !circleDetailId}
         >
           {slide.id === "identity" && <IdentitySlide account={account} world={world} />}
-          {slide.id === "world" && <ChosenWorldSlide world={world} guest={guest} />}
+          {slide.id === "world" && <ChosenWorldSlide world={world} />}
           {slide.id === "scent" && (
             <ScentInvitationSlide
               world={world}

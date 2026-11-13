@@ -229,8 +229,11 @@ body.night .space-entry-beta {
   align-items: center;
   justify-content: space-between;
   gap: 16px;
+  width: min(calc(1400px - 2 * var(--pad-x)), 100%);
+  margin-inline: auto;
   padding: 10px 0 18px;
   border-top: 1px solid var(--beta-line);
+  box-sizing: border-box;
 }
 
 .beta-slide-chrome-wrap {
@@ -368,7 +371,7 @@ body.night .space-entry-beta {
 .beta-identity-shell {
   position: relative;
   z-index: 1;
-  width: min(920px, 100%);
+  width: min(1400px, 100%);
   margin-inline: auto;
   padding-inline: var(--pad-x);
   box-sizing: border-box;
@@ -415,9 +418,11 @@ body:not(.night) .beta-identity-dunes {
 
 .beta-identity-hero {
   display: grid;
-  grid-template-columns: auto 1fr;
-  align-items: center;
-  gap: 36px;
+  grid-template-columns: auto auto;
+  justify-content: center;
+  justify-items: start;
+  align-items: start;
+  gap: 22px;
   padding-bottom: 28px;
   border-bottom: 1px solid var(--beta-line);
 }
@@ -452,9 +457,11 @@ body:not(.night) .beta-identity-dunes {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 16px;
-  padding-left: 36px;
-  border-left: 1px solid var(--beta-panel-border);
+  justify-content: center;
+  align-self: stretch;
+  gap: 14px;
+  padding-left: 22px;
+  border-left: 1px solid var(--beta-line);
 }
 
 .beta-identity-name {
@@ -506,24 +513,35 @@ body:not(.night) .beta-identity-dunes {
 
 .beta-identity-meta {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(3, minmax(0, 300px));
+  justify-content: center;
   gap: 0;
+  width: 100%;
   margin: 0;
   padding-top: 8px;
   border-top: 1px solid var(--beta-line);
 }
 
 .beta-identity-meta > div {
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 8px;
-  padding: 22px 12px;
+  padding: 22px 36px;
   text-align: center;
 }
 
-.beta-identity-meta > div + div {
-  border-left: 1px solid var(--beta-line);
+.beta-identity-meta > div + div::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 50%;
+  width: 1px;
+  height: 56%;
+  transform: translateY(-50%);
+  background: var(--beta-line);
+  pointer-events: none;
 }
 
 .beta-meta-icon {
@@ -636,7 +654,8 @@ body:not(.night) .beta-identity-dunes {
 .beta-arch-cap {
   position: absolute;
   left: 18px;
-  bottom: 18px;
+  bottom: 62px;
+  z-index: 1;
   color: var(--beta-arch-cap);
   font-size: 11px;
   letter-spacing: 0.04em;
@@ -644,10 +663,16 @@ body:not(.night) .beta-identity-dunes {
 }
 
 .beta-arch-nav {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 18px;
+  z-index: 1;
   display: flex;
-  justify-content: center;
-  gap: 12px;
-  margin-top: 14px;
+  justify-content: space-between;
+  padding: 0 16px;
+  margin: 0;
+  pointer-events: none;
 }
 
 .beta-arch-btn {
@@ -658,7 +683,19 @@ body:not(.night) .beta-identity-dunes {
   border: 1px solid var(--beta-arch-btn-border);
   border-radius: 50%;
   color: var(--beta-arch-btn-color);
-  font-size: 18px;
+  background: transparent;
+}
+
+body.night .beta-arch-btn {
+  border-color: rgba(255, 255, 255, 0.9);
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.beta-arch-arrow {
+  display: block;
+  width: 16px;
+  height: 16px;
+  overflow: visible;
 }
 
 .beta-world-name {
@@ -678,6 +715,29 @@ body:not(.night) .beta-identity-dunes {
   font-size: 13px;
 }
 
+.beta-split.beta-world {
+  align-items: stretch;
+}
+
+.beta-world .beta-split-copy {
+  height: 100%;
+  justify-content: flex-start;
+  box-sizing: border-box;
+  /* Lower start so the gap above scent reads more even */
+  padding-top: clamp(120px, 22vh, 220px);
+  padding-left: 48px;
+}
+
+.beta-world .beta-world-place {
+  color: var(--beta-fg);
+  margin-bottom: 36px;
+  font-size: 17px;
+}
+
+.beta-world .beta-scent-foot {
+  margin-top: auto;
+}
+
 .beta-inline-icon {
   display: block;
   width: 14px;
@@ -693,19 +753,32 @@ body:not(.night) .beta-identity-dunes {
   font-weight: 300;
 }
 
+.beta-world-lead em {
+  font-style: italic;
+  font-weight: 300;
+  color: inherit;
+}
+
 .beta-world-list {
   margin: 4px 0 0;
-  padding: 0 0 0 18px;
+  padding: 0;
+  list-style: none;
   color: var(--beta-soft-text);
   font-size: 14px;
   line-height: 1.7;
+}
+
+.beta-world .beta-cta {
+  margin-top: 18px;
+  padding: 14px 28px;
+  min-width: 220px;
+  justify-content: space-between;
 }
 
 .beta-scent-foot {
   width: 100%;
   margin-top: 18px;
   padding-top: 16px;
-  border-top: 1px solid var(--beta-line);
 }
 
 .beta-scent-label {
@@ -1282,6 +1355,7 @@ body:not(.night) .beta-community-video-band {
 
   .beta-identity-person {
     align-items: center;
+    align-self: auto;
     padding-left: 0;
     border-left: 0;
   }
@@ -1290,8 +1364,11 @@ body:not(.night) .beta-community-video-band {
     grid-template-columns: 1fr;
   }
 
+  .beta-identity-meta > div + div::before {
+    content: none;
+  }
+
   .beta-identity-meta > div + div {
-    border-left: 0;
     border-top: 1px solid var(--beta-line);
   }
 
