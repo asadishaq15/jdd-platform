@@ -19,6 +19,13 @@ const CATEGORY_LABELS: Record<CommunityCircleEvent["category"], string> = {
 
 const CATEGORIES = ["event", "invite", "news"] as const;
 
+/** Exact hero copy + line breaks from design / CONTENT_COPY §06–07 */
+const COMMUNITY_HERO_LINES = [
+  "You belong among people who are willing to see what others overlook",
+  "connected by unconventional perception, creative solitude, experimentation",
+  "and the ability to transform limitation into a new point of view.",
+] as const;
+
 export default function CommunitySlide({
   world,
   guest,
@@ -77,7 +84,13 @@ export default function CommunitySlide({
     <article className="beta-community" aria-label="My community">
       <div className="beta-community-hero">
         <h2 className="beta-community-title">My community</h2>
-        <p className="beta-community-desc">{world.desc}</p>
+        <p className="beta-community-desc">
+          {COMMUNITY_HERO_LINES.map((line) => (
+            <span key={line} className="beta-community-desc-line">
+              {line}
+            </span>
+          ))}
+        </p>
         <Link className="beta-cta" href="/discover?mode=dash">
           {guest ? "Plan your next stay" : "Plan your stay"}{" "}
           <span aria-hidden="true">→</span>
@@ -177,10 +190,12 @@ export default function CommunitySlide({
       ) : (
         <div className="beta-community-locked">
           <h3 className="beta-community-reserved-title">
-            Reserved for guests of the <em className="cu">house.</em>
+            Reserved for hotel guests
           </h3>
           <p className="beta-community-reserved-body">
-            Private evenings, guest invitations and news from {world.property} open after your stay.
+            Private evenings, guest invitations and news
+            <br />
+            from {world.property} open after your stay.
           </p>
           <form className="beta-code-form beta-code-form-locked" onSubmit={submitCode} noValidate>
             <input

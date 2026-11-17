@@ -47,34 +47,34 @@ export default function SpaceBetaHeader({
             <path d="M10 18.2a2.2 2.2 0 0 0 4 0" />
           </svg>
         </button>
-      </div>
-      <div className="pmenu-wrap">
-        <button
-          className="profile"
-          type="button"
-          aria-label="Account menu"
-          aria-haspopup="true"
-          aria-expanded={menuOpen}
-          onClick={onToggleMenu}
-        >
-          {account.avatarUrl
-            ? <img src={account.avatarUrl} alt="" referrerPolicy="no-referrer" />
-            : initial}
-        </button>
-        {menuOpen && (
-          <div className="pmenu beta-pmenu" role="menu">
-            <div className="pm-head">
-              <p className="pm-name">{account.fullName}</p>
-              <p className="pm-mail">{account.email}</p>
+        <div className="pmenu-wrap">
+          <button
+            className="profile"
+            type="button"
+            aria-label="Account menu"
+            aria-haspopup="true"
+            aria-expanded={menuOpen}
+            onClick={onToggleMenu}
+          >
+            {account.avatarUrl
+              ? <img src={account.avatarUrl} alt="" referrerPolicy="no-referrer" />
+              : initial}
+          </button>
+          {menuOpen && (
+            <div className="pmenu beta-pmenu" role="menu">
+              <div className="pm-head">
+                <p className="pm-name">{account.fullName}</p>
+                <p className="pm-mail">{account.email}</p>
+              </div>
+              <button className="pm-item" role="menuitem" type="button" onClick={onOpenAccount}>
+                My account
+              </button>
+              <button className="pm-item small" role="menuitem" type="button" onClick={onSignOut}>
+                Sign out
+              </button>
             </div>
-            <button className="pm-item" role="menuitem" type="button" onClick={onOpenAccount}>
-              My account
-            </button>
-            <button className="pm-item small" role="menuitem" type="button" onClick={onSignOut}>
-              Sign out
-            </button>
-          </div>
-        )}
+          )}
+        </div>
       </div>
     </header>
   );

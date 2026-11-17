@@ -411,7 +411,7 @@ function CommunitySection({
         )
       ) : (
         <>
-          <p className="pc-lead">Reserved for guests of the house.</p>
+          <p className="pc-lead">Reserved for hotel guests</p>
           <p className="sec-text pc-text">Private evenings, guest invitations and news from {world.property} open after your stay.</p>
         </>
       )}

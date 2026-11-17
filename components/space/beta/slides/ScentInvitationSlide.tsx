@@ -34,9 +34,11 @@ export default function ScentInvitationSlide({
   onOrder: () => void;
   onSimulateDelivery: () => void;
 }) {
-  const status = state.cardStatus || (guest ? "received" : "none");
+  // Only treat as received when state says so (or a real stay guest with no local status yet).
+  const status = state.cardStatus || (guest && state.order ? "received" : "none");
   const activeIndex = status === "received" ? 3 : status === "none" ? -1 : TRACK.indexOf(status as CardStatus);
-  const orderLabel = guest || status === "received" ? "Order another card" : "Order my card";
+  const orderLabel = status === "received" || Boolean(state.order) ? "Order another card" : "Order my card";
+  const canSimulate = status !== "received";
 
   return (
     <article className="beta-split beta-scent" aria-label="Scent invitation">
@@ -58,40 +60,31 @@ export default function ScentInvitationSlide({
       <div className="beta-split-copy">
         <p className="beta-eyebrow">Scent invitation</p>
         <h2 className="beta-scent-title">
-          Your scented <em className="cu">card.</em>
+          Your scented <em>card.</em>
         </h2>
         <p className="beta-scent-body">
           A personalized card that captures the signature aroma of{" "}
           <em>{world.property}</em> and introduces the atmosphere of this hospitality world.
         </p>
 
-        {status === "none" && !guest && (
-          <p className="beta-muted">Not ordered yet.</p>
-        )}
-        {guest && !state.order && status === "received" && (
+        {guest && status === "received" && !state.order && (
           <p className="beta-muted">Received during your stay.</p>
         )}
 
         <div className="beta-scent-actions">
-          {canOrder ? (
-            <button className="beta-cta" type="button" onClick={onOrder}>
-              {orderLabel} <span aria-hidden="true">→</span>
-            </button>
-          ) : (
-            <p className="beta-muted">Activate a stay to request a card.</p>
-          )}
+          <button className="beta-cta" type="button" onClick={onOrder} disabled={!canOrder}>
+            {orderLabel} <span aria-hidden="true">→</span>
+          </button>
 
-          {status !== "none" && (
-            <ol className="beta-track">
-              {TRACK.map((step, index) => (
-                <li key={step} className={index <= activeIndex ? "done" : ""}>
-                  {statusLabel(step)}
-                </li>
-              ))}
-            </ol>
-          )}
+          <ol className="beta-track">
+            {TRACK.map((step, index) => (
+              <li key={step} className={index <= activeIndex ? "done" : ""}>
+                {statusLabel(step)}
+              </li>
+            ))}
+          </ol>
 
-          {status !== "none" && status !== "received" && (
+          {canSimulate && (
             <button className="beta-text-link" type="button" onClick={onSimulateDelivery}>
               Simulate card delivery
             </button>

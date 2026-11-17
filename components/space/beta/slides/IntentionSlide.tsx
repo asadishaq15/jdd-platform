@@ -59,7 +59,7 @@ export default function IntentionSlide({
       <div className="beta-split-copy">
         <p className="beta-eyebrow">My intention</p>
         <h2 className="beta-intention-title">
-          Set your <em className="cu">intention.</em>
+          Set your <em>intention.</em>
         </h2>
 
         <div className="beta-field-shell">
@@ -69,7 +69,7 @@ export default function IntentionSlide({
           <textarea
             id="beta-intention"
             className="beta-field"
-            rows={3}
+            rows={2}
             value={intention}
             onChange={(event) => setIntention(event.target.value)}
             onBlur={() => persist()}
@@ -84,7 +84,7 @@ export default function IntentionSlide({
           <textarea
             id="beta-becoming"
             className="beta-field"
-            rows={3}
+            rows={2}
             value={becoming}
             onChange={(event) => setBecoming(event.target.value)}
             onBlur={() => persist()}

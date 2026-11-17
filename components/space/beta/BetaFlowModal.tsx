@@ -37,28 +37,14 @@ export default function BetaFlowModal({
   const [ordering, setOrdering] = useState(false);
 
   async function completeOrder() {
-    if (!activeStayId) {
-      setOrderError("Activate a stay before requesting a card.");
-      return;
-    }
     if (recipientName.trim().length < 2 || shippingAddress.trim().length < 8) {
       setOrderError("Enter the recipient and complete delivery address.");
       return;
     }
     setOrdering(true);
     setOrderError("");
-    const response = await fetch("/api/card-orders", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ stayId: activeStayId, recipientName, shippingAddress }),
-    });
-    const result = await response.json();
-    if (!response.ok) {
-      setOrderError(result.error || "The order request could not be saved.");
-      setOrdering(false);
-      return;
-    }
-    onSave({
+
+    const nextState: SpaceState = {
       ...state,
       cardStatus: "preparing",
       order: {
@@ -67,7 +53,24 @@ export default function BetaFlowModal({
         recipient: recipientName.trim(),
         address: shippingAddress.trim(),
       },
-    });
+    };
+
+    // Persist to API when a stay is linked; otherwise keep a local Space request (inactive / no stay).
+    if (activeStayId) {
+      const response = await fetch("/api/card-orders", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ stayId: activeStayId, recipientName, shippingAddress }),
+      });
+      const result = await response.json();
+      if (!response.ok) {
+        setOrderError(result.error || "The order request could not be saved.");
+        setOrdering(false);
+        return;
+      }
+    }
+
+    onSave(nextState);
     setOrdering(false);
     onClose();
   }

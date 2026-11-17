@@ -27,9 +27,15 @@ export default function RitualSlide({
       <div className="beta-ritual-shell">
         <div className="beta-ritual-block">
           <p className="beta-ritual-lead">
-            {active
-              ? "Pause · Scent · Reflect · Act"
-              : "Your invitation ritual begins when your card arrives."}
+            {active ? (
+              "Pause · Scent · Reflect · Act"
+            ) : (
+              <>
+                Your invitation ritual begins
+                <br />
+                when your card arrives.
+              </>
+            )}
           </p>
           <button className="beta-text-link" type="button" onClick={onRitual}>
             {active ? "Open my invitation ritual" : "Read the steps"}
@@ -40,7 +46,7 @@ export default function RitualSlide({
 
         <div className="beta-ritual-block">
           <h2 className="beta-ritual-title">
-            Your State, on <em className="cu">skin.</em>
+            Your State, on <em>skin.</em>
           </h2>
           <p className="beta-ritual-body">
             A perfume oil to wear alone or layer with your favourite fragrance.

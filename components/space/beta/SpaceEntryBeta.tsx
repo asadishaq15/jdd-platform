@@ -93,7 +93,8 @@ export default function SpaceEntryBeta({
     : baseWorld;
   const guest = Boolean(connectedStay || (state.visited && state.code));
   const guestName = connectedStay?.guestName || account.fullName;
-  const canOrder = Boolean(connectedStay);
+  // Show order CTA for discovery guests and inactive/no-stay members; API persists only when a stay exists.
+  const canOrder = true;
   const ritualActive = Boolean(guest || state.cardStatus === "received");
 
   function updateState(next: SpaceState) {
@@ -104,10 +105,11 @@ export default function SpaceEntryBeta({
   function simulateDelivery() {
     const current = state.cardStatus || "none";
     const nextStatus =
-      current === "preparing" ? "sent"
-        : current === "sent" ? "delivered"
-          : current === "delivered" ? "received"
-            : current;
+      current === "none" ? "preparing"
+        : current === "preparing" ? "sent"
+          : current === "sent" ? "delivered"
+            : current === "delivered" ? "received"
+              : current;
     if (nextStatus === current) return;
     updateState({ ...state, cardStatus: nextStatus });
   }
