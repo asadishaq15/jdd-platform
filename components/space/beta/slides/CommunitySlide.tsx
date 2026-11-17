@@ -36,6 +36,7 @@ export default function CommunitySlide({
 }) {
   const [code, setCode] = useState("");
   const [error, setError] = useState("");
+  const [showUnlockedCode, setShowUnlockedCode] = useState(false);
 
   const byCategory = Object.fromEntries(
     CATEGORIES.map((category) => [
@@ -60,6 +61,7 @@ export default function CommunitySlide({
     }
     setError("");
     setCode("");
+    setShowUnlockedCode(false);
     onUnlock({
       ...state,
       code: raw,
@@ -126,7 +128,6 @@ export default function CommunitySlide({
                     </p>
                     <p className="beta-community-event-title">{item.title}</p>
                     <p className="beta-community-event-body">{item.body}</p>
-                    <p className="beta-muted">{item.timing}</p>
                   </button>
                 );
               })}
@@ -140,48 +141,63 @@ export default function CommunitySlide({
             </div>
           )}
 
-          <form className="beta-code-form" onSubmit={submitCode} noValidate>
-            <label className="beta-code-label" htmlFor="beta-access-code-unlocked">
+          {showUnlockedCode ? (
+            <form className="beta-code-form" onSubmit={submitCode} noValidate>
+              <label className="beta-code-label" htmlFor="beta-access-code-unlocked">
+                Add a code from another stay
+              </label>
+              <input
+                id="beta-access-code-unlocked"
+                className="beta-code-input"
+                value={code}
+                placeholder="Enter your access code"
+                aria-label="Access code from another stay"
+                autoFocus
+                onChange={(event) => {
+                  const raw = normalizeAccessCode(event.target.value);
+                  setCode(raw.match(/.{1,4}/g)?.join("-") || "");
+                  setError("");
+                }}
+              />
+              <button className="beta-code-submit-hidden" type="submit">
+                Add a code from another stay
+              </button>
+              {error && <p className="beta-code-error" role="alert">{error}</p>}
+            </form>
+          ) : (
+            <button
+              className="beta-text-link"
+              type="button"
+              onClick={() => setShowUnlockedCode(true)}
+            >
               Add a code from another stay
-            </label>
-            <input
-              id="beta-access-code-unlocked"
-              className="beta-code-input"
-              value={code}
-              placeholder="Enter your access code"
-              aria-label="Access code from another stay"
-              onChange={(event) => {
-                const raw = normalizeAccessCode(event.target.value);
-                setCode(raw.match(/.{1,4}/g)?.join("-") || "");
-                setError("");
-              }}
-            />
-            <button className="beta-text-link" type="submit">Submit code</button>
-            {error && <p className="beta-code-error" role="alert">{error}</p>}
-          </form>
+            </button>
+          )}
         </div>
       ) : (
         <div className="beta-community-locked">
           <h3 className="beta-community-reserved-title">
-            Reserved for guests of the <em className="cu">house</em>.
+            Reserved for guests of the <em className="cu">house.</em>
           </h3>
           <p className="beta-community-reserved-body">
             Private evenings, guest invitations and news from {world.property} open after your stay.
           </p>
-          <form className="beta-code-form" onSubmit={submitCode} noValidate>
+          <form className="beta-code-form beta-code-form-locked" onSubmit={submitCode} noValidate>
             <input
               id="beta-access-code-locked"
               className="beta-code-input"
               value={code}
               placeholder="Enter your access code"
-              aria-label="Access code"
+              aria-label="Enter your access code"
               onChange={(event) => {
                 const raw = normalizeAccessCode(event.target.value);
                 setCode(raw.match(/.{1,4}/g)?.join("-") || "");
                 setError("");
               }}
             />
-            <button className="beta-text-link" type="submit">Continue</button>
+            <button className="beta-code-submit-hidden" type="submit">
+              Enter your access code
+            </button>
             {error && <p className="beta-code-error" role="alert">{error}</p>}
           </form>
         </div>

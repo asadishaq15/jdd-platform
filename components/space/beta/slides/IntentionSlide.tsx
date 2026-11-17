@@ -32,8 +32,14 @@ export default function IntentionSlide({
         <div className="beta-intention-preview">
           <div className="beta-intention-frame">
             <img
-              className="beta-scene-img"
+              className="beta-scene-img beta-scene-night"
               src="/assets/bg-04-my-intention-card-scene-no-text.jpg"
+              alt=""
+              aria-hidden="true"
+            />
+            <img
+              className="beta-scene-img beta-scene-light"
+              src="/assets/bg-04-my-intention-card-scene-no-text_light.png"
               alt=""
               aria-hidden="true"
             />
@@ -53,7 +59,7 @@ export default function IntentionSlide({
       <div className="beta-split-copy">
         <p className="beta-eyebrow">My intention</p>
         <h2 className="beta-intention-title">
-          Set your <em className="cu">intention</em>.
+          Set your <em className="cu">intention.</em>
         </h2>
 
         <div className="beta-field-shell">

@@ -70,7 +70,7 @@ export default function IdentitySlide({
 
         <div className="beta-identity-state">
           <p className="beta-label">Your State</p>
-          <p className="beta-state-name cu">{world.state}</p>
+          <p className="beta-state-name">{world.state}</p>
           <p className="beta-label">Your mantra</p>
           <p className="beta-mantra">{world.mantra}</p>
         </div>

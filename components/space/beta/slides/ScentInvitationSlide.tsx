@@ -43,8 +43,13 @@ export default function ScentInvitationSlide({
       <div className="beta-split-media">
         <div className="beta-invite-visual">
           <img
-            className="beta-scene-img"
+            className="beta-scene-img beta-scene-night"
             src="/assets/bg-03-scent-invitation-card-scene.jpg"
+            alt={`Scented invitation card for ${guestName} at ${world.property}`}
+          />
+          <img
+            className="beta-scene-img beta-scene-light"
+            src="/assets/bg-03-scent-invitation-card-scene_light.png"
             alt={`Scented invitation card for ${guestName} at ${world.property}`}
           />
         </div>
@@ -53,22 +58,12 @@ export default function ScentInvitationSlide({
       <div className="beta-split-copy">
         <p className="beta-eyebrow">Scent invitation</p>
         <h2 className="beta-scent-title">
-          Your scented <em className="cu">card</em>.
+          Your scented <em className="cu">card.</em>
         </h2>
         <p className="beta-scent-body">
           A personalized card that captures the signature aroma of{" "}
           <em>{world.property}</em> and introduces the atmosphere of this hospitality world.
         </p>
-
-        {status !== "none" && (
-          <ol className="beta-track">
-            {TRACK.map((step, index) => (
-              <li key={step} className={index <= activeIndex ? "done" : ""}>
-                {statusLabel(step)}
-              </li>
-            ))}
-          </ol>
-        )}
 
         {status === "none" && !guest && (
           <p className="beta-muted">Not ordered yet.</p>
@@ -85,6 +80,17 @@ export default function ScentInvitationSlide({
           ) : (
             <p className="beta-muted">Activate a stay to request a card.</p>
           )}
+
+          {status !== "none" && (
+            <ol className="beta-track">
+              {TRACK.map((step, index) => (
+                <li key={step} className={index <= activeIndex ? "done" : ""}>
+                  {statusLabel(step)}
+                </li>
+              ))}
+            </ol>
+          )}
+
           {status !== "none" && status !== "received" && (
             <button className="beta-text-link" type="button" onClick={onSimulateDelivery}>
               Simulate card delivery

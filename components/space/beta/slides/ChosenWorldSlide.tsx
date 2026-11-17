@@ -21,6 +21,12 @@ export default function ChosenWorldSlide({
           role="img"
           aria-label={`${world.property} visual`}
         >
+          <img
+            className="beta-arch-photo"
+            src="/assets/photo-oblique-house-lake-lounge.jpg"
+            alt=""
+            aria-hidden="true"
+          />
           <div className="beta-arch-nav" aria-hidden="true">
             <span className="beta-arch-btn">
               <svg className="beta-arch-arrow" viewBox="0 0 24 24" fill="none">

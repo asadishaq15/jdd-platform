@@ -1,0 +1,106 @@
+OBLIQUE HOUSE / ALEX LAURENT - WEBSITE COPY (copy deck)
+======================================================
+All text from the 7 layouts, cleaned and in reading order. Copy text from here,
+not from the images. Uppercase labels are written in their real case with the
+note [caps] - apply text-transform: uppercase in CSS.
+{curly braces} = data from the member profile / CMS (the layouts show sample values).
+*word* = The Seasons italic accent word inside a headline.
+
+
+GLOBAL (every screen)
+  Header ............ My Space [caps]
+  Step indicator .... {01} / 06
+  Breadcrumb ........ name of the current screen [caps]
+
+
+01 - MY SPACE
+  Breadcrumb ........ My Space
+  Member name ....... {Alex Laurent}
+  Badge ............. Member [caps]
+  Label ............. Your state [caps]
+  State ............. {Perspective}
+  Label ............. Your mantra [caps]
+  Mantra ............ {I see otherwise}
+  Facts ............. Birth date [caps]  {14 May 1992}
+                      Zodiac [caps]      {Taurus}
+                      Based in [caps]    {New York}
+
+
+02 - YOUR CHOSEN WORLD
+  Breadcrumb ........ Your chosen world
+  Title ............. {Oblique House}
+  Location .......... {Skagen, Denmark}
+  Subtitle .......... Experience your *State* here.
+  Experiences ....... A workshop with a visiting artist
+                      A room designed without straight lines
+                      A night walk along the dunes
+  Button ............ Book your stay [caps]
+  Label ............. Scent introduction [caps]
+  Scent ............. {Ink, sea grass and smoked wood.}
+
+
+03 - SCENT INVITATION
+  Breadcrumb ........ Scent invitation
+  Eyebrow ........... Scent invitation [caps]
+  Title ............. Your scented *card.*
+  Body .............. A personalized card that captures the signature aroma of *Oblique House*
+                      and introduces the atmosphere of this hospitality world.
+                      (Oblique House in Helvetica Neue Light Italic, ivory)
+  Button ............ Order my card [caps]
+  Delivery status ... Preparing [caps] · Sent [caps] · Delivered [caps]
+  Link .............. Simulate card delivery
+
+
+04 - MY INTENTION
+  Breadcrumb ........ My intention
+  Eyebrow ........... My intention [caps]
+  Title ............. Set your *intention.*
+  Field 1 label ..... Edit intention [caps]
+  Field 1 value ..... {More at peace with myself}
+  Field 2 label ..... Edit I am becoming [caps]
+  Field 2 value ..... {a more present version of myself}
+  Card (in the background image) ... More at peace with myself / I AM BECOMING /
+                      a more present version of myself
+
+
+05 - MY RITUAL
+  Breadcrumb ........ My ritual
+  Title ............. Your invitation ritual begins
+                      when your card arrives.
+  Link .............. Read the steps
+  Title ............. Your State, on *skin.*
+  Body .............. A perfume oil to wear alone or layer with your favourite fragrance.
+  Link .............. Open my perfume oil ritual
+
+
+06 - MY COMMUNITY (locked, before the access code)
+  Breadcrumb ........ My community
+  Title ............. My community
+  Body .............. You belong among people who are willing to see what others overlook —
+                      connected by unconventional perception, creative solitude, experimentation
+                      and the ability to transform limitation into a new point of view.
+  Button ............ Plan your stay [caps]
+  Title ............. Reserved for guests of the *house.*
+  Body .............. Private evenings, guest invitations and news
+                      from Oblique House open after your stay.
+  Link .............. Enter your access code
+
+
+07 - MY COMMUNITY (unlocked, after a valid access code)
+  Breadcrumb ........ My community
+  Title ............. My community
+  Body .............. (same as screen 06)
+  Button ............ Plan your next stay [caps]
+  Property .......... {Oblique House}
+  Location .......... {Skagen, Denmark}
+  Card 1 ............ Event [caps]
+                      An Evening by the North Sea
+                      An intimate dinner inspired by the Nordic coast
+  Card 2 ............ Guest invitation [caps]
+                      A Morning at Oblique House
+                      A quiet beginning with sea views and a private breakfast
+  Card 3 ............ News [caps]
+                      Discover the Art of Slow Living
+                      A new wellness experience at Oblique House
+                      (the three card titles are links - underlined)
+  Link .............. Add a code from another stay

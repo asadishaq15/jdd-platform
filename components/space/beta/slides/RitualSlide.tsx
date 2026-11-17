@@ -40,7 +40,7 @@ export default function RitualSlide({
 
         <div className="beta-ritual-block">
           <h2 className="beta-ritual-title">
-            Your State, on <em className="cu">skin</em>.
+            Your State, on <em className="cu">skin.</em>
           </h2>
           <p className="beta-ritual-body">
             A perfume oil to wear alone or layer with your favourite fragrance.

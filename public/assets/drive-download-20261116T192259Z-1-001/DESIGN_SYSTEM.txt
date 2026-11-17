@@ -1,0 +1,168 @@
+OBLIQUE HOUSE / ALEX LAURENT - DESIGN SYSTEM
+===========================================
+Desktop reference: artboard 1440 px wide. All values in CSS px.
+Measured from the layout PDF. CSS variables: design-tokens.css (same values).
+
+
+1. PRODUCT STRUCTURE
+--------------------
+"My Space" is a private member portal. The 7 layouts are one user journey,
+shown in this order (the bottom progress bar has one segment per step):
+
+  01  My Space ................ member profile, current State, mantra, birth date / zodiac / city
+  02  Your Chosen World ....... recommended hotel (Oblique House), experiences, scent, Book your stay
+  03  Scent Invitation ........ the scented card, Order my card, card delivery status
+                                 (Preparing / Sent / Delivered)
+  04  My Intention ............ two editable fields: "I am becoming" + intention text
+  05  My Ritual ............... perfume oil ritual, Read the steps / Open my perfume oil ritual
+  06  My Community - locked ... community text, Plan your stay, access-code entry
+  07  My Community - unlocked . same screen after a valid access code: property circle
+                                 (Oblique House), Event / Guest invitation / News cards
+
+Screens 06 and 07 are two STATES of the same page, not two pages.
+
+
+2. COLOURS
+----------
+Background             #0C0908  (page)   - some screens use #0E0D0B or #000000 -> unify to #0C0908
+Text primary (ivory)   #EEE8DE           - headlines, values, list items (#ECE5DA in places = same colour)
+Text secondary         #BDB7AD           - labels, location, mantra
+Text muted             #A69F93           - body copy, breadcrumb, header icons
+Subtle                 #8F8A82           - outline of the MEMBER badge
+Copper                 #B98B5C           - text caret, small accents
+Copper active          #BB804F           - active progress segment, step number "01"
+Line strong            #4A4238           - inactive progress segments
+Hairline               white 0.5pt at ~23% in the file  ->  1px rgba(255,255,255,.14)
+Field border           rgba(255,255,255,.35)
+Button                 background #EEE8DE, text #0E0D0B
+
+Gold gradient (icons, gold text):
+  #91572D 0% · #C07841 13% · #E29F63 27% · #FFD39A 41% · #F1B374 54% · #F1B374 69% · #CE864B 85% · #804E2D 100%
+  The texture 05_Images/texture-gold-satin-gradient.png is the reference for this
+  metallic look (e.g. background-clip:text on "Perspective").
+
+
+3. LAYOUT GRID
+--------------
+Artboard width          1440
+Side margins            96 left / 96 right  ->  content 96...1344 (1248 wide)
+Header                  0...100, bottom hairline at y = 100 (x 96-1344)
+Breadcrumb row          y = 118 (step number at x 96, section name at x 158)
+Two-column screens      02, 03, 04:
+  - media / image area  left: x 96, width 612 (screen 02 photo: 96,176 -> 708,896)
+                        (03 and 04 use a full-bleed background image on the left instead)
+  - text column         x 833-838 (use 835), width ~505
+Centred screens         01 (profile), 05, 06, 07: centre axis x = 720
+Progress bar            centred, y = artboard height - 48 (976 on 1024-high screens)
+Screen heights          01-05: 1024 · 06: 1084 · 07: 1278 (scrolling content)
+
+
+4. SHARED COMPONENTS
+--------------------
+4.1 Header (all screens)
+  - Centre: logo sprig (16 x 22, at x 669 y 43) + "MY SPACE" (Helvetica Neue 300,
+    15px, uppercase, #A69F93) at x 692.  The sprig is a raster image in the file ->
+    an SVG of the logo is still needed (see MISSING_ITEMS...).
+  - Right: bell icon (18 x 24 at x 1288, y 38) and profile icon (24 x 24 at x 1323,
+    y 38), colour #A69F93, 11px gap. Drawn as vectors in the file; no separate SVG
+    yet - can be extracted from the PDF or re-exported from Illustrator.
+  - Hairline under the header: y 100, x 96 -> 1344.
+
+4.2 Breadcrumb / step indicator
+  - "01 / 06" in copper (#BB804F) at x 96, y 118-130, ~10.5px.
+    In the file it is an IMAGE and shows "01 / 06" on every screen -> must be live
+    text and show the real step (01...06; screen 07 = step 06 unlocked).
+  - Section name, Helvetica Neue 400, 10.5px uppercase, #A69F93, at x 158.
+
+4.3 Progress bar (bottom)
+  - 6 segments, each 28 x 1 px, gap 6 px, centred on x 720.
+  - Inactive #4A4238, active #BB804F (one segment = current step).
+
+4.4 Primary button (ivory)
+  - Fill #EEE8DE, text #0E0D0B, Helvetica Neue 500, 11px, uppercase, letter-spacing 0.04em.
+  - Height 56 (screen 02 uses 64 - unify), padding-x 28, square corners.
+  - Arrow icon on the right (line arrow, 14 x 7, stroke 1.1, colour #0E0D0B).
+  - Examples: BOOK YOUR STAY (330 x 64), ORDER MY CARD, PLAN YOUR STAY (260 x 56).
+  - States (hover / active / focus / disabled) are not designed yet -> see MISSING.
+
+4.5 Text link (The Seasons)
+  - The Seasons Light Italic 22px, #EEE8DE, 1px underline about 10px below the text.
+  - The underline is a thin copper-gold line that fades out at both ends
+    (e.g. linear-gradient(90deg, transparent, #B98B5C 15%, #E2B07A 50%, #B98B5C 85%, transparent)).
+  - Examples: Read the steps · Open my perfume oil ritual · Enter your access code ·
+    Add a code from another stay · Simulate card delivery (screen 03).
+
+4.6 Input field (screen 04)
+  - Box 506 x 120, 1px border rgba(255,255,255,.35), no fill, square corners.
+  - Label: Helvetica Neue 500, 10.5px uppercase, #A69F93 ("EDIT INTENTION", "EDIT I AM BECOMING").
+  - Value: The Seasons Light Italic 29px #EEE8DE in both fields
+    (field 1 "More at peace with myself", field 2 "a more present version of myself").
+  - Caret: 1px copper #B98B5C, 34px high.
+
+4.7 Member badge (screen 01)
+  - "MEMBER", Helvetica Neue 400 13px uppercase #EEE8DE, outline 1px #8F8A82,
+    108 x 36, fully rounded (radius 18).
+
+4.8 Profile facts (screen 01)
+  - Three columns (centres ≈ x 357, 705, 1053), separated by vertical hairlines
+    (x 532 and 877, 76px high).
+  - Icon (gold gradient SVG) -> label (12px caps #BDB7AD) -> value (The Seasons 400, 21px, #EEE8DE).
+  - Icons: icon-calendar-birth-date, zodiac-<sign> (from the member's birth date),
+    icon-location-pin.
+
+4.9 Arched photo (screen 02)
+  - Image in a rectangle with a semicircular top (arch). Box 612 x 720 at x 96, y 176.
+    CSS: border-radius: 306px 306px 0 0; overflow: hidden; object-fit: cover.
+  - Two round carousel buttons on the photo (46px circles, 1px #EEE8DE outline,
+    arrow inside) at the bottom-left and bottom-right of the photo.
+
+4.10 Round portrait (screen 01)
+  - Member photo in a circle, 225 x 225 at x 358, y 194, with a thin ring
+    (outer circle 251 px). A vertical hairline at x 626 separates it from the name.
+
+4.11 Gold text ("Perspective", screen 01)
+  - Raster in the file. Build as live text: The Seasons Light Italic ~74px with
+    background: var(--gradient-gold); -webkit-background-clip: text; color: transparent.
+
+4.12 Event cards (screen 07)
+  - Three columns separated by vertical hairlines (x 522 and 918, 76px high),
+    between horizontal hairlines at y 860 and 1050.
+  - Category (14px caps #BDB7AD) -> title (The Seasons 400 21px #EEE8DE) ->
+    description (Helvetica Neue 300 16px/25px #A69F93), centred.
+  - Each title has a 1px copper-gold underline (same fading line as 4.5), about 29px
+    below the top of the title and as wide as the title:
+      An Evening by the North Sea      x 143 -> 449, y 960
+      A Morning at Oblique House       x 567 -> 873, y 960
+      Discover the Art of Slow Living  x 973 -> 1308, y 960
+    The underline marks the titles as links (each card opens its event / invitation / news).
+
+4.13 Card delivery status (screen 03)
+  - Row of three steps under the ORDER MY CARD button, top y 700:
+      PREPARING  - marker at x 785, text at x 806
+      SENT       - marker centred at x 935, text at x 950
+      DELIVERED  - marker centred at x 1047, text at x 1060
+  - Text: Helvetica Neue 400, 12px uppercase, #BDB7AD, letter-spacing max 0.04em.
+  - Marker, 11px circle:
+      current / done step  -> filled with the gold gradient (var(--gradient-gold))
+      future step          -> 1px copper ring (#B98B5C), no fill
+    In the layout PREPARING is the current step, SENT and DELIVERED are still empty.
+  - Below: text link "Simulate card delivery" (component 4.5) at x 785, y 746,
+    underline x 785 -> 996, y 781. It moves the status one step forward
+    (Preparing -> Sent -> Delivered) - a demo control until real delivery tracking exists.
+
+
+5. ICON SIZES
+-------------
+SVG files are in 04_Icons (gold-gradient versions in SVG/, single-colour
+versions using currentColor in SVG_Monochrome/).
+  - Header icons: 24px
+  - Profile fact icons (calendar, zodiac, pin): ~24-30px (pin on screen 01: 46 x 53 with glow)
+  - Location pin next to "Skagen, Denmark": ~22 x 27
+  - Scent icon on screen 02: ~24px
+All SVGs have a tight viewBox, so set only width or height in CSS.
+
+
+6. IMAGES & BACKGROUNDS
+-----------------------
+See ASSET_MAP.txt for which file goes on which screen, and ANIMATION_GUIDELINES.txt
+for the video backgrounds.
