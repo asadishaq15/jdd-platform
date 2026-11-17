@@ -30,7 +30,8 @@ function isEditableTarget(target: EventTarget | null) {
   return tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || target.isContentEditable;
 }
 
-function getDeckScrollStage(deck: HTMLElement) {
+function getDeckScrollStage(deck: HTMLElement | null) {
+  if (!deck) return null;
   return deck.querySelector<HTMLElement>(".beta-deck-stage");
 }
 
@@ -264,7 +265,7 @@ export default function SpaceDeck({
           else goPrev();
         } else {
           // Finger up (dy < 0) → next; finger down → prev. Defer to stage scroll when possible.
-          const stage = deckRef.current ? getDeckScrollStage(deckRef.current) : null;
+          const stage = getDeckScrollStage(deckRef.current);
           if (stage && canStageScroll(stage, dy < 0 ? 1 : -1)) return;
           if (dy < 0) goNext();
           else goPrev();
