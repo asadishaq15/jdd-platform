@@ -1,3 +1,4 @@
+import type { CSSProperties, ReactNode } from "react";
 import BrandMark from "../brand/BrandMark";
 import GradientDefs from "../layout/GradientDefs";
 import ThemeToggle from "../layout/ThemeToggle";
@@ -27,9 +28,18 @@ const globeDots = [
   { cx: 285, cy: 325, r: 5, tw: "3.85s" },
 ];
 
-export default function AuthShell({ children }: { children: React.ReactNode }) {
+export default function AuthShell({
+  children,
+  topStart,
+  className,
+}: {
+  children: ReactNode;
+  /** Replaces the empty top-left slot (e.g. Restart demo). */
+  topStart?: ReactNode;
+  className?: string;
+}) {
   return (
-    <div className="shell auth-shell">
+    <div className={`shell auth-shell${className ? ` ${className}` : ""}`}>
       <GradientDefs />
       <aside className="aside" aria-hidden="true">
         <div className="brand"><BrandMark className="brand-logo" decorative /></div>
@@ -42,18 +52,18 @@ export default function AuthShell({ children }: { children: React.ReactNode }) {
               <line x1="310" y1="50" x2="310" y2="570" /><line x1="50" y1="310" x2="570" y2="310" />
             </g>
             {globeDots.map((dot) => (
-              <circle key={`${dot.cx}-${dot.cy}`} className="gdot" cx={dot.cx} cy={dot.cy} r={dot.r} style={{ "--tw": dot.tw } as React.CSSProperties} />
+              <circle key={`${dot.cx}-${dot.cy}`} className="gdot" cx={dot.cx} cy={dot.cy} r={dot.r} style={{ "--tw": dot.tw } as CSSProperties} />
             ))}
           </svg>
         </div>
         <div>
-          <p className="quote">Choose your stay by <em className="cu">State</em><br />not status.</p>
+          <p className="quote">Choose your stay by <em className="cu">State</em><br />— not status.</p>
           <p className="sub">22 States. 22 hospitality worlds.</p>
         </div>
       </aside>
       <main className="main">
         <header className="top">
-          <span aria-hidden="true" />
+          {topStart ?? <span aria-hidden="true" />}
           <BrandMark />
           <ThemeToggle />
         </header>

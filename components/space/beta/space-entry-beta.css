@@ -324,6 +324,20 @@ body.night .space-entry-beta {
   min-height: 0;
 }
 
+.beta-deck-stage-inner > .beta-community {
+  height: auto;
+  max-height: none;
+  align-self: start;
+  min-height: 100%;
+}
+
+.beta-deck:has(.beta-community) .beta-deck-stage {
+  align-items: flex-start;
+  overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
 /* Identity: keep portrait fully visible (stage overflow was clipping the ring) */
 .beta-deck:has(.beta-identity) .beta-deck-stage {
   overflow: visible;
@@ -1526,15 +1540,17 @@ body:not(.night) .beta-ritual-video-wrap {
 .beta-community {
   position: relative;
   width: 100%;
-  height: 100%;
+  height: auto;
+  min-height: 100%;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: space-between;
-  gap: 0;
-  padding-block: 12px 16px;
+  justify-content: flex-start;
+  gap: 18px;
+  padding-block: 12px 24px;
   box-sizing: border-box;
   text-align: center;
+  overflow: visible;
 }
 
 .beta-community-hero {
@@ -1544,11 +1560,14 @@ body:not(.night) .beta-ritual-video-wrap {
   flex-direction: column;
   align-items: center;
   gap: 16px;
-  max-width: 640px;
+  max-width: min(860px, 100%);
   width: min(960px, 100%);
   padding-inline: var(--pad-x);
   box-sizing: border-box;
   flex-shrink: 0;
+  background: var(--beta-bg);
+  container-type: inline-size;
+  container-name: community-hero;
 }
 
 .beta-community-hero .beta-cta {
@@ -1570,9 +1589,11 @@ body:not(.night) .beta-ritual-video-wrap {
 
 .beta-community-desc {
   margin: 0;
-  max-width: min(44rem, 92%);
+  width: 100%;
+  max-width: 100%;
   color: var(--beta-soft-text);
-  font-size: 14.5px;
+  /* Scale with hero width so the four nowrap lines never crop */
+  font-size: clamp(10.5px, 3.15cqi, 14.5px);
   font-weight: 300;
   line-height: 1.75;
   text-align: center;
@@ -1581,19 +1602,18 @@ body:not(.night) .beta-ritual-video-wrap {
 
 .beta-community-desc-line {
   display: block;
-  width: 100%;
+  white-space: nowrap;
 }
 
-/* Ambient mid-layer: out of flex flow so the globe can be tall without cropping copy */
+/* In-flow mid band between hero and locked/unlocked — scrolls with content, no overlap */
 .beta-community-video-band {
-  position: absolute;
-  left: 50%;
-  top: 54%;
+  position: relative;
   z-index: 0;
-  width: min(100%, 820px);
+  width: min(100%, 720px);
   height: min(36vh, 300px);
-  margin: 0;
-  transform: translate(-50%, -50%) scale(0.92);
+  flex-shrink: 0;
+  margin: 0 auto;
+  transform: scale(0.96);
   transform-origin: center center;
   overflow: hidden;
   pointer-events: none;
@@ -1667,6 +1687,7 @@ body:not(.night) .beta-community-video-band {
   align-items: center;
   gap: 16px;
   flex-shrink: 0;
+  background: var(--beta-bg);
 }
 
 .beta-community-reserved-title {
@@ -1675,6 +1696,19 @@ body:not(.night) .beta-community-video-band {
   font-size: clamp(26px, 4vw, 36px);
   font-weight: 300;
   line-height: 1.22;
+  text-align: center;
+}
+
+.beta-community-reserved-title em {
+  font-style: italic;
+  font-weight: 300;
+  color: inherit;
+  background: none;
+  -webkit-text-fill-color: currentColor;
+}
+
+.beta-community-locked > .beta-text-link {
+  margin-top: 8px;
 }
 
 .beta-community-reserved-body {
@@ -1902,15 +1936,25 @@ body:not(.night) .beta-community-video-band {
 
 @media (max-width: 900px) {
   .space-entry-beta .dash-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
     padding-right: 16px;
     padding-left: 16px;
-    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
-    column-gap: 8px;
+  }
+
+  /* Drop desktop centering spacer */
+  .space-entry-beta .dash-top > span[aria-hidden="true"] {
+    display: none;
   }
 
   .space-entry-beta .dash-brand {
+    grid-column: auto;
+    justify-self: auto;
     gap: 8px;
     min-width: 0;
+    flex-shrink: 1;
   }
 
   .space-entry-beta .dash-logo {
@@ -1923,22 +1967,36 @@ body:not(.night) .beta-community-video-band {
   }
 
   .space-entry-beta .dash-controls {
-    gap: 6px;
+    grid-column: auto;
+    justify-self: auto;
+    gap: 4px;
     margin: 0;
+    flex-shrink: 0;
   }
 
-  /* Free horizontal room: hide New/Classic + disabled bell on phones */
-  .space-entry-beta .dash-controls .space-ui-toggle,
-  .space-entry-beta .dash-controls .beta-bell {
+  /* Free horizontal room: hide New/Classic toggle on phones */
+  .space-entry-beta .dash-controls .space-ui-toggle {
     display: none;
   }
 
-  .space-entry-beta .dash-controls .theme {
-    min-width: 32px;
-    min-height: 32px;
+  /* Left → right: notifications, theme, profile (profile furthest right) */
+  .space-entry-beta .dash-controls .beta-bell { order: 1; }
+  .space-entry-beta .dash-controls .theme { order: 2; }
+  .space-entry-beta .dash-controls .pmenu-wrap {
+    order: 3;
+    margin-left: 12px;
   }
 
-  .space-entry-beta .dash-controls .theme svg {
+  .space-entry-beta .dash-controls .theme,
+  .space-entry-beta .dash-controls .beta-bell {
+    min-width: 32px;
+    min-height: 32px;
+    width: 32px;
+    height: 32px;
+  }
+
+  .space-entry-beta .dash-controls .theme svg,
+  .space-entry-beta .dash-controls .beta-bell svg {
     width: 18px;
     height: 18px;
   }
@@ -1951,8 +2009,8 @@ body:not(.night) .beta-community-video-band {
 
   /*
    * Two strategies:
-   * - Fill stage: Identity / Ritual / Community (ambient video needs a full containing block)
-   * - Stack + scroll: World / Scent / Intention
+   * - Fill stage: Identity / Ritual (ambient video needs a full containing block)
+   * - Stack + scroll: World / Scent / Intention / Community
    */
   .beta-deck-stage {
     overflow-x: hidden;
@@ -1961,8 +2019,7 @@ body:not(.night) .beta-community-video-band {
   }
 
   .beta-deck-stage-inner > .beta-identity,
-  .beta-deck-stage-inner > .beta-ritual,
-  .beta-deck-stage-inner > .beta-community {
+  .beta-deck-stage-inner > .beta-ritual {
     height: 100%;
     max-height: 100%;
     align-self: stretch;
@@ -1970,7 +2027,8 @@ body:not(.night) .beta-community-video-band {
 
   .beta-deck-stage-inner > .beta-scent,
   .beta-deck-stage-inner > .beta-intention,
-  .beta-deck-stage-inner > .beta-world {
+  .beta-deck-stage-inner > .beta-world,
+  .beta-deck-stage-inner > .beta-community {
     height: auto;
     max-height: none;
     align-self: start;
@@ -1978,7 +2036,8 @@ body:not(.night) .beta-community-video-band {
 
   .beta-deck:has(.beta-world) .beta-deck-stage,
   .beta-deck:has(.beta-scent) .beta-deck-stage,
-  .beta-deck:has(.beta-intention) .beta-deck-stage {
+  .beta-deck:has(.beta-intention) .beta-deck-stage,
+  .beta-deck:has(.beta-community) .beta-deck-stage {
     align-items: flex-start;
     overflow-x: hidden;
     overflow-y: auto;
@@ -2007,6 +2066,15 @@ body:not(.night) .beta-community-video-band {
     min-height: 44px;
     padding: 0 20px;
     font-size: 12px;
+  }
+
+  .beta-community-hero .beta-cta {
+    width: auto;
+    min-width: 0;
+    min-height: 42px;
+    padding: 0 18px;
+    font-size: 12px;
+    gap: 12px;
   }
 
   .beta-scent-actions .beta-cta {
@@ -2104,34 +2172,36 @@ body:not(.night) .beta-community-video-band {
     align-items: center;
   }
 
-  /* 03 Scent / 04 Intention — image above, centered copy below */
+  /* 03 Scent / 04 Intention — full-bleed image above, centered copy below */
   .beta-split.beta-scent,
   .beta-split.beta-intention {
     grid-template-columns: 1fr;
     height: auto;
     margin-block: 0;
     gap: 24px;
-    padding-inline: var(--pad-x);
+    padding-inline: 0;
   }
 
   .beta-scent .beta-split-media,
   .beta-intention .beta-split-media {
     order: -1;
     width: 100%;
+    max-width: none;
     height: auto;
     min-height: min(36vh, 280px);
     z-index: auto;
+    margin-inline: 0;
   }
 
   .beta-scent .beta-split-copy,
   .beta-intention .beta-split-copy {
     order: 0;
     max-width: none;
-    padding-left: 0;
-    padding-right: 0;
+    padding-inline: var(--pad-x);
     margin-left: 0;
     align-items: center;
     text-align: center;
+    box-sizing: border-box;
   }
 
   .beta-scent .beta-scent-actions {
@@ -2161,8 +2231,15 @@ body:not(.night) .beta-community-video-band {
     top: auto;
     bottom: auto;
     width: 100%;
+    max-width: none;
     height: auto;
     min-height: min(36vh, 280px);
+    border-radius: 0;
+  }
+
+  .beta-scent .beta-scene-img,
+  .beta-intention .beta-scene-img {
+    object-position: center center;
   }
 
   .beta-scent .beta-invite-visual::after,
@@ -2217,7 +2294,7 @@ body:not(.night) .beta-community-video-band {
     padding: 12px 14px 14px;
   }
 
-  /* 05 Ritual — fill stage, centered dual blocks */
+  /* 05 Ritual — fill stage, ambient video behind dual blocks */
   .beta-ritual {
     height: 100%;
   }
@@ -2228,19 +2305,44 @@ body:not(.night) .beta-community-video-band {
     padding: 32px var(--pad-x);
   }
 
-  .beta-ritual-star-gap {
-    height: clamp(64px, 10vh, 100px);
+  .beta-ritual-video {
+    object-position: center 42%;
   }
 
-  /* 06/07 Community — fill stage; globe in document flow between hero and locked */
+  .beta-ritual-star-gap {
+    height: clamp(72px, 12vh, 120px);
+  }
+
+  .beta-ritual-video-wrap::after {
+    background:
+      linear-gradient(
+        180deg,
+        var(--beta-bg) 0%,
+        color-mix(in srgb, var(--beta-bg) 78%, transparent) 18%,
+        transparent 40%
+      ),
+      linear-gradient(
+        0deg,
+        var(--beta-bg) 0%,
+        color-mix(in srgb, var(--beta-bg) 78%, transparent) 18%,
+        transparent 40%
+      ),
+      radial-gradient(
+        ellipse 160% 78% at 50% 48%,
+        transparent 52%,
+        color-mix(in srgb, var(--beta-bg) 35%, transparent) 78%,
+        var(--beta-bg) 96%
+      );
+  }
+
+  /* 06/07 Community — stack + scroll; globe in document flow between hero and locked */
   .beta-community {
-    height: 100%;
+    height: auto;
+    min-height: 0;
     justify-content: flex-start;
-    gap: 20px;
+    gap: 12px;
     padding-block: 8px 16px;
-    overflow-x: hidden;
-    overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
+    overflow: visible;
   }
 
   .beta-community-hero {
@@ -2248,6 +2350,12 @@ body:not(.night) .beta-community-video-band {
     width: 100%;
     padding-inline: var(--pad-x);
     background: var(--beta-bg);
+  }
+
+  .beta-community-desc {
+    max-width: 100%;
+    padding-inline: 0;
+    box-sizing: border-box;
   }
 
   .beta-community-locked,
@@ -2262,15 +2370,35 @@ body:not(.night) .beta-community-video-band {
     position: relative;
     left: auto;
     top: auto;
-    transform: none;
-    width: 100%;
-    height: min(22vh, 180px);
+    width: min(100%, 420px);
+    height: min(28vh, 220px);
     flex-shrink: 0;
-    margin: 0;
+    margin: 0 auto;
+    transform: scale(1.05);
+    transform-origin: center center;
   }
 
   .beta-community-video-band::after {
-    display: none;
+    display: block;
+    background:
+      linear-gradient(
+        180deg,
+        var(--beta-bg) 0%,
+        color-mix(in srgb, var(--beta-bg) 70%, transparent) 16%,
+        transparent 36%
+      ),
+      linear-gradient(
+        0deg,
+        var(--beta-bg) 0%,
+        color-mix(in srgb, var(--beta-bg) 70%, transparent) 16%,
+        transparent 36%
+      ),
+      radial-gradient(
+        ellipse 140% 90% at 50% 50%,
+        transparent 50%,
+        color-mix(in srgb, var(--beta-bg) 40%, transparent) 78%,
+        var(--beta-bg) 96%
+      );
   }
 
   .beta-community-grid {
@@ -2345,7 +2473,7 @@ body:not(.night) .beta-community-video-band {
 
   .beta-ritual-shell { padding: 24px var(--pad-x); }
 
-  .beta-ritual-star-gap { height: clamp(48px, 8vh, 80px); }
+  .beta-ritual-star-gap { height: clamp(56px, 10vh, 96px); }
 
   .beta-ritual-lead,
   .beta-ritual-title {
@@ -2357,7 +2485,7 @@ body:not(.night) .beta-community-video-band {
   }
 
   .beta-community-video-band {
-    height: min(20vh, 160px);
+    height: min(24vh, 190px);
   }
 
   .beta-community-event-title {

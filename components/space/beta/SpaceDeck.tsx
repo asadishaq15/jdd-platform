@@ -30,6 +30,19 @@ function isEditableTarget(target: EventTarget | null) {
   return tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || target.isContentEditable;
 }
 
+function getDeckScrollStage(deck: HTMLElement) {
+  return deck.querySelector<HTMLElement>(".beta-deck-stage");
+}
+
+/** True when the stage can still scroll in the wheel/swipe direction (deltaY > 0 = down). */
+function canStageScroll(stage: HTMLElement, deltaY: number) {
+  const maxScroll = stage.scrollHeight - stage.clientHeight;
+  if (maxScroll <= 1) return false;
+  if (deltaY > 0) return stage.scrollTop < maxScroll - 1;
+  if (deltaY < 0) return stage.scrollTop > 1;
+  return false;
+}
+
 export default function SpaceDeck({
   index,
   onIndexChange,
@@ -190,6 +203,13 @@ export default function SpaceDeck({
 
       if (Math.abs(delta) < 1) return;
 
+      // Prefer native stage scrolling (e.g. community) before changing slides.
+      const stage = getDeckScrollStage(node);
+      if (stage && canStageScroll(stage, delta)) {
+        wheelAcc.current = 0;
+        return;
+      }
+
       // Only claim the gesture when it can change slides.
       const atStart = displayedRef.current <= 0;
       const atEnd = displayedRef.current >= SPACE_SLIDE_COUNT - 1;
@@ -243,6 +263,9 @@ export default function SpaceDeck({
           if (dx < 0) goNext();
           else goPrev();
         } else {
+          // Finger up (dy < 0) → next; finger down → prev. Defer to stage scroll when possible.
+          const stage = deckRef.current ? getDeckScrollStage(deckRef.current) : null;
+          if (stage && canStageScroll(stage, dy < 0 ? 1 : -1)) return;
           if (dy < 0) goNext();
           else goPrev();
         }

@@ -1,11 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { FormEvent, useState } from "react";
 import type { CommunityCircleEvent } from "../../../../lib/space-data";
 import { SPACE_ICON_PIN } from "../../../../lib/space-icons";
 import type { SpaceState } from "../../../../lib/space-state";
-import { demoCodes, normalizeAccessCode, type HospitalityWorld } from "../../../../lib/worlds";
+import type { HospitalityWorld } from "../../../../lib/worlds";
 import BetaLoopVideo from "../BetaLoopVideo";
 
 const COMMUNITY_SRC = "/assets/bg-06-my-community-globe-stars-loop-15s.mp4";
@@ -19,11 +18,12 @@ const CATEGORY_LABELS: Record<CommunityCircleEvent["category"], string> = {
 
 const CATEGORIES = ["event", "invite", "news"] as const;
 
-/** Exact hero copy + line breaks from design / CONTENT_COPY §06–07 */
+/** Four balanced lines sized to stay as four rows on mobile */
 const COMMUNITY_HERO_LINES = [
-  "You belong among people who are willing to see what others overlook",
-  "connected by unconventional perception, creative solitude, experimentation",
-  "and the ability to transform limitation into a new point of view.",
+  "You belong among people who are willing to see",
+  "what others overlook connected by unconventional",
+  "perception, creative solitude, experimentation and",
+  "the ability to transform limitation into a new point of view.",
 ] as const;
 
 export default function CommunitySlide({
@@ -32,19 +32,15 @@ export default function CommunitySlide({
   state,
   circleEvents,
   onOpenEvent,
-  onUnlock,
+  onRequestAccessCode,
 }: {
   world: HospitalityWorld;
   guest: boolean;
   state: SpaceState;
   circleEvents: CommunityCircleEvent[];
   onOpenEvent: (eventId: string) => void;
-  onUnlock: (next: SpaceState) => void;
+  onRequestAccessCode: () => void;
 }) {
-  const [code, setCode] = useState("");
-  const [error, setError] = useState("");
-  const [showUnlockedCode, setShowUnlockedCode] = useState(false);
-
   const byCategory = Object.fromEntries(
     CATEGORIES.map((category) => [
       category,
@@ -53,32 +49,6 @@ export default function CommunitySlide({
   ) as Record<(typeof CATEGORIES)[number], CommunityCircleEvent | null>;
 
   const hasAnyEvent = CATEGORIES.some((category) => byCategory[category]);
-
-  function submitCode(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const raw = normalizeAccessCode(code);
-    if (raw.length < 8) {
-      setError("Enter the full access code from your stay.");
-      return;
-    }
-    const visited = demoCodes[raw];
-    if (!visited) {
-      setError("Use the secure activation link from your stay invitation to connect this Space.");
-      return;
-    }
-    setError("");
-    setCode("");
-    setShowUnlockedCode(false);
-    onUnlock({
-      ...state,
-      code: raw,
-      visited,
-      entryMode: "code",
-      intention: undefined,
-      becoming: undefined,
-      reminder: undefined,
-    });
-  }
 
   return (
     <article className="beta-community" aria-label="My community">
@@ -154,67 +124,23 @@ export default function CommunitySlide({
             </div>
           )}
 
-          {showUnlockedCode ? (
-            <form className="beta-code-form" onSubmit={submitCode} noValidate>
-              <label className="beta-code-label" htmlFor="beta-access-code-unlocked">
-                Add a code from another stay
-              </label>
-              <input
-                id="beta-access-code-unlocked"
-                className="beta-code-input"
-                value={code}
-                placeholder="Enter your access code"
-                aria-label="Access code from another stay"
-                autoFocus
-                onChange={(event) => {
-                  const raw = normalizeAccessCode(event.target.value);
-                  setCode(raw.match(/.{1,4}/g)?.join("-") || "");
-                  setError("");
-                }}
-              />
-              <button className="beta-code-submit-hidden" type="submit">
-                Add a code from another stay
-              </button>
-              {error && <p className="beta-code-error" role="alert">{error}</p>}
-            </form>
-          ) : (
-            <button
-              className="beta-text-link"
-              type="button"
-              onClick={() => setShowUnlockedCode(true)}
-            >
-              Add a code from another stay
-            </button>
-          )}
+          <button className="beta-text-link" type="button" onClick={onRequestAccessCode}>
+            Add a code from another stay
+          </button>
         </div>
       ) : (
         <div className="beta-community-locked">
           <h3 className="beta-community-reserved-title">
-            Reserved for hotel guests
+            Reserved for guests of the <em>house.</em>
           </h3>
           <p className="beta-community-reserved-body">
             Private evenings, guest invitations and news
             <br />
             from {world.property} open after your stay.
           </p>
-          <form className="beta-code-form beta-code-form-locked" onSubmit={submitCode} noValidate>
-            <input
-              id="beta-access-code-locked"
-              className="beta-code-input"
-              value={code}
-              placeholder="Enter your access code"
-              aria-label="Enter your access code"
-              onChange={(event) => {
-                const raw = normalizeAccessCode(event.target.value);
-                setCode(raw.match(/.{1,4}/g)?.join("-") || "");
-                setError("");
-              }}
-            />
-            <button className="beta-code-submit-hidden" type="submit">
-              Enter your access code
-            </button>
-            {error && <p className="beta-code-error" role="alert">{error}</p>}
-          </form>
+          <button className="beta-text-link" type="button" onClick={onRequestAccessCode}>
+            Enter your access code
+          </button>
         </div>
       )}
     </article>

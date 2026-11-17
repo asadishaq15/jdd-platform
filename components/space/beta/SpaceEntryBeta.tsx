@@ -9,6 +9,7 @@ import { loadSpaceState, saveSpaceState, type SpaceState } from "../../../lib/sp
 import { createClient } from "../../../lib/supabase/client";
 import AccountSettings from "../AccountSettings";
 import type { SpaceEntryProps } from "../SpaceEntry";
+import BetaAccessCodeFlow from "./BetaAccessCodeFlow";
 import BetaFlowModal, { type BetaFlow } from "./BetaFlowModal";
 import SpaceBetaHeader from "./SpaceBetaHeader";
 import SpaceDeck from "./SpaceDeck";
@@ -52,6 +53,7 @@ export default function SpaceEntryBeta({
   const [flow, setFlow] = useState<BetaFlow | null>(null);
   const [orderStep, setOrderStep] = useState(1);
   const [circleDetailId, setCircleDetailId] = useState<string | null>(null);
+  const [accessCodeOpen, setAccessCodeOpen] = useState(false);
 
   useEffect(() => {
     setAccount(initialAccount);
@@ -125,6 +127,26 @@ export default function SpaceEntryBeta({
     ? circleEvents.find((event) => event.id === circleDetailId) || null
     : null;
 
+  if (accessCodeOpen) {
+    return (
+      <BetaAccessCodeFlow
+        onClose={() => setAccessCodeOpen(false)}
+        onComplete={({ code, visited, intention, becoming }) => {
+          updateState({
+            ...state,
+            code,
+            visited,
+            entryMode: "code",
+            intention,
+            becoming,
+            reminder: undefined,
+          });
+          setAccessCodeOpen(false);
+        }}
+      />
+    );
+  }
+
   return (
     <main className="space-entry-beta">
       <GradientDefs />
@@ -156,7 +178,7 @@ export default function SpaceEntryBeta({
         <SpaceDeck
           index={slideIndex}
           onIndexChange={setSlideIndex}
-          transitionEnabled={!flow && !accountOpen && !circleDetailId}
+          transitionEnabled={!flow && !accountOpen && !circleDetailId && !accessCodeOpen}
         >
           {slide.id === "identity" && <IdentitySlide account={account} world={world} />}
           {slide.id === "world" && <ChosenWorldSlide world={world} />}
@@ -191,7 +213,7 @@ export default function SpaceEntryBeta({
               state={state}
               circleEvents={circleEvents}
               onOpenEvent={setCircleDetailId}
-              onUnlock={updateState}
+              onRequestAccessCode={() => setAccessCodeOpen(true)}
             />
           )}
         </SpaceDeck>
