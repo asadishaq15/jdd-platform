@@ -7,10 +7,32 @@ import type { AccountSummary } from "../../lib/space-data";
 import { friendlyAuthError } from "../../lib/auth-errors";
 import { usePasswordVisibility } from "../../lib/password-visibility";
 import { createClient } from "../../lib/supabase/client";
+import { formatDateOfBirth } from "../../lib/zodiac";
 import { EyeIcon, EyeOffIcon, PencilIcon } from "../icons/AccountIcons";
 
-type Editor = "name" | "basedIn" | "email" | "password" | null;
+type Editor = "name" | "dateOfBirth" | "basedIn" | "email" | "password" | null;
 type Notice = { kind: "success" | "error"; text: string } | null;
+type DobParts = { day: string; month: string; year: string };
+
+function dobPartsFromIso(value: string | null | undefined): DobParts {
+  const match = value ? /^(\d{4})-(\d{2})-(\d{2})/.exec(value.trim()) : null;
+  if (!match) return { day: "", month: "", year: "" };
+  return { day: String(Number(match[3])), month: String(Number(match[2])), year: match[1] };
+}
+
+function formatBirthDateLabel(iso: string | null | undefined) {
+  if (!iso) return "Not set";
+  const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso.trim());
+  if (!match) return "Not set";
+  const date = new Date(Date.UTC(Number(match[1]), Number(match[2]) - 1, Number(match[3])));
+  if (Number.isNaN(date.getTime())) return "Not set";
+  return new Intl.DateTimeFormat("en-GB", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    timeZone: "UTC",
+  }).format(date);
+}
 
 export default function AccountSettings({ account, onAccountChange }: {
   account: AccountSummary;
@@ -18,6 +40,7 @@ export default function AccountSettings({ account, onAccountChange }: {
 }) {
   const [editor, setEditor] = useState<Editor>(null);
   const [name, setName] = useState(account.fullName);
+  const [dob, setDob] = useState<DobParts>(() => dobPartsFromIso(account.dateOfBirth));
   const [basedIn, setBasedIn] = useState(account.basedIn || "");
   const [email, setEmail] = useState(account.email);
   const [password, setPassword] = useState("");
@@ -35,6 +58,7 @@ export default function AccountSettings({ account, onAccountChange }: {
     setEditor(next);
     setNotice(null);
     if (next === "name") setName(account.fullName);
+    if (next === "dateOfBirth") setDob(dobPartsFromIso(account.dateOfBirth));
     if (next === "basedIn") setBasedIn(account.basedIn || "");
     if (next === "email") setEmail(account.email);
     if (next === "password") {
@@ -65,6 +89,36 @@ export default function AccountSettings({ account, onAccountChange }: {
       kind: metadataError ? "error" : "success",
       text: metadataError ? "Your displayed name was saved, but account metadata could not be synchronized." : "Your name has been updated.",
     });
+  }
+
+  async function saveDateOfBirth(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const day = Number(dob.day);
+    const month = Number(dob.month);
+    const year = Number(dob.year);
+    const date = new Date(year, month - 1, day);
+    const ok =
+      year > 1900
+      && date.getFullYear() === year
+      && date.getMonth() === month - 1
+      && date.getDate() === day
+      && date < new Date();
+    if (!ok) return setNotice({ kind: "error", text: "Please enter a valid date of birth." });
+
+    const nextDateOfBirth = formatDateOfBirth(day, month, year);
+    setSaving(true);
+    setNotice(null);
+    const supabase = createClient();
+    const { error: profileError } = await supabase
+      .from("profiles")
+      .update({ date_of_birth: nextDateOfBirth })
+      .eq("id", account.id);
+    setSaving(false);
+    if (profileError) return setNotice({ kind: "error", text: "We could not update your date of birth. Please try again." });
+
+    onAccountChange({ ...account, dateOfBirth: nextDateOfBirth });
+    setEditor(null);
+    setNotice({ kind: "success", text: "Your date of birth has been updated." });
   }
 
   async function saveBasedIn(event: FormEvent<HTMLFormElement>) {
@@ -240,6 +294,51 @@ export default function AccountSettings({ account, onAccountChange }: {
           <input id="account-name" value={name} onChange={(event) => setName(event.target.value)} autoComplete="name" maxLength={100} required autoFocus />
           <FormActions saving={saving} onCancel={() => setEditor(null)} />
         </form> : <AccountRow label="Name" value={account.fullName} onEdit={() => openEditor("name")} />}
+      </div>
+
+      <div className="account-section">
+        {editor === "dateOfBirth" ? (
+          <form className="account-form" onSubmit={saveDateOfBirth}>
+            <p className="account-form-label" id="account-dob-label">Date of birth</p>
+            <div className="account-dob" role="group" aria-labelledby="account-dob-label">
+              <input
+                inputMode="numeric"
+                maxLength={2}
+                placeholder="DD"
+                aria-label="Day"
+                value={dob.day}
+                onChange={(event) => setDob((value) => ({ ...value, day: event.target.value.replace(/\D/g, "") }))}
+                autoFocus
+              />
+              <span className="account-dob-slash" aria-hidden="true">/</span>
+              <input
+                inputMode="numeric"
+                maxLength={2}
+                placeholder="MM"
+                aria-label="Month"
+                value={dob.month}
+                onChange={(event) => setDob((value) => ({ ...value, month: event.target.value.replace(/\D/g, "") }))}
+              />
+              <span className="account-dob-slash" aria-hidden="true">/</span>
+              <input
+                className="yyyy"
+                inputMode="numeric"
+                maxLength={4}
+                placeholder="YYYY"
+                aria-label="Year"
+                value={dob.year}
+                onChange={(event) => setDob((value) => ({ ...value, year: event.target.value.replace(/\D/g, "") }))}
+              />
+            </div>
+            <FormActions saving={saving} onCancel={() => setEditor(null)} />
+          </form>
+        ) : (
+          <AccountRow
+            label="Date of birth"
+            value={formatBirthDateLabel(account.dateOfBirth)}
+            onEdit={() => openEditor("dateOfBirth")}
+          />
+        )}
       </div>
 
       <div className="account-section">
