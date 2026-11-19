@@ -15,7 +15,7 @@ type CredentialStep = "name" | "email" | "password";
 
 function requestedDestination() {
   const value = new URLSearchParams(window.location.search).get("next");
-  return value?.startsWith("/") && !value.startsWith("//") ? value : "/auth/continue";
+  return value?.startsWith("/") && !value.startsWith("//") ? value : "/auth/complete";
 }
 
 export default function AuthFlow() {

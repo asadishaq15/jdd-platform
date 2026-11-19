@@ -9,29 +9,11 @@ import { demoCodes, getWorld, HospitalityWorld, normalizeAccessCode, numberFromD
 import { formatDateOfBirth } from "../../lib/zodiac";
 import { loadSpaceState, saveSpaceState, SpaceState } from "../../lib/space-state";
 import { createClient } from "../../lib/supabase/client";
+import { persistDiscoveryProfile } from "../../lib/discovery-persist";
 import { trackProductEvent } from "../../lib/product-events";
 
 type Step = "dob" | "result" | "states" | "property" | "intent" | "becoming" | "codewarn" | "code" | "stay";
 type ExploreMode = "onb" | "dash";
-
-async function persistDiscoveryProfile(state: SpaceState) {
-  const supabase = createClient();
-  const { data: userData, error: userError } = await supabase.auth.getUser();
-  if (userError || !userData.user) return "Your session expired. Please sign in again.";
-
-  const chosenWorld = state.chosen || state.visited || state.recommended;
-  const { error: profileError } = await supabase
-    .from("profiles")
-    .update({
-      recommended_world_number: state.recommended || null,
-      chosen_world_number: chosenWorld || null,
-      discovery_completed_at: new Date().toISOString(),
-      ...(state.dateOfBirth ? { date_of_birth: state.dateOfBirth } : {}),
-    })
-    .eq("id", userData.user.id);
-
-  return profileError ? "We could not save your discovery. Please try again." : null;
-}
 
 async function persistDateOfBirth(dateOfBirth: string) {
   const supabase = createClient();

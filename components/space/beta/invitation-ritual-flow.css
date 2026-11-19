@@ -1,0 +1,399 @@
+/* Full-viewport AuthShell takeover for invitation ritual */
+
+.beta-ritual-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  background: var(--bg);
+  overflow: hidden;
+}
+
+.beta-ritual-overlay .beta-ritual-shell {
+  min-height: 100dvh;
+  height: 100%;
+  max-height: 100dvh;
+}
+
+@media (min-width: 900px) {
+  .beta-ritual-overlay .shell.auth-shell {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    height: 100%;
+  }
+
+  .beta-ritual-overlay .auth-shell .aside {
+    min-height: 0;
+    height: 100%;
+  }
+}
+
+.beta-ritual-overlay .main {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  height: 100%;
+  max-height: 100dvh;
+  overflow: hidden;
+}
+
+.beta-ritual-overlay .stage {
+  flex: 1;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  align-items: center;
+  justify-content: center;
+  padding-top: 24px;
+  padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 40px);
+}
+
+.beta-ritual-overlay .panel {
+  max-width: 380px;
+  margin-inline: auto;
+  margin-block: auto;
+  padding-bottom: 8px;
+}
+
+.beta-ritual-overlay .ritual-top-back {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--muted);
+  font-family: var(--sans);
+  font-size: 10.5px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.beta-ritual-overlay .ritual-top-back:hover {
+  color: var(--fg);
+}
+
+.beta-ritual-step-label {
+  margin: 0;
+  color: var(--muted);
+  font-size: 10.5px;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+}
+
+.beta-ritual-view {
+  width: 100%;
+  text-align: center;
+}
+
+.beta-ritual-view > .eyebrow {
+  margin: 0 auto 18px;
+  text-align: center;
+}
+
+.beta-ritual-view > .title,
+.beta-ritual-view .sc-title {
+  margin: 0 auto;
+  text-align: center;
+  text-wrap: balance;
+}
+
+.beta-ritual-view .title.rit-top {
+  margin-top: 8px;
+  margin-bottom: 0;
+}
+
+.beta-ritual-overlay .oil-p1 {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  margin-top: 8px;
+  text-align: center;
+}
+
+.beta-ritual-overlay .oil-p1 .sc-title {
+  margin: 0 0 18px;
+  font-size: clamp(28px, 7vw, 34px);
+}
+
+.beta-ritual-overlay .oil-p1 .dob-intro {
+  margin: 0 auto;
+  max-width: 36ch;
+  line-height: 1.8;
+  text-align: center;
+  text-wrap: balance;
+}
+
+.beta-ritual-overlay .stay-rule {
+  display: block;
+  width: 48px;
+  height: 1px;
+  margin: 34px auto 30px;
+  background: var(--copper-light, #d6a06d);
+}
+
+.beta-ritual-overlay .brand-note {
+  margin: 0 auto 16px;
+  max-width: 34ch;
+  color: var(--muted);
+  font-family: var(--serif);
+  font-style: italic;
+  font-weight: 300;
+  font-size: 16px;
+  line-height: 1.6;
+  text-align: center;
+  text-wrap: balance;
+}
+
+.beta-ritual-overlay .close-line {
+  margin: 34px auto 0;
+  max-width: 28ch;
+  font-family: var(--serif);
+  font-weight: 300;
+  font-size: clamp(18px, 4.5vw, 22px);
+  line-height: 1.35;
+  text-align: center;
+  text-wrap: balance;
+}
+
+.beta-ritual-overlay .stay-actions {
+  margin-top: 40px;
+  text-align: center;
+}
+
+.beta-ritual-overlay .stay-actions .tlink {
+  font-size: 13px;
+  letter-spacing: 0.06em;
+  padding: 12px 6px 16px;
+}
+
+.beta-ritual-overlay .preview-note {
+  margin: 16px auto 0;
+  max-width: 36ch;
+  color: var(--muted);
+  font-size: 13.5px;
+  line-height: 1.55;
+  text-align: center;
+  text-wrap: balance;
+}
+
+.beta-ritual-overlay .rit.ritv {
+  list-style: none;
+  margin: 14px auto 0;
+  padding: 0;
+  max-width: 520px;
+  text-align: left;
+}
+
+.beta-ritual-overlay .rit.ritv li {
+  display: grid;
+  grid-template-columns: 34px 1fr;
+  grid-template-rows: auto auto auto auto;
+  column-gap: 12px;
+  padding: 11px 0;
+  border-top: 1px solid var(--line);
+}
+
+.beta-ritual-overlay .rit.ritv li:last-child {
+  border-bottom: 1px solid var(--line);
+}
+
+.beta-ritual-overlay .rit-n {
+  grid-row: 1 / -1;
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: 14px;
+  color: #c58452;
+  padding-top: 6px;
+}
+
+.beta-ritual-overlay .rit-h {
+  font-family: var(--serif);
+  font-weight: 300;
+  font-size: 24px;
+  line-height: 1.1;
+}
+
+.beta-ritual-overlay .rit-t {
+  margin-top: 2px;
+  color: var(--muted);
+  font-size: 13.5px;
+  line-height: 1.55;
+}
+
+.beta-ritual-overlay .rit-q {
+  margin-top: 4px;
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: 16px;
+  color: var(--fg);
+}
+
+.beta-ritual-overlay .rit-link {
+  margin-top: 8px;
+}
+
+.beta-ritual-overlay .rit-link .tlink {
+  font-size: 12.5px;
+  padding: 4px 2px 8px;
+}
+
+.beta-ritual-overlay .links.small {
+  margin-top: 28px;
+  text-align: center;
+}
+
+.beta-ritual-overlay .links.small .sep {
+  margin: 0 10px;
+  color: var(--muted);
+}
+
+.beta-ritual-overlay .jmodal {
+  z-index: 90;
+}
+
+.beta-ritual-overlay .jmodal .jm-in {
+  max-width: 420px;
+  width: min(420px, calc(100vw - 32px));
+  text-align: left;
+}
+
+.beta-ritual-overlay .jmodal .jm-title {
+  text-align: center;
+}
+
+.beta-ritual-overlay .ae {
+  text-align: left;
+  max-height: 62vh;
+  overflow: auto;
+  padding-right: 4px;
+}
+
+.beta-ritual-overlay .ae-l {
+  display: block;
+  margin: 18px 0 8px;
+  font-size: 10px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.beta-ritual-overlay .ae-in {
+  width: 100%;
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  border-radius: 0;
+  background: transparent;
+  color: var(--fg);
+  font: inherit;
+  font-size: 14.5px;
+  padding: 7px 0;
+  outline: none;
+}
+
+.beta-ritual-overlay .ae-in:focus {
+  border-bottom-color: var(--copper, #c58452);
+}
+
+.beta-ritual-overlay select.ae-in {
+  appearance: none;
+  -webkit-appearance: none;
+  cursor: pointer;
+}
+
+.beta-ritual-overlay .ae-seg {
+  display: inline-flex;
+  margin: 0;
+  border: 1px solid var(--line);
+}
+
+.beta-ritual-overlay .ae-seg .seg-b {
+  background: none;
+  border: 0;
+  border-right: 1px solid var(--line);
+  border-radius: 0;
+  padding: 9px 16px;
+  color: var(--muted);
+  font: inherit;
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  cursor: pointer;
+}
+
+.beta-ritual-overlay .ae-seg .seg-b:last-child {
+  border-right: 0;
+}
+
+.beta-ritual-overlay .ae-seg .seg-b.on {
+  color: #1a1612;
+  background: linear-gradient(92deg, #a66a3f 0%, #c58452 28%, #d6a06d 50%, #f0c79b 68%, #b47749 88%, #a66a3f 100%);
+}
+
+.beta-ritual-overlay .ae-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-top: 10px;
+}
+
+.beta-ritual-overlay .ae-sub {
+  flex: 1 1 140px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.beta-ritual-overlay .ae-tz {
+  margin-top: 10px;
+}
+
+.beta-ritual-overlay .ae-save {
+  margin-top: 18px !important;
+  justify-content: flex-start;
+  text-align: left;
+}
+
+.beta-ritual-overlay .ae-note {
+  margin: 6px 0 0;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.beta-ritual-overlay .ae-demo {
+  margin: 16px 0 0;
+  font-size: 11.5px;
+  color: var(--muted);
+}
+
+.beta-ritual-overlay .ae-prev-b {
+  margin-top: 10px;
+  font-size: 12.5px;
+  padding: 6px 2px 10px;
+}
+
+.beta-ritual-overlay .ae-prev {
+  margin-top: 8px;
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.beta-ritual-overlay .ae-prev-t {
+  margin: 0 0 4px;
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: 18px;
+}
+
+.beta-ritual-overlay .ae-prev-q {
+  margin: 0;
+  font-size: 13px;
+}
+
+.beta-ritual-overlay .jmodal .links.small {
+  margin-top: 28px;
+  text-align: center;
+}

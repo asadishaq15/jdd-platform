@@ -8,11 +8,20 @@ import { getWorld } from "../../../lib/worlds";
 import { loadSpaceState, saveSpaceState, type SpaceState } from "../../../lib/space-state";
 import { createClient } from "../../../lib/supabase/client";
 import AccountSettings from "../AccountSettings";
+import DeleteAccountDialog from "../DeleteAccountDialog";
 import type { SpaceEntryProps } from "../SpaceEntry";
 import BetaAccessCodeFlow from "./BetaAccessCodeFlow";
-import BetaFlowModal, { type BetaFlow } from "./BetaFlowModal";
-import SpaceBetaHeader from "./SpaceBetaHeader";
+import type { BetaFlow } from "./BetaFlowModal";
+import ExploreStatesDrawer from "./ExploreStatesDrawer";
+import InvitationRitualFlow from "./InvitationRitualFlow";
+import LegalSheet from "./LegalSheet";
+import MyJourneyPage from "./MyJourneyPage";
+import OrderCardFlow from "./OrderCardFlow";
+import PerfumeOilFlow from "./PerfumeOilFlow";
+import SpaceBetaHeader, { type SpaceProfileAction } from "./SpaceBetaHeader";
 import SpaceDeck from "./SpaceDeck";
+import SpaceEventsDrawer from "./SpaceEventsDrawer";
+import SpaceRemindersModal from "./SpaceRemindersModal";
 import BetaCircleDetail from "./BetaCircleDetail";
 import ChosenWorldSlide from "./slides/ChosenWorldSlide";
 import CommunitySlide from "./slides/CommunitySlide";
@@ -22,6 +31,12 @@ import RitualSlide from "./slides/RitualSlide";
 import ScentInvitationSlide from "./slides/ScentInvitationSlide";
 import { SPACE_SLIDES } from "./slides";
 import "./space-entry-beta.css";
+
+type ProfilePanel = "account" | "orders" | "stays" | "reminders" | "delete" | null;
+
+const SCENT_SLIDE_INDEX = SPACE_SLIDES.findIndex((slide) => slide.id === "scent");
+const RITUAL_SLIDE_INDEX = SPACE_SLIDES.findIndex((slide) => slide.id === "ritual");
+const INTENTION_SLIDE_INDEX = SPACE_SLIDES.findIndex((slide) => slide.id === "intention");
 
 type SpaceEntryBetaProps = SpaceEntryProps & {
   uiVersion: SpaceUiVersion;
@@ -49,9 +64,12 @@ export default function SpaceEntryBeta({
   const [state, setState] = useState<SpaceState>({});
   const [slideIndex, setSlideIndex] = useState(0);
   const [menuOpen, setMenuOpen] = useState(false);
-  const [accountOpen, setAccountOpen] = useState(false);
+  const [profilePanel, setProfilePanel] = useState<ProfilePanel>(null);
+  const [journeyOpen, setJourneyOpen] = useState(false);
+  const [eventsOpen, setEventsOpen] = useState(false);
+  const [exploreOpen, setExploreOpen] = useState(false);
+  const [legalOpen, setLegalOpen] = useState(false);
   const [flow, setFlow] = useState<BetaFlow | null>(null);
-  const [orderStep, setOrderStep] = useState(1);
   const [circleDetailId, setCircleDetailId] = useState<string | null>(null);
   const [accessCodeOpen, setAccessCodeOpen] = useState(false);
 
@@ -127,6 +145,53 @@ export default function SpaceEntryBeta({
     ? circleEvents.find((event) => event.id === circleDetailId) || null
     : null;
 
+  if (flow === "order") {
+    return (
+      <OrderCardFlow
+        world={world}
+        guestName={guestName}
+        activeStayId={connectedStay?.id}
+        state={state}
+        onSave={updateState}
+        onClose={() => {
+          setFlow(null);
+          if (SCENT_SLIDE_INDEX >= 0) setSlideIndex(SCENT_SLIDE_INDEX);
+        }}
+      />
+    );
+  }
+
+  if (flow === "oil") {
+    return (
+      <PerfumeOilFlow
+        world={world}
+        state={state}
+        onClose={() => {
+          setFlow(null);
+          if (RITUAL_SLIDE_INDEX >= 0) setSlideIndex(RITUAL_SLIDE_INDEX);
+        }}
+      />
+    );
+  }
+
+  if (flow === "ritual") {
+    return (
+      <InvitationRitualFlow
+        state={state}
+        active={ritualActive}
+        onSave={updateState}
+        onClose={() => {
+          setFlow(null);
+          if (RITUAL_SLIDE_INDEX >= 0) setSlideIndex(RITUAL_SLIDE_INDEX);
+        }}
+        onEditIntention={() => {
+          setFlow(null);
+          if (INTENTION_SLIDE_INDEX >= 0) setSlideIndex(INTENTION_SLIDE_INDEX);
+        }}
+      />
+    );
+  }
+
   if (accessCodeOpen) {
     return (
       <BetaAccessCodeFlow
@@ -147,6 +212,161 @@ export default function SpaceEntryBeta({
     );
   }
 
+  function handleProfileAction(action: SpaceProfileAction) {
+    if (action === "journey") {
+      setJourneyOpen(true);
+      return;
+    }
+    if (action === "events") {
+      setEventsOpen(true);
+      return;
+    }
+    if (action === "explore") {
+      setExploreOpen(true);
+      return;
+    }
+    if (action === "legal") {
+      setLegalOpen(true);
+      return;
+    }
+    setProfilePanel(action);
+  }
+
+  const cardStatusLabel = ({
+    none: "No card ordered",
+    preparing: "Preparing",
+    sent: "Sent",
+    delivered: "Delivered",
+    received: "Received",
+  } as const)[state.cardStatus || "none"];
+
+  const profileBusy = Boolean(profilePanel || eventsOpen || exploreOpen || legalOpen);
+
+  const profileOverlays = (
+    <>
+      {profilePanel === "account" && (
+        <div
+          className="jmodal open"
+          role="presentation"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) setProfilePanel(null);
+          }}
+        >
+          <section className="jm-in glass" role="dialog" aria-modal="true" aria-label="My account">
+            <h2 className="jm-title">My account</h2>
+            <div className="jm-text">
+              <AccountSettings account={account} onAccountChange={setAccount} />
+            </div>
+            <p className="links small">
+              <button className="tlink" type="button" onClick={() => setProfilePanel(null)}>Close</button>
+            </p>
+          </section>
+        </div>
+      )}
+
+      {profilePanel === "orders" && (
+        <div
+          className="jmodal open"
+          role="presentation"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) setProfilePanel(null);
+          }}
+        >
+          <section className="jm-in glass" role="dialog" aria-modal="true" aria-label="My orders">
+            <h2 className="jm-title">My orders</h2>
+            <div className="jm-text">
+              <p>
+                {state.order ? `${state.order.property} · ${state.order.state}` : "No orders yet."}
+                <br />
+                Scented card status: {cardStatusLabel}.
+              </p>
+            </div>
+            <p className="links small">
+              <button className="tlink" type="button" onClick={() => setProfilePanel(null)}>Close</button>
+            </p>
+          </section>
+        </div>
+      )}
+
+      {profilePanel === "stays" && (
+        <div
+          className="jmodal open"
+          role="presentation"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) setProfilePanel(null);
+          }}
+        >
+          <section className="jm-in glass" role="dialog" aria-modal="true" aria-label="My stays">
+            <h2 className="jm-title">My stays</h2>
+            <div className="jm-text">
+              {stays.length ? (
+                stays.map((stay) => (
+                  <p key={stay.id}>
+                    <strong>{stay.property.name}</strong>
+                    <br />
+                    {stay.checkIn || "Date pending"}
+                    {stay.checkOut ? ` — ${stay.checkOut}` : ""}
+                  </p>
+                ))
+              ) : (
+                <p>{state.code ? `${world.property} is connected.` : "No activated stays yet."}</p>
+              )}
+            </div>
+            <p className="links small">
+              <button className="tlink" type="button" onClick={() => setProfilePanel(null)}>Close</button>
+            </p>
+          </section>
+        </div>
+      )}
+
+      {profilePanel === "reminders" && (
+        <SpaceRemindersModal
+          state={state}
+          onClose={() => setProfilePanel(null)}
+          onSave={updateState}
+        />
+      )}
+
+      {profilePanel === "delete" && (
+        <div
+          className="jmodal open"
+          role="presentation"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) setProfilePanel(null);
+          }}
+        >
+          <section className="jm-in glass" role="dialog" aria-modal="true" aria-label="Delete account">
+            <DeleteAccountDialog />
+            <p className="links small">
+              <button className="tlink" type="button" onClick={() => setProfilePanel(null)}>Close</button>
+            </p>
+          </section>
+        </div>
+      )}
+
+      <SpaceEventsDrawer open={eventsOpen} onClose={() => setEventsOpen(false)} />
+      <ExploreStatesDrawer open={exploreOpen} onClose={() => setExploreOpen(false)} />
+      <LegalSheet open={legalOpen} onClose={() => setLegalOpen(false)} />
+    </>
+  );
+
+  if (journeyOpen) {
+    return (
+      <>
+        <MyJourneyPage
+          account={account}
+          onClose={() => setJourneyOpen(false)}
+          onOpenAccount={() => setProfilePanel("account")}
+          onOpenEvents={() => setEventsOpen(true)}
+          onOpenExplore={() => setExploreOpen(true)}
+          onOpenLegal={() => setLegalOpen(true)}
+          onSignOut={signOut}
+        />
+        {profileOverlays}
+      </>
+    );
+  }
+
   return (
     <main className="space-entry-beta">
       <GradientDefs />
@@ -156,10 +376,8 @@ export default function SpaceEntryBeta({
         uiVersion={uiVersion}
         onUiVersionChange={onUiVersionChange}
         onToggleMenu={() => setMenuOpen((value) => !value)}
-        onOpenAccount={() => {
-          setMenuOpen(false);
-          setAccountOpen(true);
-        }}
+        onCloseMenu={() => setMenuOpen(false)}
+        onProfileAction={handleProfileAction}
         onSignOut={signOut}
       />
 
@@ -178,7 +396,7 @@ export default function SpaceEntryBeta({
         <SpaceDeck
           index={slideIndex}
           onIndexChange={setSlideIndex}
-          transitionEnabled={!flow && !accountOpen && !circleDetailId && !accessCodeOpen}
+          transitionEnabled={!flow && !profileBusy && !circleDetailId && !accessCodeOpen}
         >
           {slide.id === "identity" && <IdentitySlide account={account} world={world} />}
           {slide.id === "world" && <ChosenWorldSlide world={world} />}
@@ -189,10 +407,7 @@ export default function SpaceEntryBeta({
               guestName={guestName}
               state={state}
               canOrder={canOrder}
-              onOrder={() => {
-                setOrderStep(1);
-                setFlow("order");
-              }}
+              onOrder={() => setFlow("order")}
               onSimulateDelivery={simulateDelivery}
             />
           )}
@@ -219,40 +434,7 @@ export default function SpaceEntryBeta({
         </SpaceDeck>
       )}
 
-      {accountOpen && (
-        <div
-          className="jmodal open"
-          role="presentation"
-          onMouseDown={(event) => {
-            if (event.target === event.currentTarget) setAccountOpen(false);
-          }}
-        >
-          <section className="jm-in glass" role="dialog" aria-modal="true" aria-label="My account">
-            <h2 className="jm-title">My account</h2>
-            <div className="jm-text">
-              <AccountSettings account={account} onAccountChange={setAccount} />
-            </div>
-            <p className="links small">
-              <button className="tlink" type="button" onClick={() => setAccountOpen(false)}>Close</button>
-            </p>
-          </section>
-        </div>
-      )}
-
-      {flow && (
-        <BetaFlowModal
-          flow={flow}
-          world={world}
-          guestName={guestName}
-          activeStayId={connectedStay?.id}
-          state={state}
-          orderStep={orderStep}
-          onStep={setOrderStep}
-          onClose={() => setFlow(null)}
-          onSave={updateState}
-          onOpenAction={() => setFlow("action")}
-        />
-      )}
+      {profileOverlays}
     </main>
   );
 }

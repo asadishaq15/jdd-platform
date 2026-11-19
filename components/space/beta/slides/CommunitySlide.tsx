@@ -8,6 +8,7 @@ import type { HospitalityWorld } from "../../../../lib/worlds";
 import BetaLoopVideo from "../BetaLoopVideo";
 
 const COMMUNITY_SRC = "/assets/bg-06-my-community-globe-stars-loop-15s.mp4";
+const COMMUNITY_LIGHT_SRC = "/assets/bg-06-my-community-globe-stars-loop-15s_light.mp4";
 const COMMUNITY_POSTER = "/assets/bg-06-my-community-globe-stars-poster.jpg";
 
 const CATEGORY_LABELS: Record<CommunityCircleEvent["category"], string> = {
@@ -71,6 +72,7 @@ export default function CommunitySlide({
         <BetaLoopVideo
           className="beta-community-video"
           src={COMMUNITY_SRC}
+          lightSrc={COMMUNITY_LIGHT_SRC}
           poster={COMMUNITY_POSTER}
         />
       </div>

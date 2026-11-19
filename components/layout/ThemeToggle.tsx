@@ -13,14 +13,14 @@ function applyTheme(night: boolean) {
 }
 
 export default function ThemeToggle() {
-  const [night, setNight] = useState(true);
+  const [night, setNight] = useState(false);
 
   useLayoutEffect(() => {
     let savedTheme: string | null = null;
     try {
       savedTheme = localStorage.getItem(THEME_KEY);
     } catch {}
-    const initialNight = savedTheme !== "light";
+    const initialNight = savedTheme === "dark";
     setNight(initialNight);
     applyTheme(initialNight);
   }, []);

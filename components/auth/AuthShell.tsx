@@ -31,11 +31,14 @@ const globeDots = [
 export default function AuthShell({
   children,
   topStart,
+  topCenter,
   className,
 }: {
   children: ReactNode;
   /** Replaces the empty top-left slot (e.g. Restart demo). */
   topStart?: ReactNode;
+  /** Replaces the center brand mark (e.g. step label “1 of 2”). */
+  topCenter?: ReactNode;
   className?: string;
 }) {
   return (
@@ -64,7 +67,7 @@ export default function AuthShell({
       <main className="main">
         <header className="top">
           {topStart ?? <span aria-hidden="true" />}
-          <BrandMark />
+          {topCenter ?? <BrandMark />}
           <ThemeToggle />
         </header>
         <div className="stage">

@@ -3,6 +3,7 @@
 import BetaLoopVideo from "../BetaLoopVideo";
 
 const RITUAL_SRC = "/assets/bg-05-my-ritual-breathing-star-loop-12s.mp4";
+const RITUAL_LIGHT_SRC = "/assets/bg-05-my-ritual-breathing-star-loop-12s_light.mp4";
 const RITUAL_POSTER = "/assets/bg-05-my-ritual-breathing-star-poster.jpg";
 
 export default function RitualSlide({
@@ -20,6 +21,7 @@ export default function RitualSlide({
         <BetaLoopVideo
           className="beta-ritual-video"
           src={RITUAL_SRC}
+          lightSrc={RITUAL_LIGHT_SRC}
           poster={RITUAL_POSTER}
         />
       </div>

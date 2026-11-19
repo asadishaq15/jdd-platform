@@ -4,6 +4,10 @@ export type SpaceState = {
   visited?: number;
   /** ISO date `YYYY-MM-DD` captured during discovery DOB step. */
   dateOfBirth?: string;
+  /** Profile location from visitor onboarding (country · city). */
+  basedIn?: string;
+  country?: string;
+  city?: string;
   code?: string;
   intention?: string;
   becoming?: string;
@@ -19,6 +23,9 @@ export type SpaceState = {
   reminder?: {
     action: string;
     frequency: "off" | "once" | "daily";
+    date?: string;
+    time?: string;
+    tz?: string;
   };
   rsvps?: Record<string, boolean>;
 };

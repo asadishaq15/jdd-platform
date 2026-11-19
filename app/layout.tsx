@@ -16,12 +16,12 @@ export default function RootLayout({
     <html lang="en">
       <head>
         <link rel="icon" href="/assets/favicon.png" type="image/png" />
-        <meta name="theme-color" content="#111110" />
+        <meta name="theme-color" content="#F4F4F2" />
       </head>
-      <body className="night" suppressHydrationWarning>
+      <body suppressHydrationWarning>
         <script
           dangerouslySetInnerHTML={{
-            __html: `try{if(localStorage.getItem("jdd-theme")==="light"){document.body.classList.remove("night");document.querySelector('meta[name="theme-color"]').setAttribute("content","#F4F4F2")}}catch(e){}`,
+            __html: `try{if(localStorage.getItem("jdd-theme")==="dark"){document.body.classList.add("night");document.querySelector('meta[name="theme-color"]').setAttribute("content","#111110")}}catch(e){}`,
           }}
         />
         {children}

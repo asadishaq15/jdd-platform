@@ -11,6 +11,7 @@ import { zodiacFromDateOfBirth } from "../../../../lib/zodiac";
 import BetaLoopVideo from "../BetaLoopVideo";
 
 const DUNES_SRC = "/assets/bg-01-my-space-dunes-loop-14s.mp4";
+const DUNES_LIGHT_SRC = "/assets/bg-01-my-space-dunes-loop-14s_light.mp4";
 const DUNES_POSTER = "/assets/bg-01-my-space-dunes-poster.jpg";
 
 function formatBirthDate(iso: string | null | undefined) {
@@ -45,6 +46,7 @@ export default function IdentitySlide({
         <BetaLoopVideo
           className="beta-identity-dunes-video"
           src={DUNES_SRC}
+          lightSrc={DUNES_LIGHT_SRC}
           poster={DUNES_POSTER}
         />
       </div>

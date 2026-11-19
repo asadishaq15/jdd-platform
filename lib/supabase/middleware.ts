@@ -26,6 +26,7 @@ export async function updateSession(request: NextRequest) {
   const isAdminSignIn = path === "/admin/sign-in";
   const isProtected = path.startsWith("/discover")
     || path.startsWith("/space")
+    || path.startsWith("/auth/complete")
     || (path.startsWith("/admin") && !isAdminSignIn)
     || path.startsWith("/activate/");
 
@@ -44,7 +45,7 @@ export async function updateSession(request: NextRequest) {
     const requestedNext = request.nextUrl.searchParams.get("next");
     const safeNext = requestedNext?.startsWith("/") && !requestedNext.startsWith("//")
       ? requestedNext
-      : "/auth/continue";
+      : "/auth/complete";
     return NextResponse.redirect(new URL(safeNext, request.url));
   }
 

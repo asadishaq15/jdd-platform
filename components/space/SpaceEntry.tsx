@@ -9,6 +9,10 @@ import ThemeToggle from "../layout/ThemeToggle";
 import AccountSettings from "./AccountSettings";
 import DeleteAccountDialog from "./DeleteAccountDialog";
 import GuestFeedbackCard from "./GuestFeedbackCard";
+import InvitationRitualFlow from "./beta/InvitationRitualFlow";
+import MyJourneyPage from "./beta/MyJourneyPage";
+import OrderCardFlow from "./beta/OrderCardFlow";
+import PerfumeOilFlow from "./beta/PerfumeOilFlow";
 import SpaceUiToggle from "./SpaceUiToggle";
 import { getWorld, HospitalityWorld, worldDetails } from "../../lib/worlds";
 import { loadSpaceState, saveSpaceState, SpaceState } from "../../lib/space-state";
@@ -18,7 +22,7 @@ import { createClient } from "../../lib/supabase/client";
 import { trackProductEvent } from "../../lib/product-events";
 import { zodiacFromDateOfBirth } from "../../lib/zodiac";
 
-type ProfileMenu = "account" | "orders" | "stays" | "events" | "reminders" | "legal" | "delete" | null;
+type ProfileMenu = "account" | "journey" | "orders" | "stays" | "events" | "reminders" | "legal" | "delete" | null;
 type Flow = "order" | "ritual" | "oil" | "action" | "circle" | "delete" | null;
 type CardStatus = NonNullable<SpaceState["cardStatus"]>;
 
@@ -66,7 +70,6 @@ export default function SpaceEntry({
   const [menuOpen, setMenuOpen] = useState(false);
   const [modal, setModal] = useState<ProfileMenu>(null);
   const [flow, setFlow] = useState<Flow>(null);
-  const [orderStep, setOrderStep] = useState(1);
   const [circleDetail, setCircleDetail] = useState<string | null>(null);
   const connectedStay = stays.find((stay) => stay.id === activeStayId) || stays[0];
 
@@ -111,6 +114,52 @@ export default function SpaceEntry({
     const supabase = createClient();
     await supabase.auth.signOut();
     window.location.assign("/sign-in");
+  }
+
+  if (flow === "order") {
+    return (
+      <OrderCardFlow
+        world={world}
+        guestName={guestName}
+        activeStayId={connectedStay?.id}
+        state={state}
+        onSave={updateState}
+        onClose={() => setFlow(null)}
+      />
+    );
+  }
+
+  if (flow === "oil") {
+    return (
+      <PerfumeOilFlow
+        world={world}
+        state={state}
+        onClose={() => setFlow(null)}
+      />
+    );
+  }
+
+  if (flow === "ritual") {
+    return (
+      <InvitationRitualFlow
+        state={state}
+        active={ritualActive}
+        onSave={updateState}
+        onClose={() => setFlow(null)}
+        onEditIntention={() => setFlow(null)}
+      />
+    );
+  }
+
+  if (modal === "journey") {
+    return (
+      <MyJourneyPage
+        account={account}
+        onClose={() => setModal(null)}
+        onOpenAccount={() => setModal("account")}
+        onSignOut={signOut}
+      />
+    );
   }
 
   return (
@@ -174,7 +223,7 @@ export default function SpaceEntry({
 
               <div className="secs">
                 <WorldSection world={world} guest={guest} />
-                <ScentSection world={world} guest={guest} guestName={guestName} state={state} onOrder={() => { setOrderStep(1); setFlow("order"); }} canOrder={Boolean(connectedStay)} />
+                <ScentSection world={world} guest={guest} guestName={guestName} state={state} onOrder={() => setFlow("order")} canOrder={Boolean(connectedStay)} />
                 {/* My Intention is temporarily hidden from My Space. */}
                 <RitualSection
                   active={ritualActive}
@@ -219,15 +268,10 @@ export default function SpaceEntry({
       </div>
 
       <ProfileModal modal={modal} account={account} stays={stays} state={state} world={world} circleEvents={circleEvents} onAccountChange={setAccount} onClose={() => setModal(null)} onDelete={() => { setModal(null); setFlow("delete"); }} />
-      {flow && flow !== "circle" && (
+      {(flow === "action" || flow === "delete") && (
         <FlowModal
           flow={flow}
-          world={world}
-          guestName={guestName}
-          activeStayId={connectedStay?.id}
           state={state}
-          orderStep={orderStep}
-          onStep={setOrderStep}
           onClose={() => setFlow(null)}
           onSave={updateState}
         />
@@ -268,6 +312,7 @@ function DashboardHeader({ account, guest, menuOpen, uiVersion, onUiVersionChang
           <div className="pmenu" role="menu">
             <div className="pm-head"><p className="pm-name">{account.fullName}</p><p className="pm-mail">{account.email}</p></div>
             <button className="pm-item" role="menuitem" onClick={() => onOpenModal("account")}>My account</button>
+            <button className="pm-item" role="menuitem" onClick={() => onOpenModal("journey")}>My journey</button>
             <button className="pm-item" role="menuitem" onClick={() => onOpenModal("orders")}>My orders</button>
             <button className="pm-item" role="menuitem" onClick={() => onOpenModal("stays")}>My stays</button>
             {guest && <button className="pm-item" role="menuitem" onClick={() => onOpenModal("events")}>My events</button>}
@@ -451,7 +496,7 @@ function ProfileModal({
   onClose,
   onDelete,
 }: {
-  modal: ProfileMenu;
+  modal: Exclude<ProfileMenu, "journey">;
   account: AccountSummary;
   stays: ConnectedStay[];
   state: SpaceState;
@@ -588,67 +633,27 @@ function CircleDetailView({
 
 function FlowModal({
   flow,
-  world,
-  guestName,
-  activeStayId,
   state,
-  orderStep,
-  onStep,
   onClose,
   onSave,
 }: {
-  flow: Exclude<Flow, "circle" | null>;
-  world: HospitalityWorld;
-  guestName: string;
-  activeStayId?: string;
+  flow: Exclude<Flow, "circle" | "order" | "oil" | "ritual" | null>;
   state: SpaceState;
-  orderStep: number;
-  onStep: (step: number) => void;
   onClose: () => void;
   onSave: (next: SpaceState) => void;
 }) {
   const [action, setAction] = useState(state.reminder?.action || "");
   const [frequency, setFrequency] = useState<"off" | "once" | "daily">(state.reminder?.frequency || "off");
-  const [recipientName, setRecipientName] = useState(guestName);
-  const [shippingAddress, setShippingAddress] = useState("");
-  const [orderError, setOrderError] = useState("");
-  const [ordering, setOrdering] = useState(false);
-
-  async function completeOrder() {
-    if (!activeStayId) { setOrderError("Activate a stay before requesting a card."); return; }
-    if (recipientName.trim().length < 2 || shippingAddress.trim().length < 8) { setOrderError("Enter the recipient and complete delivery address."); return; }
-    setOrdering(true);
-    setOrderError("");
-    const response = await fetch("/api/card-orders", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ stayId: activeStayId, recipientName, shippingAddress }) });
-    const result = await response.json();
-    if (!response.ok) { setOrderError(result.error || "The order request could not be saved."); setOrdering(false); return; }
-    onSave({ ...state, cardStatus: "preparing", order: { property: world.property, state: world.state, recipient: recipientName.trim(), address: shippingAddress.trim() } });
-    setOrdering(false);
-    onClose();
-  }
 
   return (
     <div className="jmodal open" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}>
       <section className="jm-in glass flow-modal" role="dialog" aria-modal="true" aria-label="Space flow">
-        {flow === "order" && <>
-          <p className="g-label">Scented card request · {orderStep} of 3</p>
-          {orderStep === 1 && <><h2 className="jm-title">Your scented card.</h2><div className="order-card dash-card" style={{ "--h": (world.n * 37) % 360 } as React.CSSProperties}><span className="d-card-t">{world.property}</span><span className="d-card-s">{world.state}</span><span className="oc-name">For {guestName}</span></div><button className="btn primary" onClick={() => onStep(2)}>Continue</button></>}
-          {orderStep === 2 && <><h2 className="jm-title">Delivery details.</h2><div className="field"><input aria-label="Full name" placeholder="Full name" value={recipientName} onChange={(event) => setRecipientName(event.target.value)} /></div><div className="field"><input aria-label="Address" placeholder="Complete delivery address" value={shippingAddress} onChange={(event) => setShippingAddress(event.target.value)} /></div><button className="btn primary" onClick={() => { if (recipientName.trim().length >= 2 && shippingAddress.trim().length >= 8) { setOrderError(""); onStep(3); } else setOrderError("Enter the recipient and complete delivery address."); }}>Review</button></>}
-          {orderStep === 3 && <><h2 className="jm-title">Review request.</h2><p>{world.property} · {world.state}<br />For {recipientName}<br />{shippingAddress}</p><p className="sec-text">No payment details are collected. The property will manage fulfilment.</p><button className="btn primary" disabled={ordering} onClick={completeOrder}>{ordering ? "Saving…" : "Place request"}</button></>}
-          {orderError && <p className="feedback-error" role="alert">{orderError}</p>}
-        </>}
-        {flow === "ritual" && <RitualContent state={state} onAction={() => onSave({ ...state, reminder: { action: state.reminder?.action || "One quiet action today", frequency: state.reminder?.frequency || "once" } })} />}
-        {flow === "oil" && <><p className="g-label">Perfume oil ritual</p><h2 className="jm-title">Your State, on skin.</h2><ol className="rit-preview"><li><span>01</span>Remember. Recall your intention.</li><li><span>02</span>Apply. Place the oil on pulse points.</li><li><span>03</span>Return. Let the scent bring you back to your State.</li></ol><p className="sec-text">Wear alone, layer beneath your favourite perfume, or combine oils collected from different hospitality worlds.</p></>}
         {flow === "action" && <><p className="g-label">Reminder</p><h2 className="jm-title">Choose one action.</h2><div className="field"><input value={action} onChange={(event) => setAction(event.target.value)} placeholder="One action that supports your intention" /></div><div className="seg"><button className={frequency === "off" ? "sel" : ""} onClick={() => setFrequency("off")}>Off</button><button className={frequency === "once" ? "sel" : ""} onClick={() => setFrequency("once")}>Once</button><button className={frequency === "daily" ? "sel" : ""} onClick={() => setFrequency("daily")}>Daily</button></div><button className="btn primary" onClick={() => { onSave({ ...state, reminder: { action: action || "One quiet action today", frequency } }); onClose(); }}>Save</button></>}
         {flow === "delete" && <DeleteAccountDialog />}
         <p className="links small"><button className="tlink" type="button" onClick={onClose}>Close</button></p>
       </section>
     </div>
   );
-}
-
-function RitualContent({ state, onAction }: { state: SpaceState; onAction: () => void }) {
-  return <><p className="g-label">Your Scent Invitation</p><h2 className="jm-title">Your invitation ritual.</h2><ol className="rit-preview"><li><span>01</span>Pause. Read your intention. {state.intention}</li><li><span>02</span>Remember who you are becoming.</li><li><span>03</span>Breathe in the scent of your card.</li><li><span>04</span>Act. Choose one action that supports your intention.</li></ol><button className="btn primary" onClick={onAction}>Use this action</button></>;
 }
 
 function statusLabel(status: NonNullable<SpaceState["cardStatus"]> | "none") {

@@ -1,0 +1,248 @@
+/* Full-viewport AuthShell takeover for Order my card (prototype split layout) */
+
+.beta-order-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  background: var(--bg);
+  overflow: hidden;
+}
+
+.beta-order-overlay .beta-order-shell {
+  min-height: 100dvh;
+  height: 100%;
+  max-height: 100dvh;
+}
+
+.beta-order-overlay .main {
+  min-height: 0;
+  height: 100%;
+  max-height: 100dvh;
+  overflow: hidden;
+}
+
+.beta-order-overlay .stage {
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  align-items: flex-start;
+  padding-top: 24px;
+  padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 40px);
+}
+
+.beta-order-overlay .panel {
+  max-width: 380px;
+  margin-block: auto;
+  padding-bottom: 8px;
+}
+
+.beta-order-overlay .demo-restart {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--muted);
+  font-family: var(--sans);
+  font-size: 10.5px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.beta-order-overlay .demo-restart:hover {
+  color: var(--fg);
+}
+
+.beta-order-step-label {
+  margin: 0;
+  color: var(--muted);
+  font-size: 10.5px;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+}
+
+.beta-order-view {
+  width: 100%;
+  text-align: center;
+}
+
+.beta-order-view > .title {
+  margin: 0;
+}
+
+.beta-order-overlay .dform {
+  width: 100%;
+  margin-top: 26px;
+  display: grid;
+  gap: 14px;
+  text-align: left;
+}
+
+.beta-order-overlay .dform .field {
+  text-align: left;
+}
+
+.beta-order-overlay .dform .field label {
+  display: block;
+  text-align: left;
+}
+
+.beta-order-overlay .dform .field input {
+  text-align: left;
+}
+
+.beta-order-overlay .err {
+  display: none;
+  margin: 10px 0 0;
+  font-size: 12px;
+  color: #a65a3f;
+  text-align: left;
+}
+
+.beta-order-overlay .err.show {
+  display: block;
+}
+
+.beta-order-overlay .review {
+  width: 100%;
+  margin: 28px auto 0;
+  text-align: left;
+  border-top: 1px solid var(--line);
+}
+
+.beta-order-overlay .review div {
+  display: grid;
+  grid-template-columns: 110px 1fr;
+  gap: 10px;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.beta-order-overlay .review dt {
+  font-size: 10px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--muted);
+  padding-top: 3px;
+}
+
+.beta-order-overlay .review dd {
+  margin: 0;
+  font-size: 14px;
+}
+
+.beta-order-overlay .price-line {
+  width: 100%;
+  margin: 6px 0 4px;
+  font-size: 14px;
+  letter-spacing: 0.04em;
+  color: var(--fg);
+  text-align: left;
+}
+
+.beta-order-overlay .total-line {
+  margin: 22px 0 0;
+  font-family: var(--serif);
+  font-size: 22px;
+  font-weight: 300;
+}
+
+.beta-order-overlay .pay3 {
+  width: 100%;
+  margin: 30px auto 0;
+  text-align: left;
+}
+
+.beta-order-overlay .pay3-eye {
+  text-align: center;
+  margin: 0 0 4px;
+}
+
+.beta-order-overlay .pay3-demo {
+  margin: 10px 0 0;
+}
+
+.beta-order-overlay .pay3-demo .tlink {
+  font-size: 12.5px;
+  margin-left: 0;
+  padding-left: 0;
+}
+
+.beta-order-overlay .pay3-form {
+  margin-top: 14px;
+}
+
+.beta-order-overlay .pay3-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+}
+
+.beta-order-overlay .pay3-note {
+  margin: 14px 0 0;
+  font-size: 11.5px;
+  color: var(--muted);
+}
+
+.beta-order-overlay .pay3 .pay3-more {
+  display: none;
+}
+
+.beta-order-overlay .pay3.open .pay3-more {
+  display: block;
+  animation: rise 0.6s var(--ease-lux) both;
+}
+
+.beta-order-overlay .stay-actions {
+  margin-top: 22px;
+  text-align: center;
+}
+
+.beta-order-overlay .dform .stay-actions {
+  margin-top: 18px;
+}
+
+.beta-order-overlay .stay-actions .tlink {
+  font-size: 13px;
+  letter-spacing: 0.06em;
+  padding: 12px 6px 16px;
+}
+
+.beta-order-overlay .stay-actions .tlink:disabled {
+  opacity: 0.55;
+  cursor: wait;
+}
+
+.beta-order-overlay .links.small {
+  margin-top: 28px;
+}
+
+.beta-order-overlay .links.small .tlink {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.beta-order-overlay .links.small .sep {
+  margin: 0 8px;
+  color: var(--muted);
+}
+
+.beta-order-overlay .dob-intro {
+  margin-top: 18px;
+}
+
+.beta-order-confirmed {
+  min-height: min(60vh, 520px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+@media (max-width: 640px) {
+  .beta-order-overlay .review div {
+    grid-template-columns: 1fr;
+    gap: 4px;
+  }
+}

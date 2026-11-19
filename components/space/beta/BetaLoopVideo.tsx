@@ -1,17 +1,35 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
+
+function isNightTheme() {
+  if (typeof document === "undefined") return false;
+  return document.body.classList.contains("night");
+}
 
 export default function BetaLoopVideo({
   src,
+  lightSrc,
   poster,
   className,
 }: {
   src: string;
+  lightSrc?: string;
   poster: string;
   className?: string;
 }) {
   const videoRef = useRef<HTMLVideoElement | null>(null);
+  const [night, setNight] = useState(false);
+  const activeSrc = !night && lightSrc ? lightSrc : src;
+
+  useLayoutEffect(() => {
+    setNight(isNightTheme());
+    const observer = new MutationObserver(() => {
+      setNight(isNightTheme());
+    });
+    observer.observe(document.body, { attributes: true, attributeFilter: ["class"] });
+    return () => observer.disconnect();
+  }, []);
 
   useEffect(() => {
     const video = videoRef.current;
@@ -24,6 +42,11 @@ export default function BetaLoopVideo({
       return;
     }
 
+    if (video.getAttribute("src") !== activeSrc) {
+      video.setAttribute("src", activeSrc);
+      video.load();
+    }
+
     const play = () => {
       void video.play().catch(() => {});
     };
@@ -31,13 +54,13 @@ export default function BetaLoopVideo({
     return () => {
       video.pause();
     };
-  }, []);
+  }, [activeSrc]);
 
   return (
     <video
       ref={videoRef}
       className={className}
-      src={src}
+      src={activeSrc}
       poster={poster}
       muted
       loop

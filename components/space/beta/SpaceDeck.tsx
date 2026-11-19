@@ -37,6 +37,13 @@ function getDeckScrollStage(deck: HTMLElement | null) {
 
 /** True when the stage can still scroll in the wheel/swipe direction (deltaY > 0 = down). */
 function canStageScroll(stage: HTMLElement, deltaY: number) {
+  // overflow: hidden/visible can still report scrollHeight > clientHeight without
+  // actually scrolling — that falsely blocked slide changes (e.g. scent slide).
+  const overflowY = getComputedStyle(stage).overflowY;
+  if (overflowY !== "auto" && overflowY !== "scroll" && overflowY !== "overlay") {
+    return false;
+  }
+
   const maxScroll = stage.scrollHeight - stage.clientHeight;
   if (maxScroll <= 1) return false;
   if (deltaY > 0) return stage.scrollTop < maxScroll - 1;
@@ -116,6 +123,8 @@ export default function SpaceDeck({
     displayedRef.current = next;
     setDisplayedIndex(next);
     onIndexChange(next);
+    const stage = getDeckScrollStage(deckRef.current);
+    if (stage) stage.scrollTop = 0;
     phaseRef.current = "enter";
     const dir = dirRef.current;
     setStageMotion(dir === 1 ? "beta-stage--enter-next" : "beta-stage--enter-prev");
@@ -136,6 +145,8 @@ export default function SpaceDeck({
       displayedRef.current = clamped;
       setDisplayedIndex(clamped);
       setStageMotion("");
+      const stage = getDeckScrollStage(deckRef.current);
+      if (stage) stage.scrollTop = 0;
       onIndexChange(clamped);
       return;
     }
