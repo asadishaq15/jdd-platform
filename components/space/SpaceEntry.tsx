@@ -17,7 +17,13 @@ import SpaceUiToggle from "./SpaceUiToggle";
 import StatesExplorePage from "./StatesExplorePage";
 import SpaceNotificationsDropdown, { useSpaceNotifications } from "./beta/SpaceNotificationsDropdown";
 import { getWorld, HospitalityWorld, worldDetails } from "../../lib/worlds";
-import { loadSpaceState, saveSpaceState, SpaceState } from "../../lib/space-state";
+import {
+  asProfileReminderFrequency,
+  loadSpaceState,
+  saveSpaceState,
+  type ProfileReminderFrequency,
+  type SpaceState,
+} from "../../lib/space-state";
 import type { AccountSummary, CardOrder, CommunityCircleEvent, ConnectedStay } from "../../lib/space-data";
 import type { SpaceUiVersion } from "../../lib/space-ui-version";
 import { createClient } from "../../lib/supabase/client";
@@ -729,9 +735,8 @@ function FlowModal({
   onSave: (next: SpaceState) => void;
 }) {
   const [action, setAction] = useState(state.reminder?.action || "");
-  const reminderFrequency = state.reminder?.frequency;
-  const [frequency, setFrequency] = useState<"off" | "once" | "daily">(
-    reminderFrequency === "once" || reminderFrequency === "daily" ? reminderFrequency : "off",
+  const [frequency, setFrequency] = useState<ProfileReminderFrequency>(
+    asProfileReminderFrequency(state.reminder?.frequency),
   );
 
   return (

@@ -2,24 +2,22 @@
 
 import { useMemo, useState } from "react";
 import AuthShell from "../../auth/AuthShell";
-import type { SpaceState } from "../../../lib/space-state";
+import {
+  asRitualFrequency,
+  type RitualReminderFrequency,
+  type SpaceState,
+} from "../../../lib/space-state";
 import "./invitation-ritual-flow.css";
 
 type Step = "intro" | "ritual";
-type Frequency = "once" | "daily" | "weekly";
 
 type ReminderDraft = {
   action: string;
-  frequency: Frequency;
+  frequency: RitualReminderFrequency;
   date: string;
   time: string;
   tz: string;
 };
-
-function asRitualFrequency(value?: string): Frequency {
-  if (value === "daily" || value === "weekly" || value === "once") return value;
-  return "once";
-}
 
 function userTimeZone() {
   try {
@@ -104,7 +102,7 @@ function RemindersModal({
   const [note, setNote] = useState("");
   const zones = useMemo(() => timezoneOptions(draft.tz), [draft.tz]);
 
-  function setFrequency(frequency: Frequency) {
+  function setFrequency(frequency: RitualReminderFrequency) {
     setDraft((prev) => ({
       ...prev,
       frequency,

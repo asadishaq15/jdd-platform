@@ -1,3 +1,32 @@
+export type ReminderFrequency = "off" | "once" | "daily" | "weekly";
+export type ProfileReminderFrequency = "off" | "once" | "daily";
+export type RitualReminderFrequency = "once" | "daily" | "weekly";
+
+export function asReminderFrequency(
+  value?: string,
+  fallback: ReminderFrequency = "off",
+): ReminderFrequency {
+  if (value === "off" || value === "once" || value === "daily" || value === "weekly") {
+    return value;
+  }
+  return fallback;
+}
+
+/** Off / Once / Daily UIs — map weekly → daily so an “on” reminder stays on. */
+export function asProfileReminderFrequency(value?: string): ProfileReminderFrequency {
+  const frequency = asReminderFrequency(value);
+  if (frequency === "once" || frequency === "daily") return frequency;
+  if (frequency === "weekly") return "daily";
+  return "off";
+}
+
+/** Ritual act UI — Once / Daily / Weekly; off → once. */
+export function asRitualFrequency(value?: string): RitualReminderFrequency {
+  const frequency = asReminderFrequency(value, "once");
+  if (frequency === "once" || frequency === "daily" || frequency === "weekly") return frequency;
+  return "once";
+}
+
 export type SpaceState = {
   recommended?: number;
   chosen?: number;
@@ -27,7 +56,7 @@ export type SpaceState = {
   };
   reminder?: {
     action: string;
-    frequency: "off" | "once" | "daily" | "weekly";
+    frequency: ReminderFrequency;
     date?: string;
     time?: string;
     tz?: string;

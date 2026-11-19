@@ -1,14 +1,16 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import type { SpaceState } from "../../../lib/space-state";
+import {
+  asProfileReminderFrequency,
+  type ProfileReminderFrequency,
+  type SpaceState,
+} from "../../../lib/space-state";
 import "./space-drawer.css";
-
-type Frequency = "off" | "once" | "daily";
 
 type ReminderDraft = {
   action: string;
-  frequency: Frequency;
+  frequency: ProfileReminderFrequency;
   date: string;
   time: string;
   tz: string;
@@ -59,7 +61,7 @@ function reminderFromState(state: SpaceState): ReminderDraft {
   if (!saved) return base;
   return {
     action: saved.action || "",
-    frequency: saved.frequency || "off",
+    frequency: asProfileReminderFrequency(saved.frequency),
     date: saved.date || "",
     time: saved.time || "09:00",
     tz: saved.tz || base.tz,
@@ -90,7 +92,7 @@ export default function SpaceRemindersModal({
   const [previewOpen, setPreviewOpen] = useState(false);
   const zones = useMemo(() => timezoneOptions(draft.tz), [draft.tz]);
 
-  function setFrequency(frequency: Frequency) {
+  function setFrequency(frequency: ProfileReminderFrequency) {
     setDraft((prev) => ({
       ...prev,
       frequency,

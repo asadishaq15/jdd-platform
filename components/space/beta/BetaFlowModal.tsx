@@ -1,7 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import type { SpaceState } from "../../../lib/space-state";
+import {
+  asProfileReminderFrequency,
+  type ProfileReminderFrequency,
+  type SpaceState,
+} from "../../../lib/space-state";
 
 export type BetaFlow = "order" | "ritual" | "oil" | "action";
 
@@ -17,9 +21,8 @@ export default function BetaFlowModal({
   onSave: (next: SpaceState) => void;
 }) {
   const [action, setAction] = useState(state.reminder?.action || "");
-  const reminderFrequency = state.reminder?.frequency;
-  const [frequency, setFrequency] = useState<"off" | "once" | "daily">(
-    reminderFrequency === "once" || reminderFrequency === "daily" ? reminderFrequency : "off",
+  const [frequency, setFrequency] = useState<ProfileReminderFrequency>(
+    asProfileReminderFrequency(state.reminder?.frequency),
   );
 
   return (
