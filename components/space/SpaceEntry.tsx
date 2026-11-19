@@ -729,7 +729,10 @@ function FlowModal({
   onSave: (next: SpaceState) => void;
 }) {
   const [action, setAction] = useState(state.reminder?.action || "");
-  const [frequency, setFrequency] = useState<"off" | "once" | "daily">(state.reminder?.frequency || "off");
+  const reminderFrequency = state.reminder?.frequency;
+  const [frequency, setFrequency] = useState<"off" | "once" | "daily">(
+    reminderFrequency === "once" || reminderFrequency === "daily" ? reminderFrequency : "off",
+  );
 
   return (
     <div className="jmodal open" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}>
