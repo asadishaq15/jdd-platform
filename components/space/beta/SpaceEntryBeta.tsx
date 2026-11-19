@@ -12,7 +12,7 @@ import DeleteAccountDialog from "../DeleteAccountDialog";
 import type { SpaceEntryProps } from "../SpaceEntry";
 import BetaAccessCodeFlow from "./BetaAccessCodeFlow";
 import type { BetaFlow } from "./BetaFlowModal";
-import ExploreStatesDrawer from "./ExploreStatesDrawer";
+import StatesExplorePage from "../StatesExplorePage";
 import InvitationRitualFlow from "./InvitationRitualFlow";
 import LegalSheet from "./LegalSheet";
 import MyJourneyPage from "./MyJourneyPage";
@@ -24,7 +24,7 @@ import SpaceEventsDrawer from "./SpaceEventsDrawer";
 import SpaceRemindersModal from "./SpaceRemindersModal";
 import BetaCircleDetail from "./BetaCircleDetail";
 import ChosenWorldSlide from "./slides/ChosenWorldSlide";
-import CommunitySlide from "./slides/CommunitySlide";
+import CommunitySlide, { DEMO_COMMUNITY_EVENTS } from "./slides/CommunitySlide";
 import IdentitySlide from "./slides/IdentitySlide";
 import IntentionSlide from "./slides/IntentionSlide";
 import RitualSlide from "./slides/RitualSlide";
@@ -115,7 +115,8 @@ export default function SpaceEntryBeta({
   const guestName = connectedStay?.guestName || account.fullName;
   // Show order CTA for discovery guests and inactive/no-stay members; API persists only when a stay exists.
   const canOrder = true;
-  const ritualActive = Boolean(guest || state.cardStatus === "received");
+  // HTML ritualActive: only once the card is marked received (guest bedside or postal)
+  const ritualActive = state.cardStatus === "received";
 
   function updateState(next: SpaceState) {
     setState(next);
@@ -123,15 +124,20 @@ export default function SpaceEntryBeta({
   }
 
   function simulateDelivery() {
+    // HTML simulate: preparing → sent → delivered only (never jumps to received)
     const current = state.cardStatus || "none";
     const nextStatus =
-      current === "none" ? "preparing"
-        : current === "preparing" ? "sent"
-          : current === "sent" ? "delivered"
-            : current === "delivered" ? "received"
-              : current;
+      current === "preparing" ? "sent"
+        : current === "sent" ? "delivered"
+          : current;
     if (nextStatus === current) return;
     updateState({ ...state, cardStatus: nextStatus });
+  }
+
+  function markReceived() {
+    // HTML mark-received / card-received → status received; scroll to intention
+    updateState({ ...state, cardStatus: "received" });
+    if (INTENTION_SLIDE_INDEX >= 0) setSlideIndex(INTENTION_SLIDE_INDEX);
   }
 
   async function signOut() {
@@ -142,7 +148,7 @@ export default function SpaceEntryBeta({
 
   const slide = SPACE_SLIDES[slideIndex] || SPACE_SLIDES[0];
   const activeCircleEvent = circleDetailId
-    ? circleEvents.find((event) => event.id === circleDetailId) || null
+    ? [...circleEvents, ...DEMO_COMMUNITY_EVENTS].find((event) => event.id === circleDetailId) || null
     : null;
 
   if (flow === "order") {
@@ -345,7 +351,7 @@ export default function SpaceEntryBeta({
       )}
 
       <SpaceEventsDrawer open={eventsOpen} onClose={() => setEventsOpen(false)} />
-      <ExploreStatesDrawer open={exploreOpen} onClose={() => setExploreOpen(false)} />
+      {exploreOpen ? <StatesExplorePage onClose={() => setExploreOpen(false)} /> : null}
       <LegalSheet open={legalOpen} onClose={() => setLegalOpen(false)} />
     </>
   );
@@ -379,6 +385,17 @@ export default function SpaceEntryBeta({
         onCloseMenu={() => setMenuOpen(false)}
         onProfileAction={handleProfileAction}
         onSignOut={signOut}
+        topStart={
+          activeCircleEvent ? (
+            <button
+              className="beta-hback"
+              type="button"
+              onClick={() => setCircleDetailId(null)}
+            >
+              Back
+            </button>
+          ) : undefined
+        }
       />
 
       {activeCircleEvent ? (
@@ -389,7 +406,6 @@ export default function SpaceEntryBeta({
             state={state}
             activeStayId={connectedStay?.id}
             onSave={updateState}
-            onBack={() => setCircleDetailId(null)}
           />
         </div>
       ) : (
@@ -409,6 +425,7 @@ export default function SpaceEntryBeta({
               canOrder={canOrder}
               onOrder={() => setFlow("order")}
               onSimulateDelivery={simulateDelivery}
+              onMarkReceived={markReceived}
             />
           )}
           {slide.id === "intention" && (

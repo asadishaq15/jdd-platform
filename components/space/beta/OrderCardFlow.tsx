@@ -6,7 +6,8 @@ import type { SpaceState } from "../../../lib/space-state";
 import type { HospitalityWorld } from "../../../lib/worlds";
 import "./order-card-flow.css";
 
-type Step = "delivery" | "review" | "confirmed";
+/** Matches embedded dashboard in space (1).html: delivery → payment → review → confirmed */
+type Step = "delivery" | "payment" | "review" | "confirmed";
 
 type Delivery = {
   recipient: string;
@@ -23,6 +24,13 @@ type PayFields = {
   cvc: string;
 };
 
+const DEMO_ADDRESS = {
+  address: "12 Rue du Désert",
+  city: "Paris",
+  postal: "75003",
+  country: "France",
+} as const;
+
 function formatShippingAddress(delivery: Delivery) {
   return `${delivery.address.trim()}, ${delivery.city.trim()} ${delivery.postal.trim()}, ${delivery.country.trim()}`;
 }
@@ -35,12 +43,6 @@ function formatCardNumber(value: string) {
 function formatExp(value: string) {
   const digits = value.replace(/\D/g, "").slice(0, 4);
   return digits.length > 2 ? `${digits.slice(0, 2)} / ${digits.slice(2)}` : digits;
-}
-
-function stepLabel(step: Step) {
-  if (step === "delivery") return "1 of 2";
-  if (step === "review") return "2 of 2";
-  return null;
 }
 
 export default function OrderCardFlow({
@@ -60,24 +62,25 @@ export default function OrderCardFlow({
 }) {
   const [step, setStep] = useState<Step>("delivery");
   const [delivery, setDelivery] = useState<Delivery>({
-    recipient: guestName,
+    recipient: guestName || "Alex Laurent",
     address: "",
     city: "",
     postal: "",
     country: "",
   });
   const [pay, setPay] = useState<PayFields>({ number: "", name: "", exp: "", cvc: "" });
-  const [payOpen, setPayOpen] = useState(false);
   const [deliveryError, setDeliveryError] = useState(false);
   const [payError, setPayError] = useState(false);
   const [orderError, setOrderError] = useState("");
   const [ordering, setOrdering] = useState(false);
 
-  const topCenterLabel = stepLabel(step);
-
   function goBack() {
-    if (step === "review") {
+    if (step === "payment") {
       setStep("delivery");
+      return;
+    }
+    if (step === "review") {
+      setStep("payment");
       return;
     }
     onClose();
@@ -85,6 +88,27 @@ export default function OrderCardFlow({
 
   function updateDelivery<K extends keyof Delivery>(key: K, value: Delivery[K]) {
     setDelivery((current) => ({ ...current, [key]: value }));
+    setDeliveryError(false);
+  }
+
+  function fillDemoAddress() {
+    setDelivery({
+      recipient: guestName || "Alex Laurent",
+      ...DEMO_ADDRESS,
+      city: state.city || DEMO_ADDRESS.city,
+      country: state.country || DEMO_ADDRESS.country,
+    });
+    setDeliveryError(false);
+  }
+
+  function fillDemoPay() {
+    setPay({
+      number: "4242 4242 4242 4242",
+      name: guestName || "Alex Laurent",
+      exp: "12 / 34",
+      cvc: "123",
+    });
+    setPayError(false);
   }
 
   function submitDelivery(event: FormEvent<HTMLFormElement>) {
@@ -95,29 +119,18 @@ export default function OrderCardFlow({
     setDeliveryError(!ok);
     if (!ok) return;
     setOrderError("");
-    setStep("review");
+    setStep("payment");
   }
 
-  function fillDemoPay() {
-    setPay({
-      number: "4242 4242 4242 4242",
-      name: guestName || "Demo Guest",
-      exp: "12 / 34",
-      cvc: "123",
-    });
-    setPayOpen(true);
-    setPayError(false);
+  function submitPayment() {
+    const payOk = (["number", "name", "exp", "cvc"] as const).every((key) => pay[key].trim().length > 0);
+    setPayError(!payOk);
+    if (!payOk) return;
+    setStep("review");
   }
 
   async function placeOrder() {
     if (ordering) return;
-    const payOk = (["number", "name", "exp", "cvc"] as const).every((key) => pay[key].trim().length > 0);
-    setPayError(!payOk);
-    if (!payOk) {
-      setPayOpen(true);
-      return;
-    }
-
     const recipientName = delivery.recipient.trim();
     const shippingAddress = formatShippingAddress(delivery);
     setOrdering(true);
@@ -144,12 +157,15 @@ export default function OrderCardFlow({
         property: world.property,
         state: world.state,
         recipient: recipientName,
-        address: shippingAddress,
+        address: delivery.address.trim(),
+        city: delivery.city.trim(),
+        zip: delivery.postal.trim(),
+        country: delivery.country.trim(),
+        price: "$",
         payment: "Card",
       },
     });
     setPay({ number: "", name: "", exp: "", cvc: "" });
-    setPayOpen(false);
     setOrdering(false);
     setStep("confirmed");
   }
@@ -157,20 +173,21 @@ export default function OrderCardFlow({
   return (
     <div className="beta-order-overlay">
       <AuthShell
+        wide
         className="beta-order-shell"
         topStart={
-          <button className="demo-restart" type="button" onClick={goBack}>
-            Back
-          </button>
-        }
-        topCenter={
-          topCenterLabel ? (
-            <p className="beta-order-step-label">{topCenterLabel}</p>
-          ) : undefined
+          step === "confirmed" ? (
+            <span aria-hidden="true" />
+          ) : (
+            <button className="demo-restart" type="button" onClick={goBack}>
+              Back
+            </button>
+          )
         }
       >
         {step === "delivery" && (
           <section className="beta-order-view" aria-label="Delivery">
+            <p className="eyebrow">1 of 3</p>
             <h1 className="title">
               Where should it <em className="cu">arrive</em>?
             </h1>
@@ -220,19 +237,114 @@ export default function OrderCardFlow({
                   onChange={(event) => updateDelivery("country", event.target.value)}
                 />
               </div>
-              {deliveryError && <p className="err show" role="alert">Please complete every field.</p>}
-              <div className="stay-actions">
-                <button className="tlink" type="submit">Continue</button>
-              </div>
+              <p className="pay3-demo addr-demo">
+                <button className="tlink" type="button" onClick={fillDemoAddress}>
+                  Use demo address details
+                </button>
+              </p>
+              <p className={`err${deliveryError ? " show" : ""}`} role="alert">
+                Please complete every field.
+              </p>
+              <button className="btn primary order-cta" type="submit">
+                Continue <span aria-hidden="true">→</span>
+              </button>
             </form>
-            <p className="links small">
-              <button className="tlink" type="button" onClick={onClose}>Cancel</button>
-            </p>
+          </section>
+        )}
+
+        {step === "payment" && (
+          <section className="beta-order-view beta-order-pay" aria-label="Payment details">
+            <p className="eyebrow">2 of 3</p>
+            <h1 className="title">
+              Payment <em className="cu">details</em>.
+            </h1>
+            <div className="pay3 open">
+              <form
+                className="dform pay3-form"
+                noValidate
+                autoComplete="off"
+                onSubmit={(event) => {
+                  event.preventDefault();
+                  submitPayment();
+                }}
+              >
+                <div className="field">
+                  <label htmlFor="order-p-num">Card number</label>
+                  <input
+                    id="order-p-num"
+                    inputMode="numeric"
+                    autoComplete="off"
+                    maxLength={19}
+                    placeholder="0000 0000 0000 0000"
+                    value={pay.number}
+                    onChange={(event) =>
+                      setPay((current) => ({ ...current, number: formatCardNumber(event.target.value) }))
+                    }
+                  />
+                </div>
+                <div className="field">
+                  <label htmlFor="order-p-name">Name on card</label>
+                  <input
+                    id="order-p-name"
+                    autoComplete="off"
+                    value={pay.name}
+                    onChange={(event) => setPay((current) => ({ ...current, name: event.target.value }))}
+                  />
+                </div>
+                <div className="pay3-row">
+                  <div className="field">
+                    <label htmlFor="order-p-exp">Expiration date</label>
+                    <input
+                      id="order-p-exp"
+                      inputMode="numeric"
+                      autoComplete="off"
+                      maxLength={7}
+                      placeholder="MM / YY"
+                      value={pay.exp}
+                      onChange={(event) =>
+                        setPay((current) => ({ ...current, exp: formatExp(event.target.value) }))
+                      }
+                    />
+                  </div>
+                  <div className="field">
+                    <label htmlFor="order-p-cvc">CVC</label>
+                    <input
+                      id="order-p-cvc"
+                      inputMode="numeric"
+                      autoComplete="off"
+                      maxLength={4}
+                      placeholder="CVC"
+                      value={pay.cvc}
+                      onChange={(event) =>
+                        setPay((current) => ({
+                          ...current,
+                          cvc: event.target.value.replace(/\D/g, "").slice(0, 4),
+                        }))
+                      }
+                    />
+                  </div>
+                </div>
+                <p className="pay3-demo pay-demo-c">
+                  <button className="tlink" type="button" onClick={fillDemoPay}>
+                    Use demo card details
+                  </button>
+                </p>
+                <p className={`err${payError ? " show" : ""}`} role="alert">
+                  Please complete the payment details.
+                </p>
+              </form>
+            </div>
+            <div className="stay-actions">
+              <button className="order-cta" type="button" onClick={submitPayment}>
+                Continue <span aria-hidden="true">→</span>
+              </button>
+            </div>
           </section>
         )}
 
         {step === "review" && (
-          <section className="beta-order-view" aria-label="Review">
+          <section className="beta-order-view beta-order-review" aria-label="Review">
+            <p className="eyebrow">3 of 3</p>
             <h1 className="title">
               Review your <em className="cu">order</em>.
             </h1>
@@ -259,93 +371,17 @@ export default function OrderCardFlow({
               </div>
             </dl>
             <p className="price-line total-line">Total: $</p>
-
-            <div className={`pay3${payOpen ? " open" : ""}`}>
-              <p className="eyebrow pay3-eye">Payment details</p>
-              <p className="pay3-demo">
-                <button className="tlink" type="button" onClick={fillDemoPay}>
-                  Use demo card details
-                </button>
-              </p>
-              <form
-                className="dform pay3-form"
-                noValidate
-                autoComplete="off"
-                onSubmit={(event) => {
-                  event.preventDefault();
-                  void placeOrder();
-                }}
-              >
-                <div className="field">
-                  <label htmlFor="order-p-num">Card number</label>
-                  <input
-                    id="order-p-num"
-                    inputMode="numeric"
-                    autoComplete="off"
-                    maxLength={19}
-                    placeholder="0000 0000 0000 0000"
-                    value={pay.number}
-                    onChange={(event) => {
-                      const next = formatCardNumber(event.target.value);
-                      setPay((current) => ({ ...current, number: next }));
-                      if (/\d/.test(event.target.value)) setPayOpen(true);
-                    }}
-                  />
-                </div>
-                <div className="field pay3-more">
-                  <label htmlFor="order-p-name">Name on card</label>
-                  <input
-                    id="order-p-name"
-                    autoComplete="off"
-                    value={pay.name}
-                    onChange={(event) => setPay((current) => ({ ...current, name: event.target.value }))}
-                  />
-                </div>
-                <div className="pay3-row pay3-more">
-                  <div className="field">
-                    <label htmlFor="order-p-exp">Expiration date</label>
-                    <input
-                      id="order-p-exp"
-                      inputMode="numeric"
-                      autoComplete="off"
-                      maxLength={7}
-                      placeholder="MM / YY"
-                      value={pay.exp}
-                      onChange={(event) => setPay((current) => ({ ...current, exp: formatExp(event.target.value) }))}
-                    />
-                  </div>
-                  <div className="field">
-                    <label htmlFor="order-p-cvc">CVC</label>
-                    <input
-                      id="order-p-cvc"
-                      inputMode="numeric"
-                      autoComplete="off"
-                      maxLength={4}
-                      placeholder="CVC"
-                      value={pay.cvc}
-                      onChange={(event) =>
-                        setPay((current) => ({
-                          ...current,
-                          cvc: event.target.value.replace(/\D/g, "").slice(0, 4),
-                        }))
-                      }
-                    />
-                  </div>
-                </div>
-                {payError && <p className="err show" role="alert">Please complete the payment details.</p>}
-              </form>
-              <p className="pay3-note">Demo only — use test details. No payment will be made.</p>
-            </div>
-
             <div className="stay-actions">
-              <button className="tlink" type="button" disabled={ordering} onClick={() => void placeOrder()}>
-                {ordering ? "Saving…" : "Place demo order"}
+              <button
+                className="order-cta"
+                type="button"
+                disabled={ordering}
+                onClick={() => void placeOrder()}
+              >
+                {ordering ? "Saving…" : "Place demo order"} <span aria-hidden="true">→</span>
               </button>
             </div>
-            {orderError && <p className="err show" role="alert">{orderError}</p>}
-            <p className="links small">
-              <button className="tlink" type="button" onClick={onClose}>Cancel</button>
-            </p>
+            {orderError ? <p className="err show" role="alert">{orderError}</p> : null}
           </section>
         )}
 
@@ -356,7 +392,7 @@ export default function OrderCardFlow({
             </h1>
             <p className="body dob-intro">Status: Preparing. No real shipment will be made.</p>
             <div className="stay-actions">
-              <button className="tlink" type="button" onClick={onClose}>
+              <button className="order-cta" type="button" onClick={onClose}>
                 Return to My Space
               </button>
             </div>

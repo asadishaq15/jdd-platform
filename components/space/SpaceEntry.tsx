@@ -14,6 +14,8 @@ import MyJourneyPage from "./beta/MyJourneyPage";
 import OrderCardFlow from "./beta/OrderCardFlow";
 import PerfumeOilFlow from "./beta/PerfumeOilFlow";
 import SpaceUiToggle from "./SpaceUiToggle";
+import StatesExplorePage from "./StatesExplorePage";
+import SpaceNotificationsDropdown, { useSpaceNotifications } from "./beta/SpaceNotificationsDropdown";
 import { getWorld, HospitalityWorld, worldDetails } from "../../lib/worlds";
 import { loadSpaceState, saveSpaceState, SpaceState } from "../../lib/space-state";
 import type { AccountSummary, CardOrder, CommunityCircleEvent, ConnectedStay } from "../../lib/space-data";
@@ -71,6 +73,7 @@ export default function SpaceEntry({
   const [modal, setModal] = useState<ProfileMenu>(null);
   const [flow, setFlow] = useState<Flow>(null);
   const [circleDetail, setCircleDetail] = useState<string | null>(null);
+  const [exploreOpen, setExploreOpen] = useState(false);
   const connectedStay = stays.find((stay) => stay.id === activeStayId) || stays[0];
 
   useEffect(() => {
@@ -151,12 +154,17 @@ export default function SpaceEntry({
     );
   }
 
+  if (exploreOpen) {
+    return <StatesExplorePage onClose={() => setExploreOpen(false)} />;
+  }
+
   if (modal === "journey") {
     return (
       <MyJourneyPage
         account={account}
         onClose={() => setModal(null)}
         onOpenAccount={() => setModal("account")}
+        onOpenExplore={() => setExploreOpen(true)}
         onSignOut={signOut}
       />
     );
@@ -176,6 +184,10 @@ export default function SpaceEntry({
         onOpenModal={(next) => {
           setModal(next);
           setMenuOpen(false);
+        }}
+        onExplore={() => {
+          setMenuOpen(false);
+          setExploreOpen(true);
         }}
         onSignOut={signOut}
       />
@@ -256,7 +268,11 @@ export default function SpaceEntry({
 
               <div className="calm-explore reveal in">
                 <p className="c-eye">Hospitality Worlds</p>
-                <div className="sec-act"><Link className="tlink" href="/discover?mode=dash">Explore all States</Link></div>
+                <div className="sec-act">
+                  <button className="tlink" type="button" onClick={() => setExploreOpen(true)}>
+                    Explore all States
+                  </button>
+                </div>
               </div>
 
               <p className="links small demo-ctl">
@@ -280,7 +296,7 @@ export default function SpaceEntry({
   );
 }
 
-function DashboardHeader({ account, guest, menuOpen, uiVersion, onUiVersionChange, onToggleMenu, onOpenModal, onSignOut }: {
+function DashboardHeader({ account, guest, menuOpen, uiVersion, onUiVersionChange, onToggleMenu, onOpenModal, onExplore, onSignOut }: {
   account: AccountSummary;
   guest: boolean;
   menuOpen: boolean;
@@ -288,9 +304,31 @@ function DashboardHeader({ account, guest, menuOpen, uiVersion, onUiVersionChang
   onUiVersionChange?: (version: SpaceUiVersion) => void;
   onToggleMenu: () => void;
   onOpenModal: (modal: Exclude<ProfileMenu, null>) => void;
+  onExplore: () => void;
   onSignOut: () => void;
 }) {
   const initial = account.fullName.trim().charAt(0).toUpperCase() || "G";
+  const [bellOpen, setBellOpen] = useState(false);
+  const { items, hasUnread, answer } = useSpaceNotifications();
+
+  useEffect(() => {
+    if (!bellOpen) return;
+    function onDocClick(event: MouseEvent) {
+      const target = event.target as HTMLElement | null;
+      if (!target?.closest(".space-bell-wrap")) setBellOpen(false);
+    }
+    document.addEventListener("click", onDocClick);
+    return () => document.removeEventListener("click", onDocClick);
+  }, [bellOpen]);
+
+  useEffect(() => {
+    if (menuOpen) setBellOpen(false);
+  }, [menuOpen]);
+
+  function openModal(modal: Exclude<ProfileMenu, null>) {
+    setBellOpen(false);
+    onOpenModal(modal);
+  }
 
   return (
     <header className="top dash-top">
@@ -300,29 +338,71 @@ function DashboardHeader({ account, guest, menuOpen, uiVersion, onUiVersionChang
         {onUiVersionChange && (
           <SpaceUiToggle version={uiVersion} onChange={onUiVersionChange} />
         )}
+        {/* Same cluster as My Journey: light mode → bell (+dot) → profile */}
         <ThemeToggle />
-      </div>
-      <div className="pmenu-wrap">
-        <button className="profile" type="button" aria-label="Account menu" aria-haspopup="true" aria-expanded={menuOpen} onClick={onToggleMenu}>
-          {account.avatarUrl
-            ? <img src={account.avatarUrl} alt="" referrerPolicy="no-referrer" />
-            : initial}
-        </button>
-        {menuOpen && (
-          <div className="pmenu" role="menu">
-            <div className="pm-head"><p className="pm-name">{account.fullName}</p><p className="pm-mail">{account.email}</p></div>
-            <button className="pm-item" role="menuitem" onClick={() => onOpenModal("account")}>My account</button>
-            <button className="pm-item" role="menuitem" onClick={() => onOpenModal("journey")}>My journey</button>
-            <button className="pm-item" role="menuitem" onClick={() => onOpenModal("orders")}>My orders</button>
-            <button className="pm-item" role="menuitem" onClick={() => onOpenModal("stays")}>My stays</button>
-            {guest && <button className="pm-item" role="menuitem" onClick={() => onOpenModal("events")}>My events</button>}
-            <button className="pm-item" role="menuitem" onClick={() => onOpenModal("reminders")}>Reminders</button>
-            <span className="pm-rule" />
-            <button className="pm-item small" role="menuitem" onClick={() => onOpenModal("legal")}>Terms of Use · Privacy Policy</button>
-            <button className="pm-item small" role="menuitem" onClick={() => onOpenModal("delete")}>Delete account</button>
-            <button className="pm-item small" role="menuitem" type="button" onClick={onSignOut}>Sign out</button>
-          </div>
-        )}
+        <div className="space-bell-wrap">
+          <button
+            type="button"
+            className="space-bell"
+            aria-label="Notifications"
+            aria-haspopup="true"
+            aria-expanded={bellOpen}
+            onClick={(event) => {
+              event.stopPropagation();
+              if (menuOpen) onToggleMenu();
+              setBellOpen((value) => !value);
+            }}
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2" aria-hidden="true">
+              <path d="M6 17V11a6 6 0 0 1 12 0v6M4 17h16M10 20h4" />
+            </svg>
+            {hasUnread ? <span className="space-bell-badge" aria-hidden="true" /> : null}
+          </button>
+          <SpaceNotificationsDropdown open={bellOpen} items={items} onAnswer={answer} />
+        </div>
+        <div className="pmenu-wrap">
+          <button
+            className="profile"
+            type="button"
+            aria-label="Account menu"
+            aria-haspopup="true"
+            aria-expanded={menuOpen}
+            onClick={() => {
+              setBellOpen(false);
+              onToggleMenu();
+            }}
+          >
+            {account.avatarUrl
+              ? <img src={account.avatarUrl} alt="" referrerPolicy="no-referrer" />
+              : initial}
+          </button>
+          {menuOpen && (
+            <div className="pmenu" role="menu">
+              <div className="pm-head"><p className="pm-name">{account.fullName}</p><p className="pm-mail">{account.email}</p></div>
+              <button className="pm-item" role="menuitem" onClick={() => openModal("account")}>My account</button>
+              <button className="pm-item" role="menuitem" onClick={() => openModal("journey")}>My journey</button>
+              <button className="pm-item" role="menuitem" onClick={() => openModal("orders")}>My orders</button>
+              <button className="pm-item" role="menuitem" onClick={() => openModal("stays")}>My stays</button>
+              {guest && <button className="pm-item" role="menuitem" onClick={() => openModal("events")}>My events</button>}
+              <button className="pm-item" role="menuitem" onClick={() => openModal("reminders")}>Reminders</button>
+              <button
+                className="pm-item"
+                role="menuitem"
+                type="button"
+                onClick={() => {
+                  setBellOpen(false);
+                  onExplore();
+                }}
+              >
+                Explore all States
+              </button>
+              <span className="pm-rule" />
+              <button className="pm-item small" role="menuitem" onClick={() => openModal("legal")}>Terms of Use · Privacy Policy</button>
+              <button className="pm-item small" role="menuitem" onClick={() => openModal("delete")}>Delete account</button>
+              <button className="pm-item small" role="menuitem" type="button" onClick={onSignOut}>Sign out</button>
+            </div>
+          )}
+        </div>
       </div>
     </header>
   );

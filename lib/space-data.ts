@@ -33,6 +33,8 @@ export type CommunityCircleEvent = {
   title: string;
   timing: string;
   body: string;
+  /** Short line shown on community grid cards (HTML d-col-s). Falls back to body. */
+  subtitle?: string | null;
   thumbnailUrl: string | null;
 };
 

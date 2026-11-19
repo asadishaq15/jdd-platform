@@ -103,6 +103,27 @@ body.night .space-entry-beta {
   gap: 0;
 }
 
+/* HTML .hback — top-left Back on detail windows */
+.space-entry-beta .beta-hback {
+  grid-column: 1;
+  grid-row: 1;
+  justify-self: start;
+  margin: 0;
+  padding: 10px 0;
+  border: 0;
+  background: none;
+  color: var(--beta-muted);
+  font-family: var(--sans);
+  font-size: 13px;
+  font-weight: 400;
+  letter-spacing: 0.06em;
+  cursor: pointer;
+}
+
+.space-entry-beta .beta-hback:hover {
+  color: var(--beta-fg);
+}
+
 .space-entry-beta .dash-brand {
   display: flex;
   grid-column: 2;
@@ -125,26 +146,57 @@ body.night .space-entry-beta {
   white-space: nowrap;
 }
 
+@keyframes betaHeaderGlow {
+  0%, 100% { box-shadow: 0 0 4px 1px rgba(240, 199, 155, 0.45); }
+  50% { box-shadow: 0 0 12px 4px rgba(240, 199, 155, 0.85); }
+}
+
 .space-entry-beta .dash-controls {
   display: flex;
   grid-column: 3;
   grid-row: 1;
   justify-self: end;
   align-items: center;
-  gap: 8px;
+  gap: 22px;
   margin: 0;
   min-width: 0;
-}
-
-.space-entry-beta .dash-controls .theme {
-  min-width: 34px;
-  min-height: 34px;
-  margin: 0;
-  flex-shrink: 0;
+  position: relative;
 }
 
 .space-entry-beta .dash-controls .space-ui-toggle {
   flex-shrink: 0;
+  margin-right: 4px;
+}
+
+/* My Journey–style: borderless muted theme + bell icons */
+.space-entry-beta .dash-controls .theme {
+  width: 28px;
+  height: 28px;
+  min-width: 28px;
+  min-height: 28px;
+  margin: 0;
+  padding: 0;
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  border: 0;
+  background: none;
+  color: var(--beta-muted);
+  cursor: pointer;
+}
+
+.space-entry-beta .dash-controls .theme:hover {
+  color: var(--beta-fg);
+}
+
+.space-entry-beta .dash-controls .theme svg {
+  width: 22px;
+  height: 22px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
 .space-entry-beta .beta-bell-wrap {
@@ -158,12 +210,12 @@ body.night .space-entry-beta {
   position: relative;
   display: grid;
   place-items: center;
-  width: 34px;
-  height: 34px;
+  width: 28px;
+  height: 28px;
   flex-shrink: 0;
   padding: 0;
-  border: 1px solid var(--beta-line-strong);
-  border-radius: 50%;
+  border: 0;
+  border-radius: 0;
   background: transparent;
   color: var(--beta-muted);
   cursor: pointer;
@@ -172,12 +224,11 @@ body.night .space-entry-beta {
 
 .space-entry-beta .beta-bell:hover {
   color: var(--beta-fg);
-  border-color: var(--beta-hover-border);
 }
 
 .space-entry-beta .beta-bell svg {
-  width: 16px;
-  height: 16px;
+  width: 22px;
+  height: 22px;
   fill: none;
   stroke: currentColor;
   stroke-width: 1.2;
@@ -187,13 +238,13 @@ body.night .space-entry-beta {
 
 .space-entry-beta .beta-bell-badge {
   position: absolute;
-  top: 2px;
-  right: 2px;
+  top: 0;
+  right: 1px;
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: var(--beta-gradient-gold);
-  box-shadow: 0 0 6px 1px rgba(240, 199, 155, 0.55);
+  background: var(--beta-gradient-gold, linear-gradient(92deg, #A66A3F 0%, #C58452 28%, #D6A06D 50%, #F0C79B 68%, #B47749 88%, #A66A3F 100%));
+  animation: betaHeaderGlow 2.4s ease-in-out infinite;
 }
 
 .space-entry-beta .beta-notifs {
@@ -287,8 +338,8 @@ body.night .space-entry-beta {
 .space-entry-beta .profile {
   display: grid;
   place-items: center;
-  width: 34px;
-  height: 34px;
+  width: 44px;
+  height: 44px;
   padding: 0;
   overflow: hidden;
   border: 1px solid var(--beta-line-strong);
@@ -296,9 +347,10 @@ body.night .space-entry-beta {
   background: transparent;
   color: inherit;
   font-family: var(--serif);
-  font-size: 14px;
+  font-size: 20px;
   line-height: 1;
   cursor: pointer;
+  flex-shrink: 0;
 }
 
 .space-entry-beta .profile img {
@@ -368,6 +420,13 @@ body.night .space-entry-beta {
   flex-direction: column;
   min-height: 0;
   padding: 8px var(--pad-x) 28px;
+}
+
+.beta-deck:has(.beta-circle-detail) {
+  align-items: center;
+  overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .beta-deck-top {
@@ -853,7 +912,14 @@ body.night .space-entry-beta {
   cursor: pointer;
 }
 
-.beta-cta:hover { background: var(--beta-cta-hover); color: #111110; }
+/* Filled CTAs: no hover / focus visual change */
+.beta-cta:hover,
+.beta-cta:focus-visible {
+  background: var(--beta-cta-bg);
+  color: var(--beta-cta-fg);
+  opacity: 1;
+  outline: none;
+}
 
 .beta-text-link {
   position: relative;
@@ -1329,6 +1395,107 @@ body:not(.night) .beta-scene-light {
 
 .beta-scent .beta-split-copy > .beta-muted {
   margin-top: 16px;
+}
+
+/* Compact scent card chip — matches dashboard .order-card.dash-card */
+.beta-scent .beta-order-card {
+  width: min(220px, 60vw);
+  aspect-ratio: 3 / 4;
+  margin: 18px 0 16px;
+  border: 1px solid #e6b98a;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  background: linear-gradient(
+    165deg,
+    hsl(var(--h, 30) 16% 90%),
+    hsl(var(--h, 30) 12% 74%) 70%,
+    hsl(var(--h, 30) 10% 64%)
+  );
+  text-align: center;
+}
+
+.beta-scent .beta-order-card::before {
+  content: "";
+  position: absolute;
+  inset: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.55);
+  pointer-events: none;
+}
+
+.beta-scent .beta-order-card .d-card-t {
+  font-family: var(--serif);
+  font-weight: 300;
+  font-size: 22px;
+  color: #fff;
+  position: relative;
+  z-index: 1;
+}
+
+.beta-scent .beta-order-card .d-card-s {
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: 16px;
+  color: #fff;
+  position: relative;
+  z-index: 1;
+}
+
+.beta-scent .beta-order-card .oc-name {
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  color: rgba(255, 255, 255, 0.9);
+  margin-top: 6px;
+  position: relative;
+  z-index: 1;
+}
+
+body.night .beta-scent .beta-order-card {
+  filter: brightness(0.72);
+}
+
+.beta-scent .beta-rcv {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 12.5px;
+  letter-spacing: 0.04em;
+  margin: 16px 0 0;
+  color: var(--beta-soft-text);
+}
+
+.beta-scent .beta-rcv-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 1px solid var(--beta-soft-text-strong, #bdb7ad);
+  flex: none;
+}
+
+.beta-scent .beta-rcv.on {
+  color: var(--beta-fg);
+}
+
+.beta-scent .beta-rcv.on .beta-rcv-dot {
+  border: 0;
+  background: var(--beta-gradient-gold, linear-gradient(100deg, #d6a06d 0%, #f0c79b 40%, #e6b98a 65%, #c58452 100%));
+}
+
+.beta-scent .beta-d-saved {
+  margin: 22px 0 0;
+  font-family: var(--serif);
+  font-style: italic;
+  font-weight: 300;
+  font-size: 22px;
+  color: var(--beta-fg);
+}
+
+.beta-scent .beta-d-saved .cu {
+  color: var(--copper, #b98b5c);
+  font-style: italic;
 }
 
 .beta-track {
@@ -1994,43 +2161,144 @@ body:not(.night) .beta-scene-light {
   line-height: 1.5;
 }
 
+/* Circle detail — exact space (1).html renderDetail typography / placement */
 .beta-circle-detail {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   width: min(560px, 100%);
-  margin: 0 auto;
-  padding: 24px 0 40px;
+  margin: auto;
+  padding: 12px 0 40px;
   text-align: center;
 }
 
-.beta-circle-title {
-  margin: 10px 0 0;
-  font-family: var(--serif);
-  font-size: clamp(28px, 5vw, 40px);
-  font-weight: 300;
-  line-height: 1.15;
+.beta-circle-detail > .evt-photo {
+  position: relative;
+  left: 50%;
+  width: min(560px, calc(100vw - 48px));
+  aspect-ratio: 3 / 2;
+  margin: 0 0 34px;
+  overflow: hidden;
+  transform: translateX(-50%);
 }
 
-.beta-circle-body {
-  margin: 16px 0 0;
+.beta-circle-detail > .evt-photo img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.beta-circle-detail > .eyebrow {
+  margin: 0 0 18px;
+  color: var(--beta-muted);
+  font-size: 11px;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+}
+
+.beta-circle-detail > .title {
+  margin: 0 0 14px;
+  font-family: var(--serif);
+  font-size: clamp(30px, 8vw, 38px);
+  font-weight: 300;
+  line-height: 1.14;
+  text-wrap: balance;
+}
+
+.beta-circle-detail > .country {
+  margin: 8px 0 0;
+  color: var(--beta-muted);
+  font-size: 10.5px;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+}
+
+.beta-circle-detail > .body.dob-intro {
+  margin: 14px auto 0;
+  max-width: 42ch;
   color: var(--beta-soft-text);
   font-size: 14.5px;
-  line-height: 1.7;
+  line-height: 1.8;
 }
 
-.beta-circle-thumb {
-  display: block;
-  width: min(100%, 420px);
-  max-height: 240px;
-  margin: 18px auto 0;
-  object-fit: cover;
-  border: 1px solid var(--beta-panel-border);
+body.night .beta-circle-detail > .body.dob-intro {
+  color: var(--warm-white, #eee8de);
+  opacity: 0.78;
 }
 
-.beta-circle-confirm {
-  margin: 18px 0 0;
-  color: var(--beta-accent-soft);
+.beta-circle-detail > .fict {
+  margin: 16px 0 0;
+  color: var(--neutral-3, #a8a8a5);
+  font-size: 10px;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+}
+
+.beta-circle-detail > .confirm-line {
+  margin: 24px 0 0;
   font-family: var(--serif);
-  font-size: 18px;
+  font-size: 19px;
   font-style: italic;
+}
+
+.beta-circle-detail > .stay-actions {
+  margin-top: 40px;
+}
+
+.beta-circle-detail > .stay-actions .tlink {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  min-height: 56px;
+  height: 56px;
+  margin: 0 auto;
+  padding: 0 28px;
+  border: 0 !important;
+  border-radius: 0;
+  background: var(--beta-cta-bg) !important;
+  color: var(--beta-cta-fg) !important;
+  -webkit-text-fill-color: var(--beta-cta-fg) !important;
+  font-family: var(--sans) !important;
+  font-style: normal !important;
+  font-size: 11px !important;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+/* Override global .tlink::after underline (absolute bottom) with inline arrow */
+.beta-circle-detail > .stay-actions .tlink::after {
+  content: "";
+  position: static !important;
+  left: auto !important;
+  right: auto !important;
+  bottom: auto !important;
+  width: 14px;
+  height: 7px;
+  flex: none;
+  animation: none !important;
+  opacity: 1;
+  background: currentColor !important;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 7'%3E%3Cpath d='M0 3.5h13M10 .5l3 3-3 3' fill='none' stroke='black' stroke-width='1.1'/%3E%3C/svg%3E") center / contain no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 7'%3E%3Cpath d='M0 3.5h13M10 .5l3 3-3 3' fill='none' stroke='black' stroke-width='1.1'/%3E%3C/svg%3E") center / contain no-repeat;
+}
+
+.beta-circle-detail > .stay-actions .tlink:hover,
+.beta-circle-detail > .stay-actions .tlink:focus-visible {
+  background: var(--beta-cta-bg) !important;
+  color: var(--beta-cta-fg) !important;
+  -webkit-text-fill-color: var(--beta-cta-fg) !important;
+  opacity: 1;
+  outline: none;
+}
+
+.beta-circle-detail > .stay-actions .tlink:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
 }
 
 @media (max-width: 900px) {
@@ -2046,6 +2314,13 @@ body:not(.night) .beta-scene-light {
   /* Drop desktop centering spacer */
   .space-entry-beta .dash-top > span[aria-hidden="true"] {
     display: none;
+  }
+
+  .space-entry-beta .beta-hback {
+    grid-column: auto;
+    justify-self: auto;
+    flex-shrink: 0;
+    padding: 8px 0;
   }
 
   .space-entry-beta .dash-brand {
@@ -2078,32 +2353,33 @@ body:not(.night) .beta-scene-light {
     display: none;
   }
 
-  /* Left → right: notifications, theme, profile (profile furthest right) */
-  .space-entry-beta .dash-controls .beta-bell-wrap { order: 1; }
-  .space-entry-beta .dash-controls .theme { order: 2; }
-  .space-entry-beta .dash-controls .pmenu-wrap {
-    order: 3;
-    margin-left: 12px;
+  /* Same order as My Journey: theme → bell → profile */
+  .space-entry-beta .dash-controls .theme { order: 1; }
+  .space-entry-beta .dash-controls .beta-bell-wrap { order: 2; }
+  .space-entry-beta .dash-controls .pmenu-wrap { order: 3; }
+
+  .space-entry-beta .dash-controls {
+    gap: 16px;
   }
 
   .space-entry-beta .dash-controls .theme,
   .space-entry-beta .dash-controls .beta-bell {
-    min-width: 32px;
-    min-height: 32px;
-    width: 32px;
-    height: 32px;
+    min-width: 28px;
+    min-height: 28px;
+    width: 28px;
+    height: 28px;
   }
 
   .space-entry-beta .dash-controls .theme svg,
   .space-entry-beta .dash-controls .beta-bell svg {
-    width: 18px;
-    height: 18px;
+    width: 20px;
+    height: 20px;
   }
 
   .space-entry-beta .profile {
-    width: 32px;
-    height: 32px;
-    font-size: 13px;
+    width: 40px;
+    height: 40px;
+    font-size: 18px;
   }
 
   /*

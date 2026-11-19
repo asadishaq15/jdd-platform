@@ -7,7 +7,6 @@ import type { HospitalityWorld } from "../../../lib/worlds";
 import "./perfume-oil-flow.css";
 
 type Step = "intro" | "ritual";
-type InfoKind = "buy" | "directions" | null;
 
 function pointOfSaleLabel(property: string) {
   return /Retreat|Sanctuary|Springs/.test(property) ? "the spa" : "the boutique";
@@ -23,12 +22,15 @@ export default function PerfumeOilFlow({
   onClose: () => void;
 }) {
   const [step, setStep] = useState<Step>("intro");
-  const [info, setInfo] = useState<InfoKind>(null);
+  const [buyOpen, setBuyOpen] = useState(false);
 
   function goBack() {
+    if (buyOpen) {
+      setBuyOpen(false);
+      return;
+    }
     if (step === "ritual") {
       setStep("intro");
-      setInfo(null);
       return;
     }
     onClose();
@@ -37,38 +39,36 @@ export default function PerfumeOilFlow({
   return (
     <div className="beta-oil-overlay">
       <AuthShell
+        wide
         className="beta-oil-shell"
         topStart={
           <button className="oil-top-back" type="button" onClick={goBack}>
             Back
           </button>
         }
-        topCenter={
-          step === "ritual" ? <p className="beta-oil-step-label">2 of 2</p> : undefined
-        }
       >
         {step === "intro" && (
-          <section className="beta-oil-view" aria-label="Your State, on skin">
+          <section className="beta-oil-view intro" aria-label="Your State, on skin">
             <p className="eyebrow">Your State, on skin</p>
             <div className="oil-p1">
               <h1 className="title sc-title">
                 Create your personal <em className="cu">scent</em>.
               </h1>
-              <p className="body dob-intro">
-                Wear alone, layer beneath your favourite perfume, or explore combining oils
-                collected from different hospitality worlds.
+              <p className="body dob-intro bn-lines">
+                <span>Wear alone, layer beneath your favourite perfume, or explore</span>
+                <span>combining oils collected from different hospitality worlds.</span>
               </p>
               <span className="stay-rule" aria-hidden="true" />
-              <p className="brand-note">
-                Inspired by the tradition of anointing guests with perfumed oils as a gesture of
-                hospitality and honor.
+              <p className="brand-note bn-lines">
+                <span>Inspired by the tradition of anointing guests with</span>
+                <span>perfumed oils as a gesture of hospitality and honor.</span>
               </p>
-              <p className="brand-note">
-                Created in dialogue with the property’s signature scent, this perfume oil carries
-                its olfactory identity from place to skin.
+              <p className="brand-note bn-lines">
+                <span>Created in dialogue with the property’s signature scent, this</span>
+                <span>perfume oil carries its olfactory identity from place to skin.</span>
               </p>
               <p className="line-s close-line">
-                Apply with intention. Return to your <em className="cu">State</em>.
+                Apply with intention. Return to your State.
               </p>
             </div>
             <div className="stay-actions">
@@ -76,6 +76,9 @@ export default function PerfumeOilFlow({
                 Continue
               </button>
             </div>
+            <p className="links small">
+              <button className="tlink bottom-back" type="button" onClick={onClose}>Back</button>
+            </p>
           </section>
         )}
 
@@ -128,63 +131,49 @@ export default function PerfumeOilFlow({
               </li>
             </ol>
             <div className="stay-actions">
-              <button className="tlink" type="button" onClick={() => setInfo("buy")}>
+              <button className="tlink" type="button" onClick={() => setBuyOpen(true)}>
                 Where to buy your perfume oil
               </button>
             </div>
+            <p className="links small">
+              <button className="tlink bottom-back" type="button" onClick={() => setStep("intro")}>
+                Back
+              </button>
+            </p>
           </section>
         )}
       </AuthShell>
 
-      {info && (
+      {buyOpen ? (
         <div
           className="jmodal open"
           role="presentation"
           onMouseDown={(event) => {
-            if (event.target === event.currentTarget) setInfo(null);
+            if (event.target === event.currentTarget) setBuyOpen(false);
           }}
         >
           <section
             className="jm-in glass"
             role="dialog"
             aria-modal="true"
-            aria-label={info === "buy" ? "Where to buy" : "Get directions"}
+            aria-label="Where to buy"
           >
-            {info === "buy" ? (
-              <>
-                <h2 className="jm-title">{world.property} Perfume Oil</h2>
-                <p className="ret-pos">
-                  Available exclusively at {pointOfSaleLabel(world.property)} at {world.property}.
-                </p>
-                <p className="ret-addr">
-                  Retail address to be provided by the property
-                  <br />
-                  <span>{(world.country || "").toUpperCase()}</span>
-                </p>
-                <div className="stay-actions">
-                  <button className="tlink" type="button" onClick={() => setInfo("directions")}>
-                    Get directions
-                  </button>
-                </div>
-                <p className="ret-note">Space offers scented cards only.</p>
-              </>
-            ) : (
-              <>
-                <h2 className="jm-title">Get directions</h2>
-                <p className="jm-text">
-                  In the live platform, this opens directions to the point of sale at{" "}
-                  {world.property}. This is a fictional demo property, so no map or route is opened.
-                </p>
-              </>
-            )}
+            <p className="ret-pos">
+              Available exclusively at {pointOfSaleLabel(world.property)} at {world.property}.
+            </p>
+            <p className="ret-note">Space offers scented cards only.</p>
+            <p className="jm-text bn-lines oil-live">
+              <span>In the live platform, this opens directions</span>
+              <span>to the point of sale at {world.property}.</span>
+            </p>
             <p className="links small">
-              <button className="tlink" type="button" onClick={() => setInfo(null)}>
+              <button className="tlink" type="button" onClick={() => setBuyOpen(false)}>
                 Close
               </button>
             </p>
           </section>
         </div>
-      )}
+      ) : null}
     </div>
   );
 }

@@ -27,19 +27,18 @@ export default function BetaCircleDetail({
   state,
   activeStayId,
   onSave,
-  onBack,
 }: {
   world: HospitalityWorld;
   event: CommunityCircleEvent;
   state: SpaceState;
   activeStayId?: string;
   onSave: (next: SpaceState) => void;
-  onBack: () => void;
 }) {
   const [rsvpError, setRsvpError] = useState("");
   const [rsvping, setRsvping] = useState(false);
   const saved = Boolean(state.rsvps?.[event.id] || state.rsvps?.[event.category]);
   const rsvpCategory = event.category === "news" ? null : event.category;
+  const photoAlt = event.subtitle || event.title;
 
   useEffect(() => {
     if (event.category !== "news" || !activeStayId) return;
@@ -54,24 +53,33 @@ export default function BetaCircleDetail({
 
   async function rsvp() {
     if (!rsvpCategory) return;
-    if (!activeStayId) {
+    if (saved) return;
+
+    const isDemo = event.id.startsWith("demo-");
+    if (!isDemo && !activeStayId) {
       setRsvpError("Activate a stay before responding.");
       return;
     }
-    if (saved) return;
+
     setRsvping(true);
     setRsvpError("");
-    const response = await fetch("/api/community/rsvp", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ eventId: event.id, stayId: activeStayId }),
-    });
-    const result = await response.json().catch(() => ({}));
-    setRsvping(false);
-    if (!response.ok) {
-      setRsvpError(result.error || "Unable to save your response.");
-      return;
+
+    if (!isDemo) {
+      const response = await fetch("/api/community/rsvp", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ eventId: event.id, stayId: activeStayId }),
+      });
+      const result = await response.json().catch(() => ({}));
+      setRsvping(false);
+      if (!response.ok) {
+        setRsvpError(result.error || "Unable to save your response.");
+        return;
+      }
+    } else {
+      setRsvping(false);
     }
+
     onSave({
       ...state,
       rsvps: {
@@ -84,38 +92,38 @@ export default function BetaCircleDetail({
 
   return (
     <section className="beta-circle-detail" aria-label={`${CATEGORY_LABELS[event.category]} detail`}>
-      <p className="beta-eyebrow">
+      {event.thumbnailUrl && (
+        <div className="evt-photo">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={event.thumbnailUrl} alt={photoAlt} />
+        </div>
+      )}
+
+      <p className="eyebrow">
         {CATEGORY_LABELS[event.category]} · {world.property}
       </p>
-      <h1 className="beta-circle-title">{event.title}</h1>
-      <p className="beta-muted">{event.timing}</p>
-      {event.thumbnailUrl && (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img className="beta-circle-thumb" src={event.thumbnailUrl} alt="" />
-      )}
-      <p className="beta-circle-body">{event.body}</p>
+      <h1 className="title">{event.title}</h1>
+      <p className="country">{event.timing}</p>
+      <p className="body dob-intro">{event.body}</p>
+      <p className="fict">Fictional demo content</p>
+
       {rsvpCategory && (
         saved ? (
-          <>
-            <p className="beta-circle-confirm">{CATEGORY_DONE[rsvpCategory]}</p>
-            <p className="beta-muted">Saved in My events.</p>
-          </>
+          <p className="confirm-line">{CATEGORY_DONE[rsvpCategory]}</p>
         ) : (
-          <button
-            className="beta-cta"
-            type="button"
-            disabled={rsvping}
-            onClick={() => void rsvp()}
-          >
-            {rsvping ? "Saving…" : CATEGORY_ACTIONS[rsvpCategory]}{" "}
-            <span aria-hidden="true">→</span>
-          </button>
+          <div className="stay-actions">
+            <button
+              className="tlink"
+              type="button"
+              disabled={rsvping}
+              onClick={() => void rsvp()}
+            >
+              {rsvping ? "Saving…" : CATEGORY_ACTIONS[rsvpCategory]}
+            </button>
+          </div>
         )
       )}
       {rsvpError && <p className="beta-code-error" role="alert">{rsvpError}</p>}
-      <p className="links small">
-        <button className="tlink" type="button" onClick={onBack}>Back</button>
-      </p>
     </section>
   );
 }

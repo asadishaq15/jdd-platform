@@ -50,6 +50,12 @@
 .my-journey header{
   position:sticky;top:0;z-index:20;background:var(--bg);display:grid;grid-template-columns:1fr auto 1fr;align-items:center;padding:28px 6vw 22px;border-bottom:1px solid var(--line)
 }
+.my-journey .journey-back{
+  grid-column:1;justify-self:start;margin:0;padding:0;border:0;background:none;color:var(--muted);font-family:var(--sans);font-size:13px;letter-spacing:0.02em;cursor:pointer
+}
+.my-journey .journey-back:hover{
+  color:var(--text)
+}
 .my-journey .brand{
   grid-column:2;display:flex;align-items:center;gap:10px;font-size:13px;letter-spacing:0;color:var(--muted);text-transform:uppercase
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import BrandMark from "../../brand/BrandMark";
 import ThemeToggle from "../../layout/ThemeToggle";
 import type { AccountSummary } from "../../../lib/space-data";
@@ -28,6 +28,7 @@ export default function SpaceBetaHeader({
   onCloseMenu,
   onProfileAction,
   onSignOut,
+  topStart,
 }: {
   account: AccountSummary;
   menuOpen: boolean;
@@ -37,6 +38,8 @@ export default function SpaceBetaHeader({
   onCloseMenu: () => void;
   onProfileAction: (action: SpaceProfileAction) => void;
   onSignOut: () => void;
+  /** Top-left control (e.g. Back on detail windows), matching AuthShell topStart. */
+  topStart?: ReactNode;
 }) {
   const initial = account.fullName.trim().charAt(0).toUpperCase() || "G";
   const [bellOpen, setBellOpen] = useState(false);
@@ -64,13 +67,14 @@ export default function SpaceBetaHeader({
 
   return (
     <header className="top dash-top beta-header">
-      <span aria-hidden="true" />
+      {topStart ?? <span aria-hidden="true" />}
       <div className="dash-brand">
         <BrandMark className="dash-logo" />
         <span className="dash-title">My Space</span>
       </div>
       <div className="dash-controls">
         <SpaceUiToggle version={uiVersion} onChange={onUiVersionChange} />
+        {/* Order matches My Journey: light mode → bell (+dot) → profile */}
         <ThemeToggle />
         <div className="beta-bell-wrap">
           <button
@@ -85,9 +89,8 @@ export default function SpaceBetaHeader({
               setBellOpen((value) => !value);
             }}
           >
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-              <path d="M6 9.5a6 6 0 0 1 12 0c0 3.2.9 4.4 1.4 5.2.3.4 0 1-.5 1H5.1c-.5 0-.8-.6-.5-1 .5-.8 1.4-2 1.4-5.2Z" />
-              <path d="M10 18.2a2.2 2.2 0 0 0 4 0" />
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2" aria-hidden="true">
+              <path d="M6 17V11a6 6 0 0 1 12 0v6M4 17h16M10 20h4" />
             </svg>
             {hasUnread ? <span className="beta-bell-badge" aria-hidden="true" /> : null}
           </button>
@@ -124,14 +127,8 @@ export default function SpaceBetaHeader({
               <button className="pm-item" role="menuitem" type="button" onClick={() => openAction("journey")}>
                 My journey
               </button>
-              <button className="pm-item" role="menuitem" type="button" onClick={() => openAction("stays")}>
-                My stays
-              </button>
               <button className="pm-item" role="menuitem" type="button" onClick={() => openAction("events")}>
                 My events
-              </button>
-              <button className="pm-item" role="menuitem" type="button" onClick={() => openAction("reminders")}>
-                Reminders
               </button>
               <button className="pm-item" role="menuitem" type="button" onClick={() => openAction("explore")}>
                 Explore all States

@@ -19,6 +19,40 @@ const CATEGORY_LABELS: Record<CommunityCircleEvent["category"], string> = {
 
 const CATEGORIES = ["event", "invite", "news"] as const;
 
+/** Demo circle cards matching space (1).html circleItem for Stillness / Serein Kyoto. */
+export const DEMO_COMMUNITY_EVENTS: CommunityCircleEvent[] = [
+  {
+    id: "demo-event",
+    propertyId: "demo",
+    category: "event",
+    title: "A long table of Stillness",
+    timing: "Thursday, 22 October · 8 pm",
+    subtitle: "A silent kaiseki dinner",
+    body: "A silent kaiseki dinner. An evening for guests connected by Stillness.",
+    thumbnailUrl: "/assets/events/kaiseki.jpg",
+  },
+  {
+    id: "demo-invite",
+    propertyId: "demo",
+    category: "invite",
+    title: "An invitation at dawn",
+    timing: "Tuesday, 3 November · 4 pm",
+    subtitle: "Moss-garden contemplation at dawn",
+    body: "Moss-garden contemplation at dawn. A quiet invitation for guests of Serein Kyoto.",
+    thumbnailUrl: "/assets/events/moss.jpg",
+  },
+  {
+    id: "demo-news",
+    propertyId: "demo",
+    category: "news",
+    title: "Now open at Serein Kyoto",
+    timing: "This week",
+    subtitle: "Private meditation in the tea house",
+    body: "Private meditation in the tea house – now open to guests of Serein Kyoto.",
+    thumbnailUrl: "/assets/events/tea.jpg",
+  },
+];
+
 /** Four balanced lines sized to stay as four rows on mobile */
 const COMMUNITY_HERO_LINES = [
   "You belong among people who are willing to see",
@@ -31,25 +65,23 @@ export default function CommunitySlide({
   world,
   guest,
   state,
-  circleEvents,
   onOpenEvent,
   onRequestAccessCode,
 }: {
   world: HospitalityWorld;
   guest: boolean;
   state: SpaceState;
-  circleEvents: CommunityCircleEvent[];
+  /** Kept for call-site compatibility; unlocked grid uses DEMO_COMMUNITY_EVENTS for now. */
+  circleEvents?: CommunityCircleEvent[];
   onOpenEvent: (eventId: string) => void;
   onRequestAccessCode: () => void;
 }) {
   const byCategory = Object.fromEntries(
     CATEGORIES.map((category) => [
       category,
-      circleEvents.find((event) => event.category === category) || null,
+      DEMO_COMMUNITY_EVENTS.find((event) => event.category === category) || null,
     ]),
   ) as Record<(typeof CATEGORIES)[number], CommunityCircleEvent | null>;
-
-  const hasAnyEvent = CATEGORIES.some((category) => byCategory[category]);
 
   return (
     <article className="beta-community" aria-label="My community">
@@ -87,44 +119,35 @@ export default function CommunitySlide({
             </p>
           </div>
 
-          {hasAnyEvent ? (
-            <div className="beta-community-grid">
-              {CATEGORIES.map((category) => {
-                const item = byCategory[category];
-                if (!item) {
-                  return (
-                    <div key={category} className="beta-community-col empty">
-                      <p className="beta-label">{CATEGORY_LABELS[category]}</p>
-                      <p className="beta-muted">Nothing published yet.</p>
-                    </div>
-                  );
-                }
-                const saved = Boolean(state.rsvps?.[item.id] || state.rsvps?.[item.category]);
+          <div className="beta-community-grid">
+            {CATEGORIES.map((category) => {
+              const item = byCategory[category];
+              if (!item) {
                 return (
-                  <button
-                    key={item.id}
-                    type="button"
-                    className="beta-community-col"
-                    onClick={() => onOpenEvent(item.id)}
-                  >
-                    <p className="beta-label">
-                      {CATEGORY_LABELS[category]}
-                      {saved ? " · Saved" : ""}
-                    </p>
-                    <p className="beta-community-event-title">{item.title}</p>
-                    <p className="beta-community-event-body">{item.body}</p>
-                  </button>
+                  <div key={category} className="beta-community-col empty">
+                    <p className="beta-label">{CATEGORY_LABELS[category]}</p>
+                    <p className="beta-muted">Nothing published yet.</p>
+                  </div>
                 );
-              })}
-            </div>
-          ) : (
-            <div className="beta-community-empty">
-              <p className="beta-community-reserved-title">Nothing published yet.</p>
-              <p className="beta-community-reserved-body">
-                When {world.property} shares an evening, invitation, or note, it will appear here.
-              </p>
-            </div>
-          )}
+              }
+              const saved = Boolean(state.rsvps?.[item.id] || state.rsvps?.[item.category]);
+              return (
+                <button
+                  key={item.id}
+                  type="button"
+                  className="beta-community-col"
+                  onClick={() => onOpenEvent(item.id)}
+                >
+                  <p className="beta-label">
+                    {CATEGORY_LABELS[category]}
+                    {saved ? " · Saved" : ""}
+                  </p>
+                  <p className="beta-community-event-title">{item.title}</p>
+                  <p className="beta-community-event-body">{item.subtitle || item.body}</p>
+                </button>
+              );
+            })}
+          </div>
 
           <button className="beta-text-link" type="button" onClick={onRequestAccessCode}>
             Add a code from another stay

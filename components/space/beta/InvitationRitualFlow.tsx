@@ -6,7 +6,7 @@ import type { SpaceState } from "../../../lib/space-state";
 import "./invitation-ritual-flow.css";
 
 type Step = "intro" | "ritual";
-type Frequency = "off" | "once" | "daily";
+type Frequency = "once" | "daily" | "weekly";
 
 type ReminderDraft = {
   action: string;
@@ -15,6 +15,11 @@ type ReminderDraft = {
   time: string;
   tz: string;
 };
+
+function asRitualFrequency(value?: string): Frequency {
+  if (value === "daily" || value === "weekly" || value === "once") return value;
+  return "once";
+}
 
 function userTimeZone() {
   try {
@@ -65,8 +70,8 @@ function blankReminder(): ReminderDraft {
   const tz = userTimeZone();
   return {
     action: "",
-    frequency: "off",
-    date: "",
+    frequency: "once",
+    date: dayIn(tz),
     time: "09:00",
     tz,
   };
@@ -76,23 +81,14 @@ function reminderFromState(state: SpaceState): ReminderDraft {
   const base = blankReminder();
   const saved = state.reminder;
   if (!saved) return base;
+  const frequency = asRitualFrequency(saved.frequency);
   return {
     action: saved.action || "",
-    frequency: saved.frequency || "off",
-    date: saved.date || "",
+    frequency,
+    date: saved.date || (frequency === "once" ? dayIn(saved.tz || base.tz) : ""),
     time: saved.time || "09:00",
     tz: saved.tz || base.tz,
   };
-}
-
-function nextReminderText(draft: ReminderDraft) {
-  if (!draft.action.trim() || draft.frequency === "off") return "Reminders are off.";
-  if (draft.frequency === "once") {
-    return draft.date
-      ? `Reminder on ${draft.date} at ${draft.time} (${draft.tz}).`
-      : "Choose a date for the reminder.";
-  }
-  return `Daily at ${draft.time} (${draft.tz}).`;
 }
 
 function RemindersModal({
@@ -106,7 +102,6 @@ function RemindersModal({
 }) {
   const [draft, setDraft] = useState<ReminderDraft>(initial);
   const [note, setNote] = useState("");
-  const [previewOpen, setPreviewOpen] = useState(false);
   const zones = useMemo(() => timezoneOptions(draft.tz), [draft.tz]);
 
   function setFrequency(frequency: Frequency) {
@@ -119,13 +114,15 @@ function RemindersModal({
   }
 
   function save() {
-    const action = draft.action.trim();
     const next: ReminderDraft = {
       ...draft,
-      action,
-      frequency: action ? draft.frequency : "off",
+      action: draft.action.trim(),
+      frequency: draft.frequency,
       time: draft.time || "09:00",
       tz: draft.tz || userTimeZone(),
+      date: draft.frequency === "once"
+        ? draft.date || dayIn(draft.tz || userTimeZone())
+        : draft.date,
     };
     onSave(next);
     setDraft(next);
@@ -146,9 +143,9 @@ function RemindersModal({
           <label className="ae-l" htmlFor="ritual-action-text">My action</label>
           <input
             id="ritual-action-text"
-            className="ae-in"
+            className="ae-in ae-action"
             maxLength={140}
-            placeholder="Write one action — optional"
+            placeholder="Write one action"
             value={draft.action}
             onChange={(event) => {
               setDraft((prev) => ({ ...prev, action: event.target.value }));
@@ -159,9 +156,9 @@ function RemindersModal({
           <p className="ae-l">Reminder</p>
           <div className="ae-seg" role="radiogroup" aria-label="Reminder frequency">
             {([
-              ["off", "Off"],
               ["once", "Once"],
               ["daily", "Daily"],
+              ["weekly", "Weekly"],
             ] as const).map(([value, label]) => (
               <button
                 key={value}
@@ -197,9 +194,7 @@ function RemindersModal({
                 />
               </label>
             </div>
-          ) : null}
-
-          {draft.frequency === "daily" ? (
+          ) : (
             <div className="ae-row">
               <label className="ae-sub">
                 Time
@@ -211,44 +206,26 @@ function RemindersModal({
                 />
               </label>
             </div>
-          ) : null}
+          )}
 
-          {draft.frequency !== "off" ? (
-            <label className="ae-sub ae-tz">
-              Timezone
-              <select
-                className="ae-in"
-                value={draft.tz}
-                onChange={(event) => setDraft((prev) => ({ ...prev, tz: event.target.value }))}
-              >
-                {zones.map((zone) => (
-                  <option key={zone} value={zone}>{zone}</option>
-                ))}
-              </select>
-            </label>
-          ) : null}
+          <label className="ae-sub ae-tz">
+            Timezone
+            <select
+              className="ae-in"
+              value={draft.tz}
+              onChange={(event) => setDraft((prev) => ({ ...prev, tz: event.target.value }))}
+            >
+              {zones.map((zone) => (
+                <option key={zone} value={zone}>{zone}</option>
+              ))}
+            </select>
+          </label>
 
           <div className="stay-actions ae-save">
             <button className="tlink" type="button" onClick={save}>Save</button>
           </div>
           {note ? <p className="ae-note">{note}</p> : null}
-          <p className="ae-demo">Demo — no email or notification will be sent.</p>
-          <button className="tlink ae-prev-b" type="button" onClick={() => setPreviewOpen((value) => !value)}>
-            Preview reminder
-          </button>
-          {previewOpen ? (
-            <div className="ae-prev">
-              {draft.action.trim() ? (
-                <>
-                  <p className="ae-prev-t">{draft.action.trim()}</p>
-                  <p className="ae-prev-q">Have you taken this step today?</p>
-                  <p className="ae-note">{nextReminderText(draft)}</p>
-                </>
-              ) : (
-                <p className="ae-prev-q">Have you acted today as the person you want to become?</p>
-              )}
-            </div>
-          ) : null}
+          <p className="ae-demo">Demo</p>
         </div>
         <p className="links small">
           <button className="tlink" type="button" onClick={onClose}>Close</button>
@@ -290,18 +267,16 @@ export default function InvitationRitualFlow({
   return (
     <div className="beta-ritual-overlay">
       <AuthShell
+        wide
         className="beta-ritual-shell"
         topStart={
           <button className="ritual-top-back" type="button" onClick={goBack}>
             Back
           </button>
         }
-        topCenter={
-          step === "ritual" ? <p className="beta-ritual-step-label">2 of 2</p> : undefined
-        }
       >
         {step === "intro" && (
-          <section className="beta-ritual-view" aria-label="Your Scent Invitation">
+          <section className="beta-ritual-view intro" aria-label="Your Scent Invitation">
             <p className="eyebrow">Your Scent Invitation</p>
             <div className="oil-p1">
               <h1 className="title sc-title">
@@ -311,14 +286,14 @@ export default function InvitationRitualFlow({
                 Discover whether this fragrance feels aligned with you.
               </p>
               <span className="stay-rule" aria-hidden="true" />
-              <p className="brand-note">
-                Begin the ritual in a quiet place, alone. Inspired by the connection between scent
-                and memory, it invites you to link the qualities and habits you have chosen with the
-                fragrance.
+              <p className="brand-note bn-lines">
+                <span>Begin the ritual in a quiet place, alone. Inspired by the connection</span>
+                <span>between scent and memory, it invites you to link the qualities</span>
+                <span>and habits you have chosen with the fragrance.</span>
               </p>
-              <p className="brand-note">
-                Keep your card close — in a pocket, bag, or your car — letting its scent appear
-                quietly through the day.
+              <p className="brand-note bn-lines">
+                <span>Keep your card close – in a pocket, bag, or your car –</span>
+                <span>letting its scent appear quietly through the day.</span>
               </p>
               <p className="line-s close-line">
                 Return to it as a reminder of how you choose to live.
@@ -330,7 +305,7 @@ export default function InvitationRitualFlow({
               </button>
             </div>
             <p className="links small">
-              <button className="tlink" type="button" onClick={onClose}>Back</button>
+              <button className="tlink bottom-back" type="button" onClick={onClose}>Back</button>
             </p>
           </section>
         )}
@@ -379,7 +354,7 @@ export default function InvitationRitualFlow({
                 {savedAction ? <span className="rit-q">{savedAction}</span> : null}
                 <span className="rit-link">
                   <button className="tlink" type="button" onClick={() => setRemindersOpen(true)}>
-                    {savedAction ? "Edit my action" : "Write my action"}
+                    {savedAction ? "Add new action" : "Write my action"}
                   </button>
                 </span>
               </li>

@@ -1,40 +1,65 @@
-/* Full-viewport AuthShell takeover for Order my card (prototype split layout) */
+/* Order my card — centered single column (no globe), matching space (1).html dashboard */
 
 .beta-order-overlay {
   position: fixed;
   inset: 0;
   z-index: 80;
+  width: 100vw;
+  height: 100dvh;
   background: var(--bg);
   overflow: hidden;
 }
 
-.beta-order-overlay .beta-order-shell {
+.beta-order-overlay .beta-order-shell,
+.beta-order-overlay .shell {
+  width: 100%;
+  max-width: none;
   min-height: 100dvh;
   height: 100%;
   max-height: 100dvh;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) !important;
+}
+
+.beta-order-overlay .aside {
+  display: none !important;
 }
 
 .beta-order-overlay .main {
+  display: flex;
+  flex-direction: column;
+  grid-column: 1 / -1;
   min-height: 0;
   height: 100%;
   max-height: 100dvh;
   overflow: hidden;
+  width: 100%;
+  max-width: none;
+}
+
+.beta-order-overlay .top {
+  width: 100%;
 }
 
 .beta-order-overlay .stage {
+  display: flex !important;
+  flex: 1;
   min-height: 0;
+  width: 100%;
   overflow-x: hidden;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
-  align-items: flex-start;
-  padding-top: 24px;
-  padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 40px);
+  align-items: center;
+  justify-content: center;
+  padding: 8px 24px calc(env(safe-area-inset-bottom, 0px) + 40px);
 }
 
 .beta-order-overlay .panel {
-  max-width: 380px;
-  margin-block: auto;
+  width: min(380px, 100%);
+  max-width: 380px !important;
+  margin: 0 auto;
   padding-bottom: 8px;
+  text-align: center;
 }
 
 .beta-order-overlay .demo-restart {
@@ -44,9 +69,9 @@
   background: none;
   color: var(--muted);
   font-family: var(--sans);
-  font-size: 10.5px;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
+  font-size: 13px;
+  letter-spacing: 0.02em;
+  text-transform: none;
   cursor: pointer;
 }
 
@@ -54,54 +79,135 @@
   color: var(--fg);
 }
 
-.beta-order-step-label {
-  margin: 0;
-  color: var(--muted);
-  font-size: 10.5px;
-  letter-spacing: 0.24em;
-  text-transform: uppercase;
-}
-
 .beta-order-view {
   width: 100%;
   text-align: center;
 }
 
+.beta-order-view > .eyebrow {
+  margin: 8px 0 0;
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
 .beta-order-view > .title {
-  margin: 0;
+  margin: 18px 0 0;
+  font-size: clamp(28px, 6vw, 34px);
 }
 
 .beta-order-overlay .dform {
   width: 100%;
-  margin-top: 26px;
-  display: grid;
-  gap: 14px;
+  margin-top: 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
   text-align: left;
 }
 
 .beta-order-overlay .dform .field {
   text-align: left;
+  margin-top: 22px;
+}
+
+.beta-order-overlay .dform .field:first-child {
+  margin-top: 0;
 }
 
 .beta-order-overlay .dform .field label {
   display: block;
+  margin: 0 0 8px;
+  font-size: 10px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--muted);
   text-align: left;
 }
 
 .beta-order-overlay .dform .field input {
+  display: block;
+  width: 100%;
+  height: 44px;
+  padding: 0;
+  border: 0;
+  border-bottom: 1px solid var(--line, rgba(17, 17, 16, 0.18));
+  border-radius: 0;
+  background: transparent;
+  color: var(--fg);
+  font-family: var(--serif);
+  font-size: 22px;
+  font-style: italic;
+  font-weight: 300;
   text-align: left;
+  outline: none;
+}
+
+body.night .beta-order-overlay .dform .field input {
+  border-bottom-color: rgba(255, 255, 255, 0.22);
+}
+
+.beta-order-overlay .dform .field input::placeholder {
+  color: var(--muted);
+  opacity: 0.55;
+  font-style: italic;
+}
+
+.beta-order-overlay .dform .field input:focus {
+  border-bottom-color: var(--fg);
 }
 
 .beta-order-overlay .err {
   display: none;
-  margin: 10px 0 0;
+  margin: 14px 0 0;
   font-size: 12px;
   color: #a65a3f;
-  text-align: left;
+  text-align: center;
 }
 
 .beta-order-overlay .err.show {
   display: block;
+}
+
+.beta-order-overlay .addr-demo,
+.beta-order-overlay .pay-demo-c {
+  margin: 22px 0 0 !important;
+  text-align: center !important;
+}
+
+.beta-order-overlay .addr-demo .tlink,
+.beta-order-overlay .pay-demo-c .tlink {
+  font-family: var(--serif);
+  font-size: 19px;
+  font-style: italic;
+  font-weight: 300;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--fg);
+  margin: 0 auto;
+  padding: 4px 2px 12px;
+}
+
+.beta-order-overlay .pay3 {
+  width: 100%;
+  margin: 28px auto 0;
+  text-align: left;
+}
+
+.beta-order-overlay .pay3-form {
+  margin-top: 0;
+}
+
+.beta-order-overlay .pay3-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-top: 22px;
+  align-items: end;
+}
+
+.beta-order-overlay .pay3-row .field {
+  margin-top: 0 !important;
 }
 
 .beta-order-overlay .review {
@@ -130,6 +236,7 @@
 .beta-order-overlay .review dd {
   margin: 0;
   font-size: 14px;
+  color: var(--fg);
 }
 
 .beta-order-overlay .price-line {
@@ -138,98 +245,99 @@
   font-size: 14px;
   letter-spacing: 0.04em;
   color: var(--fg);
-  text-align: left;
+  text-align: center;
 }
 
 .beta-order-overlay .total-line {
-  margin: 22px 0 0;
+  margin: 28px 0 0;
   font-family: var(--serif);
   font-size: 22px;
   font-weight: 300;
-}
-
-.beta-order-overlay .pay3 {
-  width: 100%;
-  margin: 30px auto 0;
-  text-align: left;
-}
-
-.beta-order-overlay .pay3-eye {
   text-align: center;
-  margin: 0 0 4px;
-}
-
-.beta-order-overlay .pay3-demo {
-  margin: 10px 0 0;
-}
-
-.beta-order-overlay .pay3-demo .tlink {
-  font-size: 12.5px;
-  margin-left: 0;
-  padding-left: 0;
-}
-
-.beta-order-overlay .pay3-form {
-  margin-top: 14px;
-}
-
-.beta-order-overlay .pay3-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 18px;
-}
-
-.beta-order-overlay .pay3-note {
-  margin: 14px 0 0;
-  font-size: 11.5px;
-  color: var(--muted);
-}
-
-.beta-order-overlay .pay3 .pay3-more {
-  display: none;
-}
-
-.beta-order-overlay .pay3.open .pay3-more {
-  display: block;
-  animation: rise 0.6s var(--ease-lux) both;
 }
 
 .beta-order-overlay .stay-actions {
-  margin-top: 22px;
+  margin-top: 28px;
   text-align: center;
 }
 
-.beta-order-overlay .dform .stay-actions {
-  margin-top: 18px;
+/* Filled CTA — same look on hover (no color change) */
+.beta-order-overlay .order-cta,
+.beta-order-overlay .dform .btn.primary.order-cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: min(280px, 100%);
+  min-height: 56px;
+  margin: 40px auto 0;
+  padding: 0 28px;
+  border: 0 !important;
+  border-radius: 0;
+  background: var(--fg) !important;
+  color: var(--bg) !important;
+  -webkit-text-fill-color: var(--bg) !important;
+  font-family: var(--sans);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  cursor: pointer;
 }
 
-.beta-order-overlay .stay-actions .tlink {
-  font-size: 13px;
-  letter-spacing: 0.06em;
-  padding: 12px 6px 16px;
+.beta-order-overlay .stay-actions .order-cta {
+  margin-top: 0;
 }
 
-.beta-order-overlay .stay-actions .tlink:disabled {
+.beta-order-overlay .order-cta:hover,
+.beta-order-overlay .order-cta:focus-visible,
+.beta-order-overlay .dform .btn.primary.order-cta:hover,
+.beta-order-overlay .dform .btn.primary.order-cta:focus-visible {
+  background: var(--fg) !important;
+  color: var(--bg) !important;
+  -webkit-text-fill-color: var(--bg) !important;
+  opacity: 1;
+  outline: none;
+  transform: none;
+}
+
+body.night .beta-order-overlay .order-cta,
+body.night .beta-order-overlay .dform .btn.primary.order-cta {
+  background: #eee8de !important;
+  color: #0e0d0b !important;
+  -webkit-text-fill-color: #0e0d0b !important;
+}
+
+body.night .beta-order-overlay .order-cta:hover,
+body.night .beta-order-overlay .order-cta:focus-visible,
+body.night .beta-order-overlay .dform .btn.primary.order-cta:hover,
+body.night .beta-order-overlay .dform .btn.primary.order-cta:focus-visible {
+  background: #eee8de !important;
+  color: #0e0d0b !important;
+  -webkit-text-fill-color: #0e0d0b !important;
+}
+
+.beta-order-overlay .order-cta:disabled {
   opacity: 0.55;
   cursor: wait;
 }
 
-.beta-order-overlay .links.small {
-  margin-top: 28px;
-}
-
-.beta-order-overlay .links.small .tlink {
-  font-size: 12px;
-  color: var(--muted);
-}
-
-.beta-order-overlay .links.small .sep {
-  margin: 0 8px;
-  color: var(--muted);
-}
-
 .beta-order-overlay .dob-intro {
   margin-top: 18px;
+  color: var(--muted);
+}
+
+.beta-order-pay,
+.beta-order-review {
+  display: flex;
+  flex-direction: column;
+  min-height: min(710px, calc(100dvh - 140px));
+}
+
+.beta-order-pay .stay-actions,
+.beta-order-review .stay-actions {
+  margin-top: auto;
+  padding-top: 28px;
 }
 
 .beta-order-confirmed {
@@ -241,8 +349,25 @@
 }
 
 @media (max-width: 640px) {
+  .beta-order-overlay .stage {
+    padding-left: 20px;
+    padding-right: 20px;
+  }
+
+  .beta-order-overlay .panel {
+    max-width: 100%;
+  }
+
   .beta-order-overlay .review div {
     grid-template-columns: 1fr;
     gap: 4px;
+  }
+
+  .beta-order-overlay .dform .field input {
+    font-size: 20px;
+  }
+
+  .beta-order-overlay .pay3-row {
+    gap: 12px;
   }
 }

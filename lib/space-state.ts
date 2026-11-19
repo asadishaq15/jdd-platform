@@ -17,12 +17,17 @@ export type SpaceState = {
     property: string;
     state: string;
     recipient: string;
+    /** Street line; review still formats with city/zip/country. */
     address?: string;
+    city?: string;
+    zip?: string;
+    country?: string;
+    price?: string;
     payment?: string;
   };
   reminder?: {
     action: string;
-    frequency: "off" | "once" | "daily";
+    frequency: "off" | "once" | "daily" | "weekly";
     date?: string;
     time?: string;
     tz?: string;

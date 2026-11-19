@@ -62,11 +62,26 @@ export const worlds: HospitalityWorld[] = [
   { n: 22, state: "Wonder", mantra: "I open to the unknown.", desc: "You belong among people who are willing to begin without requiring a guaranteed outcome, connected by curiosity, freedom, experimentation, play and the possibility of discovering an entirely new way to live.", property: "Nomad Lodge", country: "Chile" },
 ];
 
-export const demoCodes: Record<string, number> = {
-  SRNKKYOT2026: 9,
-  LIORAEST2026: 6,
-  SIERRARE2026: 4,
-};
+/** Demo access codes: explicit keys + property-derived codes (HTML parity). */
+export const demoCodes: Record<string, number> = (() => {
+  const map: Record<string, number> = {
+    SRNKKYOT2026: 9,
+    LIORAEST2026: 6,
+    SIERRARE2026: 4,
+  };
+  for (const world of worlds) {
+    const prefix = `${world.property.toUpperCase().replace(/[^A-Z]/g, "")}XXXXXXXX`.slice(0, 8);
+    const key = `${prefix}2026`;
+    if (!map[key]) map[key] = world.n;
+  }
+  return map;
+})();
+
+export const DEMO_CODE_OPTIONS = [
+  { code: "SRNK-KYOT-2026", label: "Serein Kyoto" },
+  { code: "LIOR-AEST-2026", label: "Liora Estate" },
+  { code: "SIER-RARE-2026", label: "Sierra Reserve" },
+] as const;
 
 export function getWorld(n: number) {
   return worlds.find((world) => world.n === n) ?? worlds[8];

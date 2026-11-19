@@ -4,54 +4,64 @@
   position: fixed;
   inset: 0;
   z-index: 80;
+  width: 100vw;
+  height: 100dvh;
   background: var(--bg);
   overflow: hidden;
 }
 
-.beta-ritual-overlay .beta-ritual-shell {
+/* Full-viewport single column — never leave an empty second auth-shell track */
+.beta-ritual-overlay .beta-ritual-shell,
+.beta-ritual-overlay .shell {
+  width: 100%;
+  max-width: none;
   min-height: 100dvh;
   height: 100%;
   max-height: 100dvh;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) !important;
 }
 
-@media (min-width: 900px) {
-  .beta-ritual-overlay .shell.auth-shell {
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-    height: 100%;
-  }
-
-  .beta-ritual-overlay .auth-shell .aside {
-    min-height: 0;
-    height: 100%;
-  }
+.beta-ritual-overlay .aside {
+  display: none !important;
 }
 
 .beta-ritual-overlay .main {
   display: flex;
   flex-direction: column;
+  grid-column: 1 / -1;
   min-height: 0;
   height: 100%;
   max-height: 100dvh;
   overflow: hidden;
+  width: 100%;
+  max-width: none;
+}
+
+.beta-ritual-overlay .top {
+  width: 100%;
 }
 
 .beta-ritual-overlay .stage {
+  display: flex !important;
   flex: 1;
   min-height: 0;
+  width: 100%;
   overflow-x: hidden;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
   align-items: center;
   justify-content: center;
-  padding-top: 24px;
-  padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 40px);
+  padding: 24px 24px calc(env(safe-area-inset-bottom, 0px) + 40px);
 }
 
 .beta-ritual-overlay .panel {
-  max-width: 380px;
+  width: min(420px, 100%);
+  max-width: 420px !important;
   margin-inline: auto;
   margin-block: auto;
   padding-bottom: 8px;
+  text-align: center;
 }
 
 .beta-ritual-overlay .ritual-top-back {
@@ -61,9 +71,9 @@
   background: none;
   color: var(--muted);
   font-family: var(--sans);
-  font-size: 10.5px;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
+  font-size: 13px;
+  letter-spacing: 0.02em;
+  text-transform: none;
   cursor: pointer;
 }
 
@@ -71,13 +81,6 @@
   color: var(--fg);
 }
 
-.beta-ritual-step-label {
-  margin: 0;
-  color: var(--muted);
-  font-size: 10.5px;
-  letter-spacing: 0.24em;
-  text-transform: uppercase;
-}
 
 .beta-ritual-view {
   width: 100%;
@@ -133,26 +136,39 @@
 
 .beta-ritual-overlay .brand-note {
   margin: 0 auto 16px;
-  max-width: 34ch;
+  max-width: 38ch;
   color: var(--muted);
   font-family: var(--serif);
   font-style: italic;
   font-weight: 300;
-  font-size: 16px;
-  line-height: 1.6;
+  font-size: 17px;
+  line-height: 1.55;
   text-align: center;
-  text-wrap: balance;
+}
+
+.beta-ritual-overlay .bn-lines {
+  max-width: none;
+  text-align: center;
+}
+
+.beta-ritual-overlay .bn-lines span {
+  display: block;
+  white-space: nowrap;
 }
 
 .beta-ritual-overlay .close-line {
   margin: 34px auto 0;
-  max-width: 28ch;
+  max-width: none;
   font-family: var(--serif);
   font-weight: 300;
-  font-size: clamp(18px, 4.5vw, 22px);
+  font-size: min(22px, 4.9vw);
   line-height: 1.35;
   text-align: center;
-  text-wrap: balance;
+  white-space: nowrap;
+}
+
+.beta-ritual-overlay .bottom-back {
+  display: none !important;
 }
 
 .beta-ritual-overlay .stay-actions {
@@ -160,10 +176,71 @@
   text-align: center;
 }
 
+/* Filled CTA — same look on hover (no color change) */
 .beta-ritual-overlay .stay-actions .tlink {
-  font-size: 13px;
-  letter-spacing: 0.06em;
-  padding: 12px 6px 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: min(280px, 100%);
+  min-height: 56px;
+  margin: 0 auto;
+  padding: 0 28px;
+  border: 0 !important;
+  border-radius: 0;
+  background: var(--fg) !important;
+  color: var(--bg) !important;
+  -webkit-text-fill-color: var(--bg) !important;
+  font-family: var(--sans) !important;
+  font-style: normal !important;
+  font-size: 11px !important;
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.beta-ritual-overlay .stay-actions .tlink::after {
+  content: "";
+  position: static !important;
+  width: 14px;
+  height: 7px;
+  flex: none;
+  animation: none !important;
+  opacity: 1;
+  background: currentColor !important;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 7'%3E%3Cpath d='M0 3.5h13M10 .5l3 3-3 3' fill='none' stroke='black' stroke-width='1.1'/%3E%3C/svg%3E") center / contain no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 7'%3E%3Cpath d='M0 3.5h13M10 .5l3 3-3 3' fill='none' stroke='black' stroke-width='1.1'/%3E%3C/svg%3E") center / contain no-repeat;
+}
+
+.beta-ritual-overlay .stay-actions .tlink:hover,
+.beta-ritual-overlay .stay-actions .tlink:focus-visible {
+  background: var(--fg) !important;
+  color: var(--bg) !important;
+  -webkit-text-fill-color: var(--bg) !important;
+  opacity: 1;
+  outline: none;
+  transform: none;
+}
+
+body.night .beta-ritual-overlay .stay-actions .tlink {
+  background: #eee8de !important;
+  color: #0e0d0b !important;
+  -webkit-text-fill-color: #0e0d0b !important;
+}
+
+body.night .beta-ritual-overlay .stay-actions .tlink:hover,
+body.night .beta-ritual-overlay .stay-actions .tlink:focus-visible {
+  background: #eee8de !important;
+  color: #0e0d0b !important;
+  -webkit-text-fill-color: #0e0d0b !important;
+}
+
+.beta-ritual-overlay .ae-save.stay-actions .tlink {
+  width: auto;
+  min-width: min(200px, 100%);
+  min-height: 44px;
+  font-size: 10.5px !important;
 }
 
 .beta-ritual-overlay .preview-note {
@@ -180,7 +257,8 @@
   list-style: none;
   margin: 14px auto 0;
   padding: 0;
-  max-width: 520px;
+  width: 100%;
+  max-width: 100%;
   text-align: left;
 }
 
@@ -229,12 +307,34 @@
 }
 
 .beta-ritual-overlay .rit-link {
-  margin-top: 8px;
+  display: block;
+  grid-column: 2;
+  justify-self: start;
+  margin-top: 10px;
+  white-space: nowrap;
 }
 
 .beta-ritual-overlay .rit-link .tlink {
-  font-size: 12.5px;
-  padding: 4px 2px 8px;
+  font-family: var(--serif);
+  font-style: italic;
+  font-weight: 300;
+  font-size: 22px !important;
+  line-height: 1.2;
+  letter-spacing: 0;
+  padding: 10px 2px 12px;
+  color: #c58452;
+}
+
+.beta-ritual-overlay .rit-link .tlink::after {
+  background: #c58452;
+  animation: none;
+}
+
+.beta-ritual-overlay .rit-link .tlink:hover,
+.beta-ritual-overlay .rit-link .tlink:focus-visible {
+  background: none;
+  -webkit-text-fill-color: #c58452;
+  color: #c58452;
 }
 
 .beta-ritual-overlay .links.small {
@@ -315,7 +415,9 @@
   color: var(--muted);
   font: inherit;
   font-size: 12px;
-  letter-spacing: 0.06em;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
   cursor: pointer;
 }
 
@@ -324,8 +426,19 @@
 }
 
 .beta-ritual-overlay .ae-seg .seg-b.on {
-  color: #1a1612;
-  background: linear-gradient(92deg, #a66a3f 0%, #c58452 28%, #d6a06d 50%, #f0c79b 68%, #b47749 88%, #a66a3f 100%);
+  color: var(--bg);
+  background: var(--fg);
+}
+
+body.night .beta-ritual-overlay .ae-seg .seg-b.on {
+  background: #eee8de;
+  color: #0e0d0b;
+}
+
+.beta-ritual-overlay .ae-in.ae-action::placeholder {
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-size: 12px;
 }
 
 .beta-ritual-overlay .ae-row {
@@ -396,4 +509,25 @@
 .beta-ritual-overlay .jmodal .links.small {
   margin-top: 28px;
   text-align: center;
+}
+
+@media (max-width: 640px) {
+  .beta-ritual-overlay .stage {
+    padding-left: 18px;
+    padding-right: 18px;
+  }
+
+  .beta-ritual-overlay .panel {
+    width: 100%;
+    max-width: 100% !important;
+  }
+
+  .beta-ritual-overlay .rit-h {
+    font-size: 22px;
+  }
+
+  .beta-ritual-overlay .bn-lines span,
+  .beta-ritual-overlay .close-line {
+    white-space: normal;
+  }
 }

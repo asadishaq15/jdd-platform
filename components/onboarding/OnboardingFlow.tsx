@@ -1,14 +1,33 @@
 "use client";
 
-import { useMemo, useState, type CSSProperties } from "react";
+import { useEffect, useMemo, useState, type CSSProperties, type FormEvent, type ReactNode } from "react";
 import BrandMark from "../brand/BrandMark";
 import GradientDefs from "../layout/GradientDefs";
 import ThemeToggle from "../layout/ThemeToggle";
 import VisitorAuthPanel from "../auth/VisitorAuthPanel";
 import { formatDateOfBirth } from "../../lib/zodiac";
-import { getWorld, numberFromDob, worlds, type HospitalityWorld } from "../../lib/worlds";
+import { stateImageSrc } from "../../lib/state-images";
+import {
+  DEMO_CODE_OPTIONS,
+  demoCodes,
+  getWorld,
+  normalizeAccessCode,
+  numberFromDob,
+  worlds,
+  type HospitalityWorld,
+} from "../../lib/worlds";
 import { loadSpaceState, saveSpaceState, type SpaceState } from "../../lib/space-state";
 import "./visitor-onboarding.css";
+
+/** Matches HTML layout script: content in `.stage`, fixed action line below. */
+function SceneCol({ children, actions }: { children: ReactNode; actions?: ReactNode }) {
+  return (
+    <div className="col">
+      <div className="stage">{children}</div>
+      {actions}
+    </div>
+  );
+}
 
 type Scene =
   | "onb1"
@@ -18,19 +37,11 @@ type Scene =
   | "states"
   | "prop"
   | "onb3"
-  | "login";
+  | "login"
+  | "code"
+  | "stay";
 
-const STATE_IMAGES: Record<string, string> = {
-  direction: "/images/journey/direction.jpg",
-  stillness: "/images/journey/stillness.jpg",
-  perspective: "/images/journey/perspective.jpg",
-  connection: "/images/journey/connection.jpg",
-};
-
-function stateImage(world: HospitalityWorld) {
-  const key = world.state.toLowerCase().replace(/\s+/g, "-");
-  return STATE_IMAGES[key] || null;
-}
+type Guest = { n: number; code: string };
 
 function PinIcon() {
   return (
@@ -52,7 +63,7 @@ function ArchBlock({
   imageFailed?: boolean;
   onImageError?: () => void;
 }) {
-  const image = stateImage(world);
+  const image = stateImageSrc(world);
   return (
     <div className="copy">
       {label ? <p className="arch-eye fade" style={{ "--d": ".2s" } as CSSProperties}>{label}</p> : null}
@@ -60,8 +71,8 @@ function ArchBlock({
         <em className="cu">{world.state}</em>
       </h1>
       <div className="arch-row fade" style={{ "--d": ".8s" } as CSSProperties}>
-        <div className={`arch-img${!image || imageFailed ? " noimg" : ""}`}>
-          {image ? <img src={image} alt={world.property} onError={onImageError} /> : <img alt="" />}
+        <div className={`arch-img${imageFailed ? " noimg" : ""}`}>
+          <img src={image} alt={world.property} onError={onImageError} />
         </div>
         <div className="arch-info">
           <p className="arch-prop">{world.property}</p>
@@ -127,6 +138,11 @@ function ScentScene() {
   );
 }
 
+function formatCodeDisplay(raw: string) {
+  const normalized = normalizeAccessCode(raw);
+  return normalized.match(/.{1,4}/g)?.join("-") || "";
+}
+
 export default function OnboardingFlow() {
   const [scene, setScene] = useState<Scene>("onb1");
   const [stack, setStack] = useState<Scene[]>([]);
@@ -141,14 +157,29 @@ export default function OnboardingFlow() {
   const [locError, setLocError] = useState(false);
   const [preview, setPreview] = useState<number | null>(null);
   const [failedImages, setFailedImages] = useState<Record<number, boolean>>({});
+  const [guest, setGuest] = useState<Guest | null>(null);
+  const [accessCode, setAccessCode] = useState("");
+  const [codeError, setCodeError] = useState("");
 
   const recommended = state.recommended || 9;
   const recommendedWorld = useMemo(() => getWorld(recommended), [recommended]);
   const previewWorld = useMemo(() => getWorld(preview || recommended), [preview, recommended]);
+  const guestWorld = useMemo(() => (guest ? getWorld(guest.n) : null), [guest]);
   const wide = scene === "states";
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const param = new URLSearchParams(window.location.search).get("scene");
+    if (param === "code") {
+      setGuest(null);
+      setScene("code");
+      setStack([]);
+    }
+  }, []);
 
   function go(next: Scene) {
     setStack((items) => [...items, scene]);
+    if (next === "code") setGuest(null);
     setScene(next);
   }
 
@@ -189,15 +220,22 @@ export default function OnboardingFlow() {
 
     const nextRecommended = numberFromDob(day, month, year);
     const dateOfBirth = formatDateOfBirth(day, month, year);
-    persist({
+    const nextState: SpaceState = {
       ...state,
       recommended: nextRecommended,
       dateOfBirth,
       country: country.trim(),
       city: city.trim(),
       basedIn: `${city.trim()}, ${country.trim()}`,
-    });
-    go("onb2");
+    };
+    if (guest) {
+      nextState.visited = guest.n;
+      nextState.chosen = guest.n;
+      nextState.code = guest.code;
+      nextState.entryMode = "code";
+    }
+    persist(nextState);
+    go(guest ? "onb3" : "onb2");
   }
 
   function chooseWorld(n: number, mode: "recommended" | "chosen") {
@@ -209,9 +247,35 @@ export default function OnboardingFlow() {
     go("onb3");
   }
 
+  function submitCode(event?: FormEvent) {
+    event?.preventDefault();
+    const raw = normalizeAccessCode(accessCode);
+    if (!raw) {
+      setCodeError("Please enter your access code.");
+      return;
+    }
+    if (raw.length < 12) {
+      setCodeError("Please enter the full 12-character code.");
+      return;
+    }
+    const n = demoCodes[raw] || 9;
+    const nextGuest = { n, code: raw };
+    setGuest(nextGuest);
+    setCodeError("");
+    persist({
+      ...state,
+      visited: n,
+      chosen: n,
+      code: raw,
+      entryMode: "code",
+    });
+    go("onb1");
+  }
+
   function showBack() {
-    if (scene === "onb1" || scene === "login") return stack.length > 0;
-    return true;
+    if (scene === "onb1" && !guest) return stack.length > 0;
+    if (scene === "login") return stack.length > 0;
+    return scene !== "onb1" || stack.length > 0;
   }
 
   return (
@@ -225,82 +289,209 @@ export default function OnboardingFlow() {
         >
           Back
         </button>
-        <div className="mark-slot">
-          <BrandMark className="mark" />
-        </div>
+        <BrandMark className="mark" />
         <div className="top-r">
+          {scene !== "login" && scene !== "code" ? (
+            <button className="top-signin" type="button" onClick={() => go("login")}>
+              Sign in
+            </button>
+          ) : null}
           <ThemeToggle />
         </div>
       </header>
 
       <div className="screens">
         <section className={`scr${scene === "onb1" ? " on" : ""}`} data-name="onb1" aria-label="Onboarding 1 of 3">
-          <div className="col">
+          <SceneCol
+            actions={(
+              <div className="actions fade" style={{ "--d": "3.1s" } as CSSProperties}>
+                <button
+                  className="tlink bp"
+                  type="button"
+                  onClick={() => go(guest ? "stay" : "dob")}
+                >
+                  {guest ? "Continue" : "Find where to begin"}
+                </button>
+                {!guest ? (
+                  <p className="have-acct">
+                    <button className="top-signin" type="button" onClick={() => go("login")}>Have an account?</button>
+                  </p>
+                ) : null}
+              </div>
+            )}
+          >
             <div className="copy">
               <p className="eyebrow fade" style={{ "--d": ".2s" } as CSSProperties}>State-Based Hospitality</p>
               <h1 className="title" data-type="">
-                Choose your stay by <em className="cu">State</em>, not status.
+                {guest ? (
+                  <>Experience your stay by <em className="cu">State</em>, not status.</>
+                ) : (
+                  <>Choose your stay by <em className="cu">State</em>, not status.</>
+                )}
               </h1>
             </div>
             <div className="scene"><DoorwayScene /></div>
             <div className="copy">
               <p className="body lines fade" style={{ "--d": "2.6s" } as CSSProperties}>
-                <span>Discover the luxury hospitality world and the</span>
-                <span>community that reflect who you are, through</span>
-                <span>self-knowledge, intention and sensory science.</span>
+                {guest && guestWorld ? (
+                  <>
+                    <span>Discover the world of <span className="hn">{guestWorld.property}</span> and the</span>
+                    <span>community that reflect who you are, through</span>
+                    <span>self-knowledge, intention and sensory science.</span>
+                  </>
+                ) : (
+                  <>
+                    <span>Discover the luxury hospitality world and the</span>
+                    <span>community that reflect who you are, through</span>
+                    <span>self-knowledge, intention and sensory science.</span>
+                  </>
+                )}
               </p>
             </div>
-            <div className="actions fade" style={{ "--d": "3.1s" } as CSSProperties}>
-              <button className="tlink bp" type="button" onClick={() => go("dob")}>Find where to begin</button>
-              <p className="have-acct">
-                <button className="top-signin" type="button" onClick={() => go("login")}>Have an account?</button>
-              </p>
+          </SceneCol>
+        </section>
+
+        <section className={`scr${scene === "code" ? " on" : ""}`} data-name="code" aria-label="Continue your stay">
+          <SceneCol
+            actions={(
+              <div className="actions fade" style={{ "--d": "1.2s" } as CSSProperties}>
+                <button className="tlink bp" type="button" onClick={() => submitCode()}>Continue</button>
+              </div>
+            )}
+          >
+            <h1 className="title" data-type="">
+              Continue your <em className="cu">stay</em>.
+            </h1>
+            <p className="lede fade" style={{ "--d": ".9s" } as CSSProperties}>
+              Enter the access code you received at your hotel.
+            </p>
+            <form className="fgroup fade" style={{ "--d": "1.2s" } as CSSProperties} onSubmit={submitCode}>
+              <input
+                className={`code-input${codeError ? " bad" : ""}`}
+                type="text"
+                inputMode="text"
+                autoCapitalize="characters"
+                autoComplete="off"
+                spellCheck={false}
+                maxLength={14}
+                placeholder="XXXX-XXXX-XXXX"
+                aria-label="Access code"
+                value={accessCode}
+                onChange={(event) => {
+                  setAccessCode(formatCodeDisplay(event.target.value));
+                  setCodeError("");
+                }}
+              />
+              <p className={`err${codeError ? " show" : ""}`} role="alert">{codeError || "Please enter your access code."}</p>
+            </form>
+            <div className="demo-codes fade" style={{ "--d": "1.5s" } as CSSProperties}>
+              <p className="demo-eye">Demo codes</p>
+              {DEMO_CODE_OPTIONS.map((option) => (
+                <p key={option.code}>
+                  <button
+                    className="tlink tl dc"
+                    type="button"
+                    onClick={() => {
+                      setAccessCode(option.code);
+                      setCodeError("");
+                    }}
+                  >
+                    {option.code}
+                  </button>
+                  <span>{option.label}</span>
+                </p>
+              ))}
             </div>
-          </div>
+          </SceneCol>
+        </section>
+
+        <section className={`scr${scene === "stay" ? " on" : ""}`} data-name="stay" aria-label="Your stay">
+          <SceneCol
+            actions={(
+              <div className="actions fade" style={{ "--d": "1.8s" } as CSSProperties}>
+                <button className="tlink bp" type="button" onClick={() => go("onb2")}>Continue</button>
+              </div>
+            )}
+          >
+            {guestWorld ? (
+              <ArchBlock
+                world={guestWorld}
+                label="Your stay"
+                imageFailed={failedImages[guestWorld.n]}
+                onImageError={() => setFailedImages((prev) => ({ ...prev, [guestWorld.n]: true }))}
+              />
+            ) : null}
+          </SceneCol>
         </section>
 
         <section className={`scr${scene === "dob" ? " on" : ""}`} data-name="dob" aria-label="Discover your State">
-          <div className="col">
-            <div className="stage">
-              <h1 className="title" data-type="">
-                Discover your <em className="cu">State</em>.
-              </h1>
-              <p className="lede two fade" style={{ "--d": ".9s" } as CSSProperties}>
-                <span>Your date of birth and where you’re from</span>
-                <span>offer a starting point for your discovery.</span>
-              </p>
-              <div className="fgroup fade" style={{ "--d": "1.2s" } as CSSProperties}>
-                <p className="flabel" id="dobLabel">Date of birth</p>
-                <div className={`dob${dobError ? " bad" : ""}`} role="group" aria-labelledby="dobLabel">
-                  <input inputMode="numeric" maxLength={2} placeholder="DD" aria-label="Day" autoComplete="bday-day" value={dob.day} onChange={(e) => setDob((v) => ({ ...v, day: e.target.value.replace(/\D/g, "").slice(0, 2) }))} />
-                  <span className="slash">/</span>
-                  <input inputMode="numeric" maxLength={2} placeholder="MM" aria-label="Month" autoComplete="bday-month" value={dob.month} onChange={(e) => setDob((v) => ({ ...v, month: e.target.value.replace(/\D/g, "").slice(0, 2) }))} />
-                  <span className="slash">/</span>
-                  <input className="yyyy" inputMode="numeric" maxLength={4} placeholder="YYYY" aria-label="Year" autoComplete="bday-year" value={dob.year} onChange={(e) => setDob((v) => ({ ...v, year: e.target.value.replace(/\D/g, "").slice(0, 4) }))} />
-                </div>
-                <p className={`err${dobError ? " show" : ""}`} role="alert">Please enter a valid date of birth.</p>
+          <SceneCol
+            actions={(
+              <div className="actions fade" style={{ "--d": "1.6s" } as CSSProperties}>
+                <button className="tlink bp" type="button" onClick={submitDob}>Continue</button>
               </div>
-              <div className="fgroup fade" style={{ "--d": "1.4s" } as CSSProperties}>
-                <p className="flabel loc-label" id="locLabel">Where you are from</p>
-                <div className={`loc${locError ? " bad" : ""}`} role="group" aria-labelledby="locLabel">
-                  <span className="loc-f">
-                    <input placeholder="COUNTRY" aria-label="Country" maxLength={60} autoComplete="off" spellCheck={false} required value={country} onChange={(e) => setCountry(e.target.value)} />
-                  </span>
-                  <span className="loc-f">
-                    <input placeholder="CITY" aria-label="City" maxLength={60} autoComplete="off" spellCheck={false} required value={city} onChange={(e) => setCity(e.target.value)} />
-                  </span>
-                </div>
-                <p className={`err${locError ? " show" : ""}`} role="alert">Please enter your country and city.</p>
+            )}
+          >
+            <h1 className="title" data-type="">
+              {guest ? (
+                <>Complete your <em className="cu">profile</em>.</>
+              ) : (
+                <>Discover your <em className="cu">State</em>.</>
+              )}
+            </h1>
+            <p className="lede two fade" style={{ "--d": ".9s" } as CSSProperties}>
+              {guest ? (
+                <>
+                  <span>Your date of birth and where you’re from</span>
+                  <span>personalise your Space and your rituals.</span>
+                </>
+              ) : (
+                <>
+                  <span>Your date of birth and where you’re from</span>
+                  <span>offer a starting point for your discovery.</span>
+                </>
+              )}
+            </p>
+            <div className="fgroup fade" style={{ "--d": "1.2s" } as CSSProperties}>
+              <p className="flabel" id="dobLabel">Date of birth</p>
+              <div className={`dob${dobError ? " bad" : ""}`} role="group" aria-labelledby="dobLabel">
+                <input inputMode="numeric" maxLength={2} placeholder="DD" aria-label="Day" autoComplete="bday-day" value={dob.day} onChange={(e) => setDob((v) => ({ ...v, day: e.target.value.replace(/\D/g, "").slice(0, 2) }))} />
+                <span className="slash">/</span>
+                <input inputMode="numeric" maxLength={2} placeholder="MM" aria-label="Month" autoComplete="bday-month" value={dob.month} onChange={(e) => setDob((v) => ({ ...v, month: e.target.value.replace(/\D/g, "").slice(0, 2) }))} />
+                <span className="slash">/</span>
+                <input className="yyyy" inputMode="numeric" maxLength={4} placeholder="YYYY" aria-label="Year" autoComplete="bday-year" value={dob.year} onChange={(e) => setDob((v) => ({ ...v, year: e.target.value.replace(/\D/g, "").slice(0, 4) }))} />
               </div>
+              <p className={`err${dobError ? " show" : ""}`} role="alert">Please enter a valid date of birth.</p>
             </div>
-            <div className="actions fade" style={{ "--d": "1.6s" } as CSSProperties}>
-              <button className="tlink bp" type="button" onClick={submitDob}>Continue</button>
+            <div className="fgroup fade" style={{ "--d": "1.4s" } as CSSProperties}>
+              <p className="flabel loc-label" id="locLabel">Where you are from</p>
+              <div className={`loc${locError ? " bad" : ""}`} role="group" aria-labelledby="locLabel">
+                <span className="loc-f">
+                  <input placeholder="COUNTRY" aria-label="Country" maxLength={60} autoComplete="off" spellCheck={false} required value={country} onChange={(e) => setCountry(e.target.value)} />
+                </span>
+                <span className="loc-f">
+                  <input placeholder="CITY" aria-label="City" maxLength={60} autoComplete="off" spellCheck={false} required value={city} onChange={(e) => setCity(e.target.value)} />
+                </span>
+              </div>
+              <p className={`err${locError ? " show" : ""}`} role="alert">Please enter your country and city.</p>
             </div>
-          </div>
+          </SceneCol>
         </section>
 
         <section className={`scr${scene === "onb2" ? " on" : ""}`} data-name="onb2" aria-label="Onboarding 2 of 3">
-          <div className="col">
+          <SceneCol
+            actions={(
+              <div className="actions fade" style={{ "--d": "3.5s" } as CSSProperties}>
+                <button
+                  className="tlink bp"
+                  type="button"
+                  onClick={() => go(guest ? "dob" : "result")}
+                >
+                  {guest ? "Continue" : "Reveal my world"}
+                </button>
+              </div>
+            )}
+          >
             <div className="copy">
               <h1 className="title" data-type="">
                 Belong to a world aligned with <em className="cu">yours</em>.
@@ -309,51 +500,68 @@ export default function OnboardingFlow() {
             <div className="scene"><AlignedScene /></div>
             <div className="copy">
               <p className="body lines fade" style={{ "--d": "2.2s" } as CSSProperties}>
-                <span>22 States. 22 hospitality worlds. Each one</span>
-                <span>expresses a State through its space, experience</span>
-                <span>and scent. Find the one you want to step into.</span>
+                {guest && guestWorld ? (
+                  <>
+                    <span><span className="hn">{guestWorld.property}</span> is one of 22 worlds. It expresses</span>
+                    <span>its State through its space, experience and scent.</span>
+                    <span>Discover it during your stay.</span>
+                  </>
+                ) : (
+                  <>
+                    <span>22 States. 22 hospitality worlds. Each one</span>
+                    <span>expresses a State through its space, experience</span>
+                    <span>and scent. Find the one you want to step into.</span>
+                  </>
+                )}
               </p>
               <p className="line fade" style={{ "--d": "2.9s" } as CSSProperties}>By Jardin du Désert</p>
               <p className="house fade" style={{ "--d": "3.1s" } as CSSProperties}>Private Intellectual Fragrance House</p>
             </div>
-            <div className="actions fade" style={{ "--d": "3.5s" } as CSSProperties}>
-              <button className="tlink bp" type="button" onClick={() => go("result")}>Reveal my world</button>
-            </div>
-          </div>
+          </SceneCol>
         </section>
 
         <section className={`scr${scene === "result" ? " on" : ""}`} data-name="result" aria-label="Your recommended world">
-          <div className="col">
+          <SceneCol
+            actions={(
+              <div className="actions fade" style={{ "--d": "1.8s" } as CSSProperties}>
+                <button className="tlink bp" type="button" onClick={() => chooseWorld(recommended, "recommended")}>
+                  Choose this world
+                </button>
+                <button className="tlink tl cg" type="button" onClick={() => go("states")}>
+                  Let me explore all States
+                </button>
+              </div>
+            )}
+          >
             <ArchBlock
               world={recommendedWorld}
               label="Your recommended world"
               imageFailed={failedImages[recommendedWorld.n]}
               onImageError={() => setFailedImages((prev) => ({ ...prev, [recommendedWorld.n]: true }))}
             />
-            <div className="actions fade" style={{ "--d": "1.8s" } as CSSProperties}>
-              <button className="tlink bp" type="button" onClick={() => chooseWorld(recommended, "recommended")}>
-                Choose this world
-              </button>
-              <button className="tlink tl cg" type="button" onClick={() => go("states")}>
-                Let me explore all States
-              </button>
-            </div>
-          </div>
+          </SceneCol>
         </section>
 
         <section className={`scr${scene === "states" ? " on" : ""}`} data-name="states" aria-label="All States">
-          <div className="col">
+          <SceneCol>
             <p className="eyebrow fade" style={{ "--d": ".2s" } as CSSProperties}>22 States · 22 hospitality worlds</p>
             <h1 className="title" data-type="">
               Explore the <em className="cu">States</em>.
             </h1>
             <div className="states-grid fade" style={{ "--d": ".9s" } as CSSProperties}>
               {worlds.map((world) => {
-                const image = stateImage(world);
+                const image = stateImageSrc(world);
                 const rec = world.n === state.recommended;
                 const chosen = world.n === state.chosen;
-                const cls = chosen ? "chosen" : rec ? "rec" : "";
-                const tag = chosen ? "Your chosen world" : rec ? "Your recommended world" : "";
+                const stay = guest?.n === world.n || state.visited === world.n;
+                const cls = stay ? "stay" : chosen ? "chosen" : rec ? "rec" : "";
+                const tag = stay
+                  ? "Your stay"
+                  : chosen
+                    ? "Your chosen world"
+                    : rec
+                      ? "Your recommended world"
+                      : "";
                 return (
                   <button
                     key={world.n}
@@ -371,15 +579,13 @@ export default function OnboardingFlow() {
                         <span className="cb-dot" />
                       </span>
                     ) : null}
-                    <span className={`c-img${!image || failedImages[world.n] ? " noimg" : ""}`}>
-                      {image ? (
-                        <img
-                          src={image}
-                          alt=""
-                          loading="lazy"
-                          onError={() => setFailedImages((prev) => ({ ...prev, [world.n]: true }))}
-                        />
-                      ) : null}
+                    <span className={`c-img${failedImages[world.n] ? " noimg" : ""}`}>
+                      <img
+                        src={image}
+                        alt=""
+                        loading="lazy"
+                        onError={() => setFailedImages((prev) => ({ ...prev, [world.n]: true }))}
+                      />
                     </span>
                     <span className="c-txt">
                       <span className="c-h">{world.state}</span>
@@ -389,29 +595,38 @@ export default function OnboardingFlow() {
                 );
               })}
             </div>
-          </div>
+          </SceneCol>
         </section>
 
         <section className={`scr${scene === "prop" ? " on" : ""}`} data-name="prop" aria-label="Hospitality world">
-          <div className="col">
+          <SceneCol
+            actions={(
+              <div className="actions fade" style={{ "--d": "1.8s" } as CSSProperties}>
+                <button className="tlink bp" type="button" onClick={() => chooseWorld(previewWorld.n, "chosen")}>
+                  Choose this world
+                </button>
+                <button className="tlink tl cg" type="button" onClick={goBack}>
+                  Back to all States
+                </button>
+              </div>
+            )}
+          >
             <ArchBlock
               world={previewWorld}
               imageFailed={failedImages[previewWorld.n]}
               onImageError={() => setFailedImages((prev) => ({ ...prev, [previewWorld.n]: true }))}
             />
-            <div className="actions fade" style={{ "--d": "1.8s" } as CSSProperties}>
-              <button className="tlink bp" type="button" onClick={() => chooseWorld(previewWorld.n, "chosen")}>
-                Choose this world
-              </button>
-              <button className="tlink tl cg" type="button" onClick={goBack}>
-                Back to all States
-              </button>
-            </div>
-          </div>
+          </SceneCol>
         </section>
 
         <section className={`scr${scene === "onb3" ? " on" : ""}`} data-name="onb3" aria-label="Onboarding 3 of 3">
-          <div className="col">
+          <SceneCol
+            actions={(
+              <div className="actions fade" style={{ "--d": "3.2s" } as CSSProperties}>
+                <button className="tlink bp" type="button" onClick={() => go("login")}>Enter your Space</button>
+              </div>
+            )}
+          >
             <div className="copy">
               <p className="eyebrow fade" style={{ "--d": ".2s" } as CSSProperties}>The neuroscience of scent</p>
               <h1 className="title" data-type="">
@@ -426,14 +641,15 @@ export default function OnboardingFlow() {
                 <span>of your intention before, during and after your stay.</span>
               </p>
             </div>
-            <div className="actions fade" style={{ "--d": "3.2s" } as CSSProperties}>
-              <button className="tlink bp" type="button" onClick={() => go("login")}>Enter your Space</button>
-            </div>
-          </div>
+          </SceneCol>
         </section>
 
         <section className={`scr${scene === "login" ? " on" : ""}`} data-name="login" aria-label="Enter your private space">
-          <VisitorAuthPanel nextPath="/auth/complete" />
+          <VisitorAuthPanel
+            nextPath="/auth/complete"
+            onCode={() => go("code")}
+            hideCodeRow={Boolean(guest)}
+          />
         </section>
       </div>
     </main>

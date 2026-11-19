@@ -1,0 +1,74 @@
+/* Full-page States explore overlay opened from Space profile */
+.states-explore.visitor-app {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  height: 100dvh;
+  width: 100%;
+  background: var(--bg);
+}
+
+.states-explore .states-explore-top {
+  position: relative;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: calc(env(safe-area-inset-top) + 18px) var(--pad-x, 24px) 10px;
+  min-height: 64px;
+  flex: 0 0 auto;
+}
+
+.states-explore .states-explore-mark {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  margin: 0;
+  font: 400 13px var(--sans);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.states-explore .screens {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+}
+
+.states-explore .scr {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 8px var(--pad-x, 24px) calc(env(safe-area-inset-bottom) + 40px);
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  opacity: 1;
+  pointer-events: auto;
+  transform: none;
+  visibility: visible;
+}
+
+.states-explore .scr.states-scr .col {
+  max-width: 1080px;
+}
+
+.states-explore .stage {
+  flex: 1 0 auto;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 8px 0 48px;
+}
+
+.states-explore .actions {
+  flex: 0 0 auto;
+  height: auto;
+  margin-top: 28px;
+}

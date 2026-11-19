@@ -299,6 +299,9 @@ export default function MyJourneyPage({
       </svg>
 
       <header>
+        <button className="journey-back" type="button" onClick={onClose}>
+          Back
+        </button>
         <button className="brand" type="button" onClick={onClose} aria-label="Back to My Space">
           <svg viewBox="0 0 16 22" fill="none" stroke="currentColor" strokeWidth="1" aria-hidden="true">
             <path d="M8 21V3M8 12C4 10 3 6 4 2M8 9c3-1 5-3 6-6" />

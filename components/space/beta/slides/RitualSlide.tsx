@@ -28,17 +28,21 @@ export default function RitualSlide({
 
       <div className="beta-ritual-shell">
         <div className="beta-ritual-block">
-          <p className="beta-ritual-lead">
-            {active ? (
-              "Pause · Scent · Reflect · Act"
-            ) : (
-              <>
+          {active ? (
+            <>
+              <p className="beta-ritual-lead">Pause · Scent · Reflect · Act</p>
+              <p className="beta-ritual-status">Active</p>
+            </>
+          ) : (
+            <>
+              <p className="beta-ritual-lead beta-ritual-lead-preview">
                 Your invitation ritual begins
                 <br />
                 when your card arrives.
-              </>
-            )}
-          </p>
+              </p>
+              <p className="beta-ritual-status beta-ritual-status-muted">Preview</p>
+            </>
+          )}
           <button className="beta-text-link" type="button" onClick={onRitual}>
             {active ? "Open my invitation ritual" : "Read the steps"}
           </button>

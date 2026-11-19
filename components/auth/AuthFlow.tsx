@@ -313,7 +313,7 @@ export default function AuthFlow() {
         <p className={`err ${error ? "show" : ""}`} role="alert">{error}</p>
       </section>
 
-      <LegalModal kind={legal} onClose={() => setLegal(null)} />
+      <LegalModal kind={legal} onClose={() => setLegal(null)} onSwitch={(next) => setLegal(next)} />
     </>
   );
 }

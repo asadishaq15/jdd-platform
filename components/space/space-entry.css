@@ -27,6 +27,10 @@
   line-height: 1;
   white-space: nowrap;
 }
+@keyframes spaceHeaderGlow {
+  0%, 100% { box-shadow: 0 0 4px 1px rgba(240, 199, 155, 0.45); }
+  50% { box-shadow: 0 0 12px 4px rgba(240, 199, 155, 0.85); }
+}
 .space-entry .dash-controls {
   display: flex;
   grid-column: 3;
@@ -34,13 +38,134 @@
   justify-self: end;
   align-self: center;
   align-items: center;
-  gap: 8px;
-  margin-right: 50px;
+  gap: 22px;
+  margin-right: 0;
+  position: relative;
 }
+/* My Journey–style: borderless light-mode + bell */
 .space-entry .dash-controls .theme {
-  min-height: 34px;
+  width: 28px;
+  height: 28px;
+  min-width: 28px;
+  min-height: 28px;
   margin: 0;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  border: 0;
+  background: none;
+  color: var(--muted);
+  cursor: pointer;
 }
+.space-entry .dash-controls .theme:hover { color: var(--fg); }
+.space-entry .dash-controls .theme svg {
+  width: 22px;
+  height: 22px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.space-entry .space-bell-wrap {
+  position: relative;
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+}
+.space-entry .space-bell {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+}
+.space-entry .space-bell:hover { color: var(--fg); }
+.space-entry .space-bell svg {
+  width: 22px;
+  height: 22px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.space-entry .space-bell-badge {
+  position: absolute;
+  top: 0;
+  right: 1px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: linear-gradient(92deg, #A66A3F 0%, #C58452 28%, #D6A06D 50%, #F0C79B 68%, #B47749 88%, #A66A3F 100%);
+  animation: spaceHeaderGlow 2.4s ease-in-out infinite;
+}
+.space-entry .space-bell-wrap .beta-notifs {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  z-index: 40;
+  width: min(420px, calc(100vw - 24px));
+  max-height: 80vh;
+  overflow: auto;
+  text-align: left;
+  background: var(--bg);
+  border: 1px solid var(--line);
+}
+.space-entry .beta-notif {
+  padding: 24px 28px;
+  border-bottom: 1px solid var(--line);
+}
+.space-entry .beta-notif:last-child { border-bottom: 0; }
+.space-entry .beta-notif-eyebrow {
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.space-entry .beta-notif-title {
+  margin: 10px 0 6px;
+  font-family: var(--serif);
+  font-size: 22px;
+  font-weight: 300;
+}
+.space-entry .beta-notif-text {
+  margin: 0 0 16px;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.5;
+}
+.space-entry .beta-notif-done {
+  color: var(--muted);
+  font-size: 13px;
+}
+.space-entry .beta-notif-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.space-entry .beta-notif-btn {
+  min-height: 40px;
+  padding: 0 16px;
+  border: 1px solid var(--line);
+  background: transparent;
+  color: var(--fg);
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+.space-entry .beta-notif-btn.primary {
+  background: var(--fg);
+  border-color: var(--fg);
+  color: var(--bg);
+}
+.space-entry .beta-notif-btn:hover { border-color: #d6a06d; }
 .space-ui-toggle {
   display: inline-flex;
   align-items: center;
@@ -68,18 +193,14 @@
 .space-entry .pmenu-wrap {
   position: relative;
   display: flex;
-  grid-column: 3;
-  grid-row: 1;
-  justify-self: end;
-  align-self: center;
   align-items: center;
+  flex-shrink: 0;
 }
 .space-entry .profile {
-  display: flex;
-  width: 34px;
-  height: 34px;
-  align-items: center;
-  justify-content: center;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
   overflow: hidden;
   border: 1px solid var(--line);
   border-radius: 50%;
@@ -87,8 +208,10 @@
   color: var(--fg);
   cursor: pointer;
   font-family: var(--serif);
-  font-size: 16px;
+  font-size: 20px;
+  line-height: 1;
   padding: 0;
+  flex-shrink: 0;
 }
 .space-entry .profile img {
   width: 100%;
@@ -288,6 +411,18 @@ body.night .sec { background: rgba(255,255,255,.04); }
   text-align: center;
 }
 .sec-act { margin-top: 16px; }
+/* Keep Order my card / explore tlinks unchanged on hover (no copper fill) */
+.space-entry .sec-act .tlink:hover,
+.space-entry .sec-act .tlink:focus-visible,
+.space-entry .calm-explore .tlink:hover,
+.space-entry .calm-explore .tlink:focus-visible {
+  background: none;
+  background-clip: border-box;
+  -webkit-background-clip: border-box;
+  -webkit-text-fill-color: var(--fg);
+  color: var(--fg);
+  outline: none;
+}
 .sec-rule {
   display: block;
   width: 40px;
@@ -628,7 +763,9 @@ body.night .jm-in { border-color: rgba(255,255,255,.08); background: rgba(30,30,
 
 @media (max-width: 620px) {
   .space-entry .dash-top { padding-right: 18px; padding-left: 18px; }
-  .space-entry .dash-controls { margin-right: 44px; }
+  .space-entry .dash-controls { gap: 16px; margin-right: 0; }
+  .space-entry .profile { width: 40px; height: 40px; font-size: 18px; }
+  .space-entry .space-ui-toggle { display: none; }
   .space-entry .dash-title { display: none; }
   .space-entry .dash-brand { gap: 0; }
   .space-entry .dash-logo { height: 26px; }

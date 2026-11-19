@@ -69,17 +69,19 @@ export default function AuthCompletePage() {
       <GradientDefs />
       <div className="screens">
         <section className="scr on" data-name="load" aria-label="Loading" aria-live="polite">
-          <div className="col">
-            <div className="loader" aria-hidden="true">
-              <svg viewBox="0 0 120 120">
-                <circle className="ring" cx="60" cy="60" r="46" />
-                <circle className="arc" cx="60" cy="60" r="46" pathLength="1" />
-              </svg>
+          <div className="col auth-loading">
+            <div className="stage">
+              <div className="loader" aria-hidden="true">
+                <svg viewBox="0 0 120 120">
+                  <circle className="ring" cx="60" cy="60" r="46" />
+                  <circle className="arc" cx="60" cy="60" r="46" pathLength="1" />
+                </svg>
+              </div>
+              <p className="load-title">
+                <span className="l1">One moment.</span>
+                <span className="l2">{error || "Preparing your private space."}</span>
+              </p>
             </div>
-            <p className="load-title">
-              <span className="l1">One moment.</span>
-              <span className="l2">{error || "Preparing your private space."}</span>
-            </p>
           </div>
         </section>
       </div>

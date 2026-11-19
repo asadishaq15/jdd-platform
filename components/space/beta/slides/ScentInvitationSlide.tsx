@@ -17,6 +17,24 @@ function statusLabel(status: CardStatus | "none" | "received") {
   } as const)[status];
 }
 
+function OrderCardPreview({
+  world,
+  guestName,
+  hue,
+}: {
+  world: HospitalityWorld;
+  guestName: string;
+  hue: number;
+}) {
+  return (
+    <div className="beta-order-card dash-card" style={{ ["--h" as string]: hue }}>
+      <span className="d-card-t">{world.property}</span>
+      <span className="d-card-s">{world.state}</span>
+      <span className="oc-name">For {guestName}</span>
+    </div>
+  );
+}
+
 export default function ScentInvitationSlide({
   world,
   guest,
@@ -25,6 +43,7 @@ export default function ScentInvitationSlide({
   canOrder,
   onOrder,
   onSimulateDelivery,
+  onMarkReceived,
 }: {
   world: HospitalityWorld;
   guest: boolean;
@@ -33,15 +52,33 @@ export default function ScentInvitationSlide({
   canOrder: boolean;
   onOrder: () => void;
   onSimulateDelivery: () => void;
+  onMarkReceived: () => void;
 }) {
-  // Only treat as received when state says so (or a real stay guest with no local status yet).
-  const status = state.cardStatus || (guest && state.order ? "received" : "none");
-  const activeIndex = status === "received" ? 3 : status === "none" ? -1 : TRACK.indexOf(status as CardStatus);
-  const orderLabel = status === "received" || Boolean(state.order) ? "Order another card" : "Order my card";
-  const canSimulate = status !== "received";
+  const hasOrder = Boolean(state.order);
+  const status = state.cardStatus || "none";
+  const guestReceived = guest && !hasOrder && status === "received";
+  const guestBedside = guest && !hasOrder && status !== "received";
+  const memberNotOrdered = !guest && !hasOrder && (status === "none" || !status);
+  const showTrack = hasOrder && status !== "none" && status !== "received";
+  const showPostalReceived = hasOrder && status === "received";
+  const canSimulate = status === "preparing" || status === "sent";
+  const showMarkPostal = hasOrder && status === "delivered";
+  const showMarkBedside = guestBedside;
+  const activeIndex = status === "none" ? -1 : TRACK.indexOf(status as CardStatus);
+  const cardHue = ((world.n || 9) * 37) % 360;
+
+  // HTML: guest bedside has no Order CTA; members mid-shipment have none; after postal receive → Order another.
+  const showOrderCta = canOrder && (memberNotOrdered || (hasOrder && status === "received"));
+  const orderLabel = hasOrder || status === "received" ? "Order another card" : "Order my card";
+  const orderWorld: HospitalityWorld = {
+    ...world,
+    property: state.order?.property || world.property,
+    state: state.order?.state || world.state,
+  };
+  const orderRecipient = state.order?.recipient || guestName;
 
   return (
-    <article className="beta-split beta-scent" aria-label="Scent invitation">
+    <article className="beta-split beta-scent" aria-label="Scent Invitation">
       <div className="beta-split-media">
         <div className="beta-invite-visual">
           <img
@@ -58,24 +95,39 @@ export default function ScentInvitationSlide({
       </div>
 
       <div className="beta-split-copy">
-        <p className="beta-eyebrow">Scent invitation</p>
+        <p className="beta-eyebrow">Scent Invitation</p>
         <h2 className="beta-scent-title">
           Your scented <em>card.</em>
         </h2>
-        <p className="beta-scent-body">
-          A personalized card that captures the signature aroma of{" "}
-          <em>{world.property}</em> and introduces the atmosphere of this hospitality world.
-        </p>
 
-        {guest && status === "received" && !state.order && (
-          <p className="beta-muted">Received during your stay.</p>
-        )}
+        {guestBedside || guestReceived ? (
+          <>
+            <OrderCardPreview world={world} guestName={guestName} hue={cardHue} />
+            <p className="beta-scent-body">
+              Your card is waiting for you on the bedside table in your room. It carries the
+              signature aroma of {world.property} and introduces the atmosphere of this world.
+            </p>
+            <p className={`beta-rcv${guestReceived ? " on" : ""}`}>
+              <span className="beta-rcv-dot" aria-hidden="true" />
+              Received
+            </p>
+          </>
+        ) : null}
 
-        <div className="beta-scent-actions">
-          <button className="beta-cta" type="button" onClick={onOrder} disabled={!canOrder}>
-            {orderLabel} <span aria-hidden="true">→</span>
-          </button>
+        {memberNotOrdered ? (
+          <>
+            <OrderCardPreview world={world} guestName={guestName} hue={cardHue} />
+            <p className="beta-scent-body">
+              A personalized card that introduces the aroma of this hospitality world.
+            </p>
+          </>
+        ) : null}
 
+        {showTrack || showPostalReceived ? (
+          <OrderCardPreview world={orderWorld} guestName={orderRecipient} hue={cardHue} />
+        ) : null}
+
+        {showTrack ? (
           <ol className="beta-track">
             {TRACK.map((step, index) => (
               <li key={step} className={index <= activeIndex ? "done" : ""}>
@@ -83,12 +135,38 @@ export default function ScentInvitationSlide({
               </li>
             ))}
           </ol>
+        ) : null}
 
-          {canSimulate && (
+        {showPostalReceived ? (
+          <p className="beta-d-saved beta-d-recv">
+            Received<span className="cu">.</span>
+          </p>
+        ) : null}
+
+        <div className="beta-scent-actions">
+          {showMarkBedside ? (
+            <button className="beta-text-link" type="button" onClick={onMarkReceived}>
+              Mark as received
+            </button>
+          ) : null}
+
+          {showMarkPostal ? (
+            <button className="beta-text-link" type="button" onClick={onMarkReceived}>
+              I received my card
+            </button>
+          ) : null}
+
+          {canSimulate ? (
             <button className="beta-text-link" type="button" onClick={onSimulateDelivery}>
               Simulate card delivery
             </button>
-          )}
+          ) : null}
+
+          {showOrderCta ? (
+            <button className="beta-cta" type="button" onClick={onOrder}>
+              {orderLabel} <span aria-hidden="true">→</span>
+            </button>
+          ) : null}
         </div>
       </div>
     </article>

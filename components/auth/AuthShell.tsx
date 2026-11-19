@@ -1,38 +1,19 @@
-import type { CSSProperties, ReactNode } from "react";
+import type { ReactNode } from "react";
 import BrandMark from "../brand/BrandMark";
 import GradientDefs from "../layout/GradientDefs";
 import ThemeToggle from "../layout/ThemeToggle";
+import BetaLoopVideo from "../space/beta/BetaLoopVideo";
 
-const globeDots = [
-  { cx: 180, cy: 180, r: 3.5, tw: "3.4s" },
-  { cx: 440, cy: 150, r: 3, tw: "3.85s" },
-  { cx: 500, cy: 270, r: 3.5, tw: "4.3s" },
-  { cx: 380, cy: 120, r: 2.8, tw: "4.75s" },
-  { cx: 145, cy: 260, r: 3.2, tw: "5.2s" },
-  { cx: 220, cy: 420, r: 3.5, tw: "3.4s" },
-  { cx: 410, cy: 440, r: 3.2, tw: "3.85s" },
-  { cx: 330, cy: 200, r: 3, tw: "4.3s" },
-  { cx: 255, cy: 150, r: 2.8, tw: "4.75s" },
-  { cx: 480, cy: 380, r: 3.5, tw: "5.2s" },
-  { cx: 130, cy: 360, r: 3, tw: "3.4s" },
-  { cx: 290, cy: 470, r: 3.5, tw: "3.85s" },
-  { cx: 380, cy: 330, r: 4, tw: "4.3s" },
-  { cx: 200, cy: 300, r: 2.8, tw: "4.75s" },
-  { cx: 470, cy: 200, r: 3.5, tw: "5.2s" },
-  { cx: 320, cy: 380, r: 3, tw: "3.4s" },
-  { cx: 360, cy: 490, r: 3.5, tw: "3.85s" },
-  { cx: 250, cy: 240, r: 3, tw: "4.3s" },
-  { cx: 415, cy: 250, r: 3.5, tw: "4.75s" },
-  { cx: 170, cy: 440, r: 2.8, tw: "5.2s" },
-  { cx: 470, cy: 470, r: 3, tw: "3.4s" },
-  { cx: 285, cy: 325, r: 5, tw: "3.85s" },
-];
+const ASIDE_VIDEO_SRC = "/assets/bg-06-my-community-globe-stars-loop-15s.mp4";
+const ASIDE_VIDEO_LIGHT_SRC = "/assets/bg-06-my-community-globe-stars-loop-15s_light.mp4";
+const ASIDE_VIDEO_POSTER = "/assets/bg-06-my-community-globe-stars-poster.jpg";
 
 export default function AuthShell({
   children,
   topStart,
   topCenter,
   className,
+  wide = false,
 }: {
   children: ReactNode;
   /** Replaces the empty top-left slot (e.g. Restart demo). */
@@ -40,30 +21,40 @@ export default function AuthShell({
   /** Replaces the center brand mark (e.g. step label “1 of 2”). */
   topCenter?: ReactNode;
   className?: string;
+  /**
+   * My Space dashboard chrome: single column, no globe aside
+   * (matches embedded dashboard in space (1).html).
+   */
+  wide?: boolean;
 }) {
+  const shellClass = [
+    "shell",
+    wide ? "shell-wide" : "auth-shell",
+    className,
+  ]
+    .filter(Boolean)
+    .join(" ");
+
   return (
-    <div className={`shell auth-shell${className ? ` ${className}` : ""}`}>
+    <div className={shellClass}>
       <GradientDefs />
-      <aside className="aside" aria-hidden="true">
-        <div className="brand"><BrandMark className="brand-logo" decorative /></div>
-        <div className="art">
-          <svg viewBox="0 0 620 620">
-            <g className="ggrid">
-              <circle className="gouter" cx="310" cy="310" r="260" />
-              <ellipse cx="310" cy="310" rx="260" ry="60" /><ellipse cx="310" cy="310" rx="260" ry="130" /><ellipse cx="310" cy="310" rx="260" ry="200" />
-              <ellipse cx="310" cy="310" rx="60" ry="260" /><ellipse cx="310" cy="310" rx="130" ry="260" /><ellipse cx="310" cy="310" rx="200" ry="260" />
-              <line x1="310" y1="50" x2="310" y2="570" /><line x1="50" y1="310" x2="570" y2="310" />
-            </g>
-            {globeDots.map((dot) => (
-              <circle key={`${dot.cx}-${dot.cy}`} className="gdot" cx={dot.cx} cy={dot.cy} r={dot.r} style={{ "--tw": dot.tw } as CSSProperties} />
-            ))}
-          </svg>
-        </div>
-        <div>
-          <p className="quote">Choose your stay by <em className="cu">State</em><br />— not status.</p>
-          <p className="sub">22 States. 22 hospitality worlds.</p>
-        </div>
-      </aside>
+      {!wide ? (
+        <aside className="aside" aria-hidden="true">
+          <div className="brand"><BrandMark className="brand-logo" decorative /></div>
+          <div className="art">
+            <BetaLoopVideo
+              className="auth-aside-video"
+              src={ASIDE_VIDEO_SRC}
+              lightSrc={ASIDE_VIDEO_LIGHT_SRC}
+              poster={ASIDE_VIDEO_POSTER}
+            />
+          </div>
+          <div>
+            <p className="quote">Choose your stay by <em className="cu">State</em>,<br />not status.</p>
+            <p className="sub">22 States. 22 hospitality worlds.</p>
+          </div>
+        </aside>
+      ) : null}
       <main className="main">
         <header className="top">
           {topStart ?? <span aria-hidden="true" />}

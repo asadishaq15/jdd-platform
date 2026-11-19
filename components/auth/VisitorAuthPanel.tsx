@@ -17,9 +17,11 @@ function defaultNext() {
 export default function VisitorAuthPanel({
   onCode,
   nextPath,
+  hideCodeRow = false,
 }: {
   onCode?: () => void;
   nextPath?: string;
+  hideCodeRow?: boolean;
 }) {
   const [mode, setMode] = useState<EmailMode>("in");
   const [field, setField] = useState<AuthField>("email");
@@ -152,17 +154,19 @@ export default function VisitorAuthPanel({
 
   if (phase === "loading") {
     return (
-      <div className="col">
-        <div className="loader" aria-hidden="true">
-          <svg viewBox="0 0 120 120">
-            <circle className="ring" cx="60" cy="60" r="46" />
-            <circle className="arc" cx="60" cy="60" r="46" pathLength="1" />
-          </svg>
+      <div className="col auth-loading">
+        <div className="stage">
+          <div className="loader" aria-hidden="true">
+            <svg viewBox="0 0 120 120">
+              <circle className="ring" cx="60" cy="60" r="46" />
+              <circle className="arc" cx="60" cy="60" r="46" pathLength="1" />
+            </svg>
+          </div>
+          <p className="load-title">
+            <span className="l1">One moment.</span>
+            <span className="l2">Preparing your private space.</span>
+          </p>
         </div>
-        <p className="load-title">
-          <span className="l1">One moment.</span>
-          <span className="l2">Preparing your private space.</span>
-        </p>
       </div>
     );
   }
@@ -170,10 +174,12 @@ export default function VisitorAuthPanel({
   if (phase === "confirmation") {
     return (
       <div className="col">
-        <h1 className="title">Confirm your <em className="cu">account</em>.</h1>
-        <p className="lede fade" style={{ "--d": ".4s" } as React.CSSProperties}>
-          We sent a secure confirmation link to {email}.
-        </p>
+        <div className="stage">
+          <h1 className="title">Confirm your <em className="cu">account</em>.</h1>
+          <p className="lede fade" style={{ "--d": ".4s" } as React.CSSProperties}>
+            We sent a secure confirmation link to {email}.
+          </p>
+        </div>
         <div className="actions fade" style={{ "--d": ".8s" } as React.CSSProperties}>
           <button className="tlink bp" type="button" onClick={() => { selectTab("in"); setPhase("entry"); }}>
             Back to sign in
@@ -189,7 +195,9 @@ export default function VisitorAuthPanel({
   return (
     <>
       <div className="col">
-        <h1 className="title">Enter your <em className="cu">private space</em>.</h1>
+        <div className="stage">
+          <h1 className="title">Enter your <em className="cu">private space</em>.</h1>
+        </div>
         <div className="actions login-act fade" style={{ "--d": "1.2s" } as React.CSSProperties}>
           <div className="auth-tabs" role="tablist">
             <button
@@ -306,18 +314,24 @@ export default function VisitorAuthPanel({
           <p className={`err${agreeNeed ? " show" : ""}`} role="alert">{agreeNeed ? error : ""}</p>
         </div>
 
-        <p className="code-row fade" style={{ "--d": "1.8s" } as React.CSSProperties}>
-          <svg viewBox="0 0 24 24" aria-hidden="true">
-            <circle cx="8" cy="12" r="4" />
-            <path d="M12 12h9M18 12v3M21 12v2" />
-          </svg>
-          <span>Have an access code from your hotel stay?</span>
-          <button className="tlink tl" type="button" onClick={onCode}>
-            Enter your code
-          </button>
-        </p>
+        {hideCodeRow ? null : (
+          <p className="code-row fade" style={{ "--d": "1.8s" } as React.CSSProperties}>
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <circle cx="8" cy="12" r="4" />
+              <path d="M12 12h9M18 12v3M21 12v2" />
+            </svg>
+            <span>Have an access code from your hotel stay?</span>
+            <button className="tlink tl" type="button" onClick={onCode}>
+              Enter your code
+            </button>
+          </p>
+        )}
       </div>
-      <LegalModal kind={legal} onClose={() => setLegal(null)} />
+      <LegalModal
+        kind={legal}
+        onClose={() => setLegal(null)}
+        onSwitch={(next) => setLegal(next)}
+      />
     </>
   );
 }

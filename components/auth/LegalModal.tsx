@@ -1,21 +1,69 @@
+"use client";
+
+import { useEffect, useRef } from "react";
+import { LEGAL, type LegalKind } from "../../lib/legal-content";
+
 type LegalModalProps = {
-  kind: "terms" | "privacy" | null;
+  kind: LegalKind | null;
   onClose: () => void;
+  onSwitch?: (kind: LegalKind) => void;
 };
 
-export default function LegalModal({ kind, onClose }: LegalModalProps) {
+export default function LegalModal({ kind, onClose, onSwitch }: LegalModalProps) {
+  const bodyRef = useRef<HTMLDivElement>(null);
+  const ovRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!kind) return;
+    const prev = document.documentElement.style.overflow;
+    document.documentElement.style.overflow = "hidden";
+    ovRef.current?.scrollTo(0, 0);
+    return () => {
+      document.documentElement.style.overflow = prev;
+    };
+  }, [kind]);
+
+  useEffect(() => {
+    if (!kind) return;
+    function onKey(event: KeyboardEvent) {
+      if (event.key === "Escape") onClose();
+    }
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [kind, onClose]);
+
   if (!kind) return null;
 
+  const html = LEGAL[kind] || LEGAL.terms;
+
   return (
-    <div className="modal-backdrop" role="presentation">
-      <section className="legal-modal" role="dialog" aria-modal="true" aria-label={kind === "terms" ? "Terms of Use" : "Privacy Policy"}>
-        <button className="modal-close" type="button" aria-label="Close" onClick={onClose}>×</button>
-        <p className="eyebrow">Jardin du Desert · Space</p>
-        <h2 className="doc-title">{kind === "terms" ? "Terms of Use" : "Privacy Policy"}</h2>
-        <p>
-          This shell is ready for the final legal copy. In production this content can be served from a CMS or legal document route while keeping the same modal surface.
-        </p>
-      </section>
+    <div
+      id="legalOv"
+      ref={ovRef}
+      role="dialog"
+      aria-modal="true"
+      aria-label={kind === "terms" ? "Terms of Use" : "Privacy Policy"}
+    >
+      <button className="lg-x" type="button" onClick={onClose}>
+        Close
+      </button>
+      <div
+        className="lg-in"
+        ref={bodyRef}
+        dangerouslySetInnerHTML={{ __html: html }}
+        onClick={(event) => {
+          const anchor = (event.target as HTMLElement).closest?.("a");
+          if (!anchor) return;
+          const href = anchor.getAttribute("href") || "";
+          if (/jardindudesert\.com\/privacy/i.test(href)) {
+            event.preventDefault();
+            onSwitch?.("privacy");
+          } else if (/jardindudesert\.com\/terms/i.test(href)) {
+            event.preventDefault();
+            onSwitch?.("terms");
+          }
+        }}
+      />
     </div>
   );
 }
