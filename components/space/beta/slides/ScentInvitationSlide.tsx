@@ -67,9 +67,8 @@ export default function ScentInvitationSlide({
   const activeIndex = status === "none" ? -1 : TRACK.indexOf(status as CardStatus);
   const cardHue = ((world.n || 9) * 37) % 360;
 
-  // HTML: guest bedside has no Order CTA; members mid-shipment have none; after postal receive → Order another.
-  const showOrderCta = canOrder && (memberNotOrdered || (hasOrder && status === "received"));
-  const orderLabel = hasOrder || status === "received" ? "Order another card" : "Order my card";
+  // HTML: Order my card only when there is no order yet (no “Order another”).
+  const showOrderCta = canOrder && memberNotOrdered;
   const orderWorld: HospitalityWorld = {
     ...world,
     property: state.order?.property || world.property,
@@ -164,7 +163,7 @@ export default function ScentInvitationSlide({
 
           {showOrderCta ? (
             <button className="beta-cta" type="button" onClick={onOrder}>
-              {orderLabel} <span aria-hidden="true">→</span>
+              Order my card <span aria-hidden="true">→</span>
             </button>
           ) : null}
         </div>

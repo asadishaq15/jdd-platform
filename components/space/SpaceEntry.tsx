@@ -446,7 +446,13 @@ function ScentSection({ world, guest, guestName, state, onOrder, canOrder }: {
           <span className="oc-name">For {guestName}</span>
         </div>
         {guest && !state.order ? <p className="c-s">Received during your stay</p> : status === "none" ? <><p className="sec-text">A personalized card that introduces the aroma of this hospitality world.</p><p className="c-s muted">Not ordered</p></> : <OrderTracker status={status} />}
-        <div className="sec-act">{canOrder ? <button className="tlink" type="button" onClick={onOrder}>{guest || status === "received" ? "Order another card" : "Order my card"}</button> : <span className="c-s muted">Activate a stay to request a card.</span>}</div>
+        <div className="sec-act">
+          {!state.order && !guest && canOrder ? (
+            <button className="tlink" type="button" onClick={onOrder}>Order my card</button>
+          ) : !state.order && !guest && !canOrder ? (
+            <span className="c-s muted">Activate a stay to request a card.</span>
+          ) : null}
+        </div>
       </div>
     </article>
   );
