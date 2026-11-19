@@ -17,7 +17,10 @@ export default function BetaFlowModal({
   onSave: (next: SpaceState) => void;
 }) {
   const [action, setAction] = useState(state.reminder?.action || "");
-  const [frequency, setFrequency] = useState<"off" | "once" | "daily">(state.reminder?.frequency || "off");
+  const reminderFrequency = state.reminder?.frequency;
+  const [frequency, setFrequency] = useState<"off" | "once" | "daily">(
+    reminderFrequency === "once" || reminderFrequency === "daily" ? reminderFrequency : "off",
+  );
 
   return (
     <div
