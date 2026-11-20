@@ -479,7 +479,7 @@ body.night .space-entry-beta {
 .beta-slide-title { color: var(--beta-soft-text); }
 
 .beta-chrome--fade .beta-slide-chrome {
-  animation: betaChromeFade 0.35s var(--ease-lux) both;
+  animation: betaChromeFade 0.48s var(--ease-lux) both;
 }
 
 .beta-deck-stage {
@@ -495,36 +495,57 @@ body.night .space-entry-beta {
 }
 
 .beta-deck-stage-inner {
+  position: relative;
   width: 100%;
   height: 100%;
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   grid-template-rows: minmax(0, 1fr);
   place-items: center;
-  will-change: opacity, transform;
 }
 
-.beta-deck-stage-inner > .beta-identity,
-.beta-deck-stage-inner > .beta-ritual,
-.beta-deck-stage-inner > .beta-community,
-.beta-deck-stage-inner > .beta-scent,
-.beta-deck-stage-inner > .beta-intention,
-.beta-deck-stage-inner > .beta-world {
-  justify-self: stretch;
-  align-self: stretch;
+/* Stacked slide layers — instant swap; loops stay warm at opacity 0 (no crossfade) */
+.beta-slide-layer {
+  grid-area: 1 / 1;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  min-width: 0;
+  opacity: 0;
+  pointer-events: none;
+  z-index: 0;
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}
+
+.beta-slide-layer.is-active {
+  opacity: 1;
+  pointer-events: auto;
+  z-index: 1;
+  position: relative;
+  overflow: visible;
+}
+
+.beta-slide-layer.is-active .beta-identity,
+.beta-slide-layer.is-active .beta-ritual,
+.beta-slide-layer.is-active .beta-scent,
+.beta-slide-layer.is-active .beta-intention,
+.beta-slide-layer.is-active .beta-world {
   width: 100%;
   height: 100%;
   min-height: 0;
 }
 
-.beta-deck-stage-inner > .beta-community {
+.beta-slide-layer.is-active .beta-community {
   height: auto;
   max-height: none;
-  align-self: start;
   min-height: 100%;
 }
 
-.beta-deck:has(.beta-community) .beta-deck-stage {
+.beta-deck[data-active-slide="community"] .beta-deck-stage {
   align-items: flex-start;
   overflow-x: hidden;
   overflow-y: auto;
@@ -532,60 +553,55 @@ body.night .space-entry-beta {
 }
 
 /* Identity: keep portrait fully visible (stage overflow was clipping the ring) */
-.beta-deck:has(.beta-identity) .beta-deck-stage {
+.beta-deck[data-active-slide="identity"] .beta-deck-stage {
   overflow: visible;
   padding-top: 20px;
 }
 
 /* Scent / Intention: allow photo to bleed behind chrome + pips */
-.beta-deck:has(.beta-scent) .beta-deck-stage,
-.beta-deck:has(.beta-intention) .beta-deck-stage {
+.beta-deck[data-active-slide="scent"] .beta-deck-stage,
+.beta-deck[data-active-slide="intention"] .beta-deck-stage {
   overflow: visible;
   padding-block: 0;
 }
 
-.beta-deck:has(.beta-scent) .beta-deck-top,
-.beta-deck:has(.beta-scent) .beta-pips,
-.beta-deck:has(.beta-intention) .beta-deck-top,
-.beta-deck:has(.beta-intention) .beta-pips {
+.beta-deck[data-active-slide="scent"] .beta-deck-top,
+.beta-deck[data-active-slide="scent"] .beta-pips,
+.beta-deck[data-active-slide="intention"] .beta-deck-top,
+.beta-deck[data-active-slide="intention"] .beta-pips {
   position: relative;
   z-index: 4;
 }
 
-.beta-stage--exit-next {
-  animation: betaStageExitNext 0.38s var(--ease-lux) both;
+/* Standard deck: incoming slide rises in (no exit phase, no layer crossfade) */
+.beta-slide-layer.beta-stage--enter-next {
+  animation: betaStageEnterNext 0.58s var(--ease-lux) both;
 }
 
-.beta-stage--exit-prev {
-  animation: betaStageExitPrev 0.38s var(--ease-lux) both;
-}
-
-.beta-stage--enter-next {
-  animation: betaStageEnterNext 0.42s var(--ease-lux) both;
-}
-
-.beta-stage--enter-prev {
-  animation: betaStageEnterPrev 0.42s var(--ease-lux) both;
-}
-
-@keyframes betaStageExitNext {
-  from { opacity: 1; transform: translateY(0); }
-  to { opacity: 0; transform: translateY(-16px); }
-}
-
-@keyframes betaStageExitPrev {
-  from { opacity: 1; transform: translateY(0); }
-  to { opacity: 0; transform: translateY(16px); }
+.beta-slide-layer.beta-stage--enter-prev {
+  animation: betaStageEnterPrev 0.58s var(--ease-lux) both;
 }
 
 @keyframes betaStageEnterNext {
-  from { opacity: 0; transform: translateY(18px); }
-  to { opacity: 1; transform: none; }
+  from {
+    opacity: 0;
+    transform: translate3d(0, 18px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
 }
 
 @keyframes betaStageEnterPrev {
-  from { opacity: 0; transform: translateY(-18px); }
-  to { opacity: 1; transform: none; }
+  from {
+    opacity: 0;
+    transform: translate3d(0, -18px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
 }
 
 @keyframes betaChromeFade {
@@ -594,10 +610,8 @@ body.night .space-entry-beta {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .beta-stage--exit-next,
-  .beta-stage--exit-prev,
-  .beta-stage--enter-next,
-  .beta-stage--enter-prev,
+  .beta-slide-layer.beta-stage--enter-next,
+  .beta-slide-layer.beta-stage--enter-prev,
   .beta-chrome--fade .beta-slide-chrome {
     animation: none !important;
   }
@@ -713,6 +727,8 @@ body.night .space-entry-beta {
   position: relative;
   display: block;
   overflow: hidden;
+  transform: translateZ(0);
+  backface-visibility: hidden;
 }
 
 .beta-loop-video > .beta-loop-video-layer {
@@ -725,6 +741,8 @@ body.night .space-entry-beta {
   opacity: 0;
   transition: opacity 0.6s var(--ease-lux, cubic-bezier(0.22, 1, 0.36, 1));
   pointer-events: none;
+  transform: translateZ(0);
+  backface-visibility: hidden;
 }
 
 .beta-loop-video > .beta-loop-video-layer.is-active {
@@ -1464,7 +1482,7 @@ body:not(.night) .beta-scene-light {
 }
 
 .beta-scent-title {
-  margin: 12px 0 0;
+  margin: 14px 0 0;
   font-family: var(--serif);
   font-size: clamp(36px, 5.2vw, 52px);
   font-weight: 300;
@@ -1541,10 +1559,25 @@ body:not(.night) .beta-scene-light {
   font-style: italic;
 }
 
+/* Card delivery row — space-signin .track / demo-ctl-in */
+.beta-scent-order-status {
+  width: 100%;
+  margin-top: 16px;
+}
+
+.beta-scent-demo-ctl {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin: 14px 0 0;
+}
+
 .beta-track {
   display: flex;
   flex-wrap: wrap;
-  gap: 24px;
+  justify-content: center;
+  gap: 18px;
   width: 100%;
   margin: 0;
   padding: 0;
@@ -1553,30 +1586,36 @@ body:not(.night) .beta-scene-light {
 
 .beta-track li {
   position: relative;
-  padding-left: 20px;
-  color: var(--beta-soft-text-strong, #bdb7ad);
-  font-size: 12px;
-  letter-spacing: 0.04em;
+  padding-top: 12px;
+  color: var(--beta-muted, var(--muted));
+  font-size: 10px;
+  font-weight: 400;
+  letter-spacing: 0.2em;
   text-transform: uppercase;
+  text-align: center;
 }
 
 .beta-track li::before {
   content: "";
   position: absolute;
-  left: 0;
-  top: 0.2em;
-  width: 11px;
-  height: 11px;
+  top: 0;
+  left: 50%;
+  width: 6px;
+  height: 6px;
+  margin-left: -3px;
   box-sizing: border-box;
-  border: 1px solid #b98b5c;
+  border: 1px solid var(--beta-muted, var(--muted));
   border-radius: 50%;
   background: transparent;
 }
 
-.beta-track li.done { color: var(--beta-soft-text-strong, #bdb7ad); }
+.beta-track li.done {
+  color: var(--beta-fg, var(--fg));
+}
+
 .beta-track li.done::before {
   border: 0;
-  background: var(--beta-gradient-gold);
+  background: radial-gradient(circle at 40% 40%, #fff0da, #f0c79b 45%, #d6a06d);
 }
 
 .beta-scent-actions {
@@ -1584,6 +1623,10 @@ body:not(.night) .beta-scene-light {
   flex-direction: column;
   align-items: flex-start;
   gap: 0;
+  margin-top: 16px;
+}
+
+.beta-scent-actions:has(.beta-cta) {
   margin-top: 40px;
 }
 
@@ -1600,12 +1643,13 @@ body:not(.night) .beta-scene-light {
   justify-content: space-between;
 }
 
-.beta-scent-actions .beta-track {
-  margin-bottom: 20px;
-}
-
 .beta-scent-actions .beta-text-link {
   margin-top: 0;
+}
+
+.beta-scent-demo-ctl .beta-text-link {
+  font-size: 12px;
+  color: var(--beta-muted, var(--muted));
 }
 
 .beta-intention-card {
@@ -2254,7 +2298,20 @@ body:not(.night) .beta-scene-light {
 }
 
 .space-entry-beta .beta-orders-sheet .stay-actions {
+  display: flex;
+  justify-content: center;
   margin-top: 22px;
+}
+
+/* My orders empty state — space (1).html primary CTA (.tlink.bp) */
+.space-entry-beta .beta-orders-sheet .beta-orders-cta {
+  margin-top: 0;
+  min-height: 56px;
+  min-width: min(280px, 100%);
+  padding: 0 28px;
+  gap: 14px;
+  justify-content: center;
+  letter-spacing: 0.16em;
 }
 
 @media (max-width: 560px) {
@@ -2599,33 +2656,31 @@ body.night .beta-circle-detail > .body.dob-intro {
     -webkit-overflow-scrolling: touch;
   }
 
-  .beta-deck-stage-inner > .beta-identity,
-  .beta-deck-stage-inner > .beta-ritual {
+  .beta-slide-layer.is-active .beta-identity,
+  .beta-slide-layer.is-active .beta-ritual {
     height: 100%;
     max-height: 100%;
-    align-self: stretch;
   }
 
-  .beta-deck-stage-inner > .beta-scent,
-  .beta-deck-stage-inner > .beta-intention,
-  .beta-deck-stage-inner > .beta-world,
-  .beta-deck-stage-inner > .beta-community {
+  .beta-slide-layer.is-active .beta-scent,
+  .beta-slide-layer.is-active .beta-intention,
+  .beta-slide-layer.is-active .beta-world,
+  .beta-slide-layer.is-active .beta-community {
     height: auto;
     max-height: none;
-    align-self: start;
   }
 
-  .beta-deck:has(.beta-world) .beta-deck-stage,
-  .beta-deck:has(.beta-scent) .beta-deck-stage,
-  .beta-deck:has(.beta-intention) .beta-deck-stage,
-  .beta-deck:has(.beta-community) .beta-deck-stage {
+  .beta-deck[data-active-slide="world"] .beta-deck-stage,
+  .beta-deck[data-active-slide="scent"] .beta-deck-stage,
+  .beta-deck[data-active-slide="intention"] .beta-deck-stage,
+  .beta-deck[data-active-slide="community"] .beta-deck-stage {
     align-items: flex-start;
     overflow-x: hidden;
     overflow-y: auto;
     padding-block: 12px 24px;
   }
 
-  .beta-deck:has(.beta-identity) .beta-deck-stage {
+  .beta-deck[data-active-slide="identity"] .beta-deck-stage {
     overflow-x: hidden;
     overflow-y: auto;
     padding-top: 16px;
@@ -2801,10 +2856,6 @@ body.night .beta-circle-detail > .body.dob-intro {
 
   .beta-scent .beta-scent-actions .beta-cta {
     margin-inline: auto;
-  }
-
-  .beta-scent .beta-track {
-    justify-content: center;
   }
 
   .beta-intention .beta-field-shell {

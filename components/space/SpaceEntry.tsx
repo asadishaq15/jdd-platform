@@ -70,7 +70,7 @@ export default function SpaceEntry({
   circleEvents = [],
   initialRsvps = {},
   initialState = {},
-  uiVersion = "classic",
+  uiVersion = "new",
   onUiVersionChange,
 }: SpaceEntryProps) {
   const [account, setAccount] = useState(initialAccount);

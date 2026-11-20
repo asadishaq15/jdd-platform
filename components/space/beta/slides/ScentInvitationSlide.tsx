@@ -95,13 +95,22 @@ export default function ScentInvitationSlide({
         ) : null}
 
         {showTrack ? (
-          <ol className="beta-track">
-            {TRACK.map((step, index) => (
-              <li key={step} className={index <= activeIndex ? "done" : ""}>
-                {statusLabel(step)}
-              </li>
-            ))}
-          </ol>
+          <div className="beta-scent-order-status">
+            <ol className="beta-track">
+              {TRACK.map((step, index) => (
+                <li key={step} className={index <= activeIndex ? "done" : ""}>
+                  {statusLabel(step)}
+                </li>
+              ))}
+            </ol>
+            {canSimulate ? (
+              <p className="beta-scent-demo-ctl">
+                <button className="beta-text-link" type="button" onClick={onSimulateDelivery}>
+                  Simulate card delivery
+                </button>
+              </p>
+            ) : null}
+          </div>
         ) : null}
 
         {showPostalReceived ? (
@@ -120,12 +129,6 @@ export default function ScentInvitationSlide({
           {showMarkPostal ? (
             <button className="beta-text-link" type="button" onClick={onMarkReceived}>
               I received my card
-            </button>
-          ) : null}
-
-          {canSimulate ? (
-            <button className="beta-text-link" type="button" onClick={onSimulateDelivery}>
-              Simulate card delivery
             </button>
           ) : null}
 

@@ -10,7 +10,7 @@ import SpaceEntry, { type SpaceEntryProps } from "./SpaceEntry";
 import SpaceEntryBeta from "./beta/SpaceEntryBeta";
 
 export default function SpaceApp(props: SpaceEntryProps) {
-  const [version, setVersion] = useState<SpaceUiVersion>("classic");
+  const [version, setVersion] = useState<SpaceUiVersion>("new");
 
   useLayoutEffect(() => {
     setVersion(readSpaceUiVersion());

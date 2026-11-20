@@ -11,7 +11,7 @@ export function readSpaceUiVersion(): SpaceUiVersion {
     const saved = localStorage.getItem(SPACE_UI_KEY);
     if (isSpaceUiVersion(saved)) return saved;
   } catch {}
-  return "classic";
+  return "new";
 }
 
 export function writeSpaceUiVersion(version: SpaceUiVersion) {

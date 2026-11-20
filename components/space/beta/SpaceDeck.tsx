@@ -8,15 +8,16 @@ import {
   useRef,
   useState,
 } from "react";
+import { BetaDeckSlideProvider } from "./BetaSlideLayer";
 import SlideChrome from "./SlideChrome";
 import SlidePips from "./SlidePips";
 import { SPACE_SLIDE_COUNT, SPACE_SLIDES } from "./slides";
 
 const SWIPE_THRESHOLD = 50;
 const WHEEL_THRESHOLD = 40;
-const WHEEL_COOLDOWN_MS = 900;
+const WHEEL_COOLDOWN_MS = 1100;
 
-type Phase = "idle" | "exit" | "enter";
+type Phase = "idle" | "enter";
 type Dir = 1 | -1;
 
 function prefersReducedMotion() {
@@ -69,7 +70,6 @@ export default function SpaceDeck({
 
   const phaseRef = useRef<Phase>("idle");
   const displayedRef = useRef(index);
-  const pendingRef = useRef<number | null>(null);
   const dirRef = useRef<Dir>(1);
   const queuedRef = useRef<number | null>(null);
   const deckRef = useRef<HTMLDivElement | null>(null);
@@ -99,7 +99,6 @@ export default function SpaceDeck({
   const finishEnter = useCallback(() => {
     clearAnimTimer();
     phaseRef.current = "idle";
-    pendingRef.current = null;
     setStageMotion("");
     const queued = queuedRef.current;
     queuedRef.current = null;
@@ -118,25 +117,6 @@ export default function SpaceDeck({
     animTimerRef.current = window.setTimeout(fn, ms);
   }, [clearAnimTimer]);
 
-  const completeExit = useCallback(() => {
-    const next = pendingRef.current;
-    if (next == null) {
-      finishEnter();
-      return;
-    }
-    displayedRef.current = next;
-    setDisplayedIndex(next);
-    onIndexChange(next);
-    const stage = getDeckScrollStage(deckRef.current);
-    if (stage) stage.scrollTop = 0;
-    phaseRef.current = "enter";
-    const dir = dirRef.current;
-    setStageMotion(dir === 1 ? "beta-stage--enter-next" : "beta-stage--enter-prev");
-    armAnimTimer(480, () => {
-      if (phaseRef.current === "enter") finishEnter();
-    });
-  }, [armAnimTimer, finishEnter, onIndexChange]);
-
   const goTo = useCallback((next: number) => {
     const clamped = Math.max(0, Math.min(SPACE_SLIDE_COUNT - 1, next));
     if (clamped === displayedRef.current && phaseRef.current === "idle") return;
@@ -144,7 +124,6 @@ export default function SpaceDeck({
     if (!transitionEnabled || prefersReducedMotion()) {
       clearAnimTimer();
       phaseRef.current = "idle";
-      pendingRef.current = null;
       queuedRef.current = null;
       displayedRef.current = clamped;
       setDisplayedIndex(clamped);
@@ -162,13 +141,17 @@ export default function SpaceDeck({
 
     const dir: Dir = clamped > displayedRef.current ? 1 : -1;
     dirRef.current = dir;
-    pendingRef.current = clamped;
-    phaseRef.current = "exit";
-    setStageMotion(dir === 1 ? "beta-stage--exit-next" : "beta-stage--exit-prev");
-    armAnimTimer(420, () => {
-      if (phaseRef.current === "exit") completeExit();
+    displayedRef.current = clamped;
+    setDisplayedIndex(clamped);
+    onIndexChange(clamped);
+    const stage = getDeckScrollStage(deckRef.current);
+    if (stage) stage.scrollTop = 0;
+    phaseRef.current = "enter";
+    setStageMotion(dir === 1 ? "beta-stage--enter-next" : "beta-stage--enter-prev");
+    armAnimTimer(600, () => {
+      if (phaseRef.current === "enter") finishEnter();
     });
-  }, [armAnimTimer, clearAnimTimer, completeExit, onIndexChange, transitionEnabled]);
+  }, [armAnimTimer, clearAnimTimer, finishEnter, onIndexChange, transitionEnabled]);
 
   goToRef.current = goTo;
 
@@ -176,11 +159,11 @@ export default function SpaceDeck({
   const goNext = useCallback(() => goTo(displayedRef.current + 1), [goTo]);
 
   function onStageAnimationEnd(event: AnimationEvent<HTMLDivElement>) {
-    if (event.target !== event.currentTarget) return;
-    if (phaseRef.current === "exit") {
-      completeExit();
+    if (event.animationName !== "betaStageEnterNext" && event.animationName !== "betaStageEnterPrev") {
       return;
     }
+    const target = event.target;
+    if (!(target instanceof HTMLElement) || !target.classList.contains("beta-slide-layer")) return;
     if (phaseRef.current === "enter") {
       finishEnter();
     }
@@ -258,6 +241,7 @@ export default function SpaceDeck({
     <div
       ref={deckRef}
       className="beta-deck"
+      data-active-slide={slide.id}
       onTouchStart={(event) => {
         const touch = event.changedTouches[0];
         touchStart.current = touch
@@ -294,12 +278,11 @@ export default function SpaceDeck({
       </div>
 
       <div className="beta-deck-stage" aria-live="polite">
-        <div
-          className={`beta-deck-stage-inner ${stageMotion}`.trim()}
-          onAnimationEnd={onStageAnimationEnd}
-        >
-          {children}
-        </div>
+        <BetaDeckSlideProvider activeIndex={displayedIndex} stageMotion={stageMotion}>
+          <div className="beta-deck-stage-inner" onAnimationEnd={onStageAnimationEnd}>
+            {children}
+          </div>
+        </BetaDeckSlideProvider>
       </div>
 
       <SlidePips index={displayedIndex} onSelect={goTo} />

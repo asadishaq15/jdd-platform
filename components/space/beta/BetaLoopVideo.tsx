@@ -63,6 +63,17 @@ export default function BetaLoopVideo({
     return () => observer.disconnect();
   }, []);
 
+  // Keep encodings playing even on hidden deck slides — avoids poster flash on resume.
+  useEffect(() => {
+    if (prefersReducedMotion()) return;
+    const list = lightSrc ? [nightRef.current, lightRef.current] : [singleRef.current];
+    void (async () => {
+      const videos = list.filter((v): v is HTMLVideoElement => Boolean(v));
+      await Promise.all(videos.map((v) => whenCanPlay(v)));
+      videos.forEach(playVideo);
+    })();
+  }, [lightSrc, src]);
+
   // Single-source path (no light variant)
   useEffect(() => {
     if (lightSrc) return;
@@ -76,12 +87,9 @@ export default function BetaLoopVideo({
     }
 
     playVideo(video);
-    return () => {
-      video.pause();
-    };
   }, [lightSrc, src]);
 
-  // Dual-source path — keep both loaded; crossfade without load() swap
+  // Dual-source theme crossfade (no src reload; do not pause on deck hide)
   useEffect(() => {
     if (!lightSrc) return;
 
@@ -99,7 +107,7 @@ export default function BetaLoopVideo({
       lightVideo.pause();
       nightVideo.removeAttribute("autoplay");
       lightVideo.removeAttribute("autoplay");
-      setActiveLayer(night || !lightSrc ? "night" : "light");
+      setActiveLayer(night ? "night" : "light");
       return;
     }
 
@@ -109,11 +117,13 @@ export default function BetaLoopVideo({
 
     let cancelled = false;
 
+    playVideo(incoming);
+    setActiveLayer(nextLayer);
+
     void (async () => {
       await whenCanPlay(incoming);
       if (cancelled) return;
       playVideo(incoming);
-      setActiveLayer(nextLayer);
       fadeTimerRef.current = window.setTimeout(() => {
         if (!cancelled && outgoing !== incoming) {
           outgoing.pause();
@@ -149,7 +159,7 @@ export default function BetaLoopVideo({
         muted
         loop
         playsInline
-        preload="metadata"
+        preload="auto"
         autoPlay
       />
     );
@@ -168,7 +178,7 @@ export default function BetaLoopVideo({
         loop
         playsInline
         preload="auto"
-        autoPlay={night}
+        autoPlay
       />
       <video
         ref={lightRef}
@@ -179,7 +189,7 @@ export default function BetaLoopVideo({
         loop
         playsInline
         preload="auto"
-        autoPlay={!night}
+        autoPlay
       />
     </div>
   );

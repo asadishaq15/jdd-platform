@@ -22,6 +22,7 @@ import MyJourneyPage from "./MyJourneyPage";
 import OrderCardFlow from "./OrderCardFlow";
 import PerfumeOilFlow from "./PerfumeOilFlow";
 import SpaceBetaHeader, { type SpaceProfileAction } from "./SpaceBetaHeader";
+import { BetaSlideLayer } from "./BetaSlideLayer";
 import SpaceDeck from "./SpaceDeck";
 import SpaceEventsDrawer from "./SpaceEventsDrawer";
 import SpaceRemindersModal from "./SpaceRemindersModal";
@@ -157,7 +158,6 @@ export default function SpaceEntryBeta({
     window.location.assign("/sign-in");
   }
 
-  const slide = SPACE_SLIDES[slideIndex] || SPACE_SLIDES[0];
   const activeCircleEvent = circleDetailId
     ? [...circleEvents, ...communityCircleForWorld(world)].find((event) => event.id === circleDetailId) || null
     : null;
@@ -326,8 +326,8 @@ export default function SpaceEntryBeta({
                 <>
                   <p>No orders yet.</p>
                   <div className="stay-actions">
-                    <button className="tlink" type="button" onClick={openOrderFromMenu}>
-                      Order my card
+                    <button className="beta-cta beta-orders-cta" type="button" onClick={openOrderFromMenu}>
+                      Order my card <span aria-hidden="true">→</span>
                     </button>
                   </div>
                 </>
@@ -474,41 +474,45 @@ export default function SpaceEntryBeta({
           onIndexChange={setSlideIndex}
           transitionEnabled={!flow && !profileBusy && !circleDetailId && !accessCodeOpen}
         >
-          {slide.id === "identity" && <IdentitySlide account={account} world={world} />}
-          {slide.id === "world" && <ChosenWorldSlide world={world} guest={guest} />}
-          {slide.id === "scent" && (
-            <ScentInvitationSlide
-              world={world}
-              guest={guest}
-              guestName={guestName}
-              state={state}
-              canOrder={canOrder}
-              onOrder={() => setFlow("order")}
-              onSimulateDelivery={simulateDelivery}
-              onMarkReceived={markReceived}
-            />
-          )}
-          {slide.id === "intention" && (
-            <IntentionSlide state={state} onSave={updateState} />
-          )}
-          {slide.id === "ritual" && (
-            <RitualSlide
-              active={ritualActive}
-              guest={guest}
-              onRitual={() => setFlow("ritual")}
-              onOil={() => setFlow("oil")}
-            />
-          )}
-          {slide.id === "community" && (
-            <CommunitySlide
-              world={world}
-              guest={guest}
-              state={state}
-              circleEvents={circleEvents}
-              onOpenEvent={setCircleDetailId}
-              onRequestAccessCode={() => setAccessCodeOpen(true)}
-            />
-          )}
+          {SPACE_SLIDES.map((def, i) => (
+            <BetaSlideLayer key={def.id} index={i} slideId={def.id}>
+              {def.id === "identity" && <IdentitySlide account={account} world={world} />}
+              {def.id === "world" && <ChosenWorldSlide world={world} guest={guest} />}
+              {def.id === "scent" && (
+                <ScentInvitationSlide
+                  world={world}
+                  guest={guest}
+                  guestName={guestName}
+                  state={state}
+                  canOrder={canOrder}
+                  onOrder={() => setFlow("order")}
+                  onSimulateDelivery={simulateDelivery}
+                  onMarkReceived={markReceived}
+                />
+              )}
+              {def.id === "intention" && (
+                <IntentionSlide state={state} onSave={updateState} />
+              )}
+              {def.id === "ritual" && (
+                <RitualSlide
+                  active={ritualActive}
+                  guest={guest}
+                  onRitual={() => setFlow("ritual")}
+                  onOil={() => setFlow("oil")}
+                />
+              )}
+              {def.id === "community" && (
+                <CommunitySlide
+                  world={world}
+                  guest={guest}
+                  state={state}
+                  circleEvents={circleEvents}
+                  onOpenEvent={setCircleDetailId}
+                  onRequestAccessCode={() => setAccessCodeOpen(true)}
+                />
+              )}
+            </BetaSlideLayer>
+          ))}
         </SpaceDeck>
       )}
 
