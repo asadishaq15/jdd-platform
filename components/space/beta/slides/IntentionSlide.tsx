@@ -91,6 +91,23 @@ export default function IntentionSlide({
             placeholder="a more present version of myself"
           />
         </div>
+
+        {state.intentPrompt && intention.trim() ? (
+          <>
+            <p className="beta-intent-prompt">
+              Write your intention on your card, then keep the same words here.
+            </p>
+            <div className="beta-scent-actions">
+              <button
+                className="beta-text-link"
+                type="button"
+                onClick={() => onSave({ ...state, intentPrompt: false })}
+              >
+                Keep my intention
+              </button>
+            </div>
+          </>
+        ) : null}
       </div>
     </article>
   );

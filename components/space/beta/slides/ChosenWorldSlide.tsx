@@ -1,18 +1,26 @@
 "use client";
 
+import { useState } from "react";
 import { SPACE_ICON_PIN, SPACE_ICON_SCENT } from "../../../../lib/space-icons";
 import type { HospitalityWorld } from "../../../../lib/worlds";
 import { worldDetails } from "../../../../lib/worlds";
+import BetaExploreStayModal from "../BetaExploreStayModal";
 
 export default function ChosenWorldSlide({
   world,
+  guest,
 }: {
   world: HospitalityWorld;
+  guest: boolean;
 }) {
+  const [bookOpen, setBookOpen] = useState(false);
   const detail = worldDetails[world.n] || worldDetails[9];
 
   return (
-    <article className="beta-split beta-world" aria-label="Your chosen world">
+    <article
+      className="beta-split beta-world"
+      aria-label={guest ? "Your stay" : "Your chosen world"}
+    >
       <div className="beta-split-media">
         <div
           className="beta-arch"
@@ -68,10 +76,18 @@ export default function ChosenWorldSlide({
           ))}
         </ul>
         <div className="beta-world-cta">
-          <button className="beta-cta" type="button" disabled>
-            Reflect on your stay <span aria-hidden="true">→</span>
-          </button>
-          <p className="beta-cta-note">Opens after your check-out.</p>
+          {guest ? (
+            <>
+              <button className="beta-cta" type="button" disabled>
+                Reflect on your stay <span aria-hidden="true">→</span>
+              </button>
+              <p className="beta-cta-note">Opens after your check-out.</p>
+            </>
+          ) : (
+            <button className="beta-cta" type="button" onClick={() => setBookOpen(true)}>
+              Book your stay <span aria-hidden="true">→</span>
+            </button>
+          )}
         </div>
         <div className="beta-scent-foot">
           <p className="beta-label beta-scent-label">
@@ -81,6 +97,12 @@ export default function ChosenWorldSlide({
           <p className="beta-scent-line">{detail.scent}</p>
         </div>
       </div>
+
+      <BetaExploreStayModal
+        property={world.property}
+        open={bookOpen}
+        onClose={() => setBookOpen(false)}
+      />
     </article>
   );
 }

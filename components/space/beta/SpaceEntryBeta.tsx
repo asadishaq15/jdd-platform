@@ -6,6 +6,8 @@ import type { CardOrder } from "../../../lib/space-data";
 import type { SpaceUiVersion } from "../../../lib/space-ui-version";
 import { communityCircleForWorld } from "../../../lib/community-circle";
 import { getWorld, worldNumberForDemoCode } from "../../../lib/worlds";
+import { activeWorldNumber, isGuestSpace } from "../../../lib/space-active-world";
+import { attachDemoCode, migrateStaysFromCode } from "../../../lib/space-property-snapshot";
 import { loadSpaceState, saveSpaceState, type SpaceState } from "../../../lib/space-state";
 import { createClient } from "../../../lib/supabase/client";
 import AccountSettings from "../AccountSettings";
@@ -79,7 +81,7 @@ export default function SpaceEntryBeta({
   }, [initialAccount]);
 
   useEffect(() => {
-    const loaded = loadSpaceState();
+    const loaded = migrateStaysFromCode(loadSpaceState());
     const synced = {
       ...loaded,
       ...(initialState.recommended ? { recommended: initialState.recommended } : {}),
@@ -87,6 +89,7 @@ export default function SpaceEntryBeta({
       ...(initialState.dateOfBirth ? { dateOfBirth: initialState.dateOfBirth } : {}),
       rsvps: { ...(loaded.rsvps || {}), ...initialRsvps },
     };
+    const hasDemoCode = Boolean(worldNumberForDemoCode(synced.code));
     const connected = stays.find((stay) => stay.id === activeStayId) || stays[0];
     const latestOrder = initialOrders[0];
     const persistedOrder = latestOrder
@@ -99,21 +102,23 @@ export default function SpaceEntryBeta({
           },
         }
       : {};
-    const next = connected
-      ? { ...synced, ...persistedOrder, visited: connected.property.worldNumber }
-      : { ...synced, ...persistedOrder };
+    const next = hasDemoCode
+      ? synced
+      : connected
+        ? { ...synced, ...persistedOrder, visited: connected.property.worldNumber }
+        : { ...synced, ...persistedOrder };
     setState(next);
     saveSpaceState(next);
   }, [activeStayId, initialOrders, initialRsvps, initialState.chosen, initialState.dateOfBirth, initialState.recommended, stays]);
 
   const connectedStay = stays.find((stay) => stay.id === activeStayId) || stays[0];
-  const codeWorldNumber = worldNumberForDemoCode(state.code);
-  const activeNumber = codeWorldNumber || connectedStay?.property.worldNumber || state.visited || state.chosen || state.recommended || 9;
+  const guest = isGuestSpace(state);
+  const activeNumber = activeWorldNumber(state) ?? connectedStay?.property.worldNumber ?? 9;
   const baseWorld = getWorld(activeNumber);
-  const world = connectedStay && !codeWorldNumber
-    ? { ...baseWorld, property: connectedStay.property.name, country: connectedStay.property.country || baseWorld.country }
-    : baseWorld;
-  const guest = Boolean(connectedStay || (state.visited && state.code));
+  const world =
+    connectedStay && !guest
+      ? { ...baseWorld, property: connectedStay.property.name, country: connectedStay.property.country || baseWorld.country }
+      : baseWorld;
   const guestName = connectedStay?.guestName || account.fullName;
   // Show order CTA for discovery guests and inactive/no-stay members; API persists only when a stay exists.
   const canOrder = true;
@@ -137,8 +142,12 @@ export default function SpaceEntryBeta({
   }
 
   function markReceived() {
-    // HTML mark-received / card-received → status received; scroll to intention
-    updateState({ ...state, cardStatus: "received" });
+    // HTML card-received → received; members with intention get intentPrompt + scroll to intention
+    updateState({
+      ...state,
+      cardStatus: "received",
+      ...(!guest && state.intention?.trim() ? { intentPrompt: true } : {}),
+    });
     if (INTENTION_SLIDE_INDEX >= 0) setSlideIndex(INTENTION_SLIDE_INDEX);
   }
 
@@ -205,15 +214,7 @@ export default function SpaceEntryBeta({
       <BetaAccessCodeFlow
         onClose={() => setAccessCodeOpen(false)}
         onComplete={({ code, visited }) => {
-          updateState({
-            ...state,
-            code,
-            visited,
-            entryMode: "code",
-            intention: undefined,
-            becoming: undefined,
-            reminder: undefined,
-          });
+          updateState(attachDemoCode(state, code, visited));
           setAccessCodeOpen(false);
         }}
       />
@@ -241,12 +242,17 @@ export default function SpaceEntryBeta({
   }
 
   const cardStatusLabel = ({
-    none: "No card ordered",
+    none: "Not ordered",
     preparing: "Preparing",
     sent: "Sent",
     delivered: "Delivered",
     received: "Received",
   } as const)[state.cardStatus || "none"];
+
+  function openOrderFromMenu() {
+    setProfilePanel(null);
+    setFlow("order");
+  }
 
   const profileBusy = Boolean(profilePanel || eventsOpen || exploreOpen || legalOpen);
 
@@ -280,14 +286,52 @@ export default function SpaceEntryBeta({
             if (event.target === event.currentTarget) setProfilePanel(null);
           }}
         >
-          <section className="jm-in glass" role="dialog" aria-modal="true" aria-label="My orders">
+          <section className="jm-in glass beta-orders-sheet" role="dialog" aria-modal="true" aria-label="My orders">
             <h2 className="jm-title">My orders</h2>
             <div className="jm-text">
-              <p>
-                {state.order ? `${state.order.property} · ${state.order.state}` : "No orders yet."}
-                <br />
-                Scented card status: {cardStatusLabel}.
-              </p>
+              {state.order ? (
+                <div className="beta-orders-acc">
+                  <p className="acc-l">Scented card</p>
+                  <p className="acc-v">
+                    {state.order.property} · {state.order.state}
+                  </p>
+                  <p className="acc-l">For</p>
+                  <p className="acc-v">{state.order.recipient}</p>
+                  {state.order.address || state.order.city ? (
+                    <>
+                      <p className="acc-l">Deliver to</p>
+                      <p className="acc-v">
+                        {[state.order.address, state.order.city, state.order.zip, state.order.country]
+                          .filter(Boolean)
+                          .join(", ")}
+                      </p>
+                    </>
+                  ) : null}
+                  {state.order.price ? (
+                    <>
+                      <p className="acc-l">Price</p>
+                      <p className="acc-v">{state.order.price}</p>
+                    </>
+                  ) : null}
+                  {state.order.payment ? (
+                    <>
+                      <p className="acc-l">Payment method</p>
+                      <p className="acc-v">{state.order.payment}</p>
+                    </>
+                  ) : null}
+                  <p className="acc-l">Status</p>
+                  <p className="acc-v">{cardStatusLabel}</p>
+                </div>
+              ) : (
+                <>
+                  <p>No orders yet.</p>
+                  <div className="stay-actions">
+                    <button className="tlink" type="button" onClick={openOrderFromMenu}>
+                      Order my card
+                    </button>
+                  </div>
+                </>
+              )}
             </div>
             <p className="links small">
               <button className="tlink" type="button" onClick={() => setProfilePanel(null)}>Close</button>
@@ -307,7 +351,20 @@ export default function SpaceEntryBeta({
           <section className="jm-in glass" role="dialog" aria-modal="true" aria-label="My stays">
             <h2 className="jm-title">My stays</h2>
             <div className="jm-text">
-              {stays.length ? (
+              {(state.stays || []).length ? (
+                <div className="beta-orders-acc">
+                  <p className="acc-l">Your stays, connected to My Space.</p>
+                  {state.stays!.map((stay) => {
+                    const row = getWorld(stay.n);
+                    return (
+                      <div key={`${stay.n}-${stay.code}`}>
+                        <p className="acc-v">{row.property}</p>
+                        <p className="acc-l">{row.state}</p>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : stays.length ? (
                 stays.map((stay) => (
                   <p key={stay.id}>
                     <strong>{stay.property.name}</strong>
@@ -317,7 +374,7 @@ export default function SpaceEntryBeta({
                   </p>
                 ))
               ) : (
-                <p>{state.code ? `${world.property} is connected.` : "No activated stays yet."}</p>
+                <p>No activated stays yet.</p>
               )}
             </div>
             <p className="links small">
@@ -413,11 +470,12 @@ export default function SpaceEntryBeta({
       ) : (
         <SpaceDeck
           index={slideIndex}
+          guest={guest}
           onIndexChange={setSlideIndex}
           transitionEnabled={!flow && !profileBusy && !circleDetailId && !accessCodeOpen}
         >
           {slide.id === "identity" && <IdentitySlide account={account} world={world} />}
-          {slide.id === "world" && <ChosenWorldSlide world={world} />}
+          {slide.id === "world" && <ChosenWorldSlide world={world} guest={guest} />}
           {slide.id === "scent" && (
             <ScentInvitationSlide
               world={world}
@@ -436,6 +494,7 @@ export default function SpaceEntryBeta({
           {slide.id === "ritual" && (
             <RitualSlide
               active={ritualActive}
+              guest={guest}
               onRitual={() => setFlow("ritual")}
               onOil={() => setFlow("oil")}
             />

@@ -89,7 +89,8 @@ export default function ScentInvitationSlide({
 
         {memberNotOrdered ? (
           <p className="beta-scent-body">
-            A personalized card that introduces the aroma of this hospitality world.
+            A personalised card that introduces the aroma of {world.property}. It arrives by post
+            and becomes part of your ritual.
           </p>
         ) : null}
 

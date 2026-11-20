@@ -8,10 +8,12 @@ const RITUAL_POSTER = "/assets/bg-05-my-ritual-breathing-star-poster.jpg";
 
 export default function RitualSlide({
   active,
+  guest,
   onRitual,
   onOil,
 }: {
   active: boolean;
+  guest: boolean;
   onRitual: () => void;
   onOil: () => void;
 }) {
@@ -34,14 +36,21 @@ export default function RitualSlide({
               <p className="beta-ritual-status">Active</p>
             </>
           ) : (
-            <>
-              <p className="beta-ritual-lead beta-ritual-lead-preview">
-                Your invitation ritual begins
-                <br />
-                when your card arrives.
-              </p>
-              <p className="beta-ritual-status beta-ritual-status-muted">Preview</p>
-            </>
+            <p className="beta-ritual-lead beta-ritual-lead-preview">
+              {guest ? (
+                <>
+                  Your ritual begins when
+                  <br />
+                  you arrive in your room.
+                </>
+              ) : (
+                <>
+                  Your invitation ritual begins
+                  <br />
+                  when your card arrives.
+                </>
+              )}
+            </p>
           )}
           <button className="beta-text-link" type="button" onClick={onRitual}>
             {active ? "Open my invitation ritual" : "Read the steps"}

@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { createPortal } from "react-dom";
+import { useState } from "react";
 import { communityCircleForWorld } from "../../../../lib/community-circle";
+import BetaExploreStayModal from "../BetaExploreStayModal";
 import type { CommunityCircleEvent } from "../../../../lib/space-data";
 import { SPACE_ICON_PIN } from "../../../../lib/space-icons";
 import type { SpaceState } from "../../../../lib/space-state";
@@ -20,14 +20,6 @@ const CATEGORY_LABELS: Record<CommunityCircleEvent["category"], string> = {
 };
 
 const CATEGORIES = ["event", "invite", "news"] as const;
-
-/** Four balanced lines sized to stay as four rows on mobile */
-const COMMUNITY_HERO_LINES = [
-  "You belong among people who are willing to see",
-  "what others overlook connected by unconventional",
-  "perception, creative solitude, experimentation and",
-  "the ability to transform limitation into a new point of view.",
-] as const;
 
 export default function CommunitySlide({
   world,
@@ -47,14 +39,6 @@ export default function CommunitySlide({
   const [stayNoteOpen, setStayNoteOpen] = useState(false);
   const circle = communityCircleForWorld(world);
 
-  useEffect(() => {
-    if (!stayNoteOpen) return;
-    function onKey(event: KeyboardEvent) {
-      if (event.key === "Escape") setStayNoteOpen(false);
-    }
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [stayNoteOpen]);
   const byCategory = Object.fromEntries(
     CATEGORIES.map((category) => [
       category,
@@ -66,12 +50,9 @@ export default function CommunitySlide({
     <article className="beta-community" aria-label="My community">
       <div className="beta-community-hero">
         <h2 className="beta-community-title">My community</h2>
+        <p className="beta-mantra beta-community-mantra">{world.mantra}</p>
         <p className="beta-community-desc">
-          {COMMUNITY_HERO_LINES.map((line) => (
-            <span key={line} className="beta-community-desc-line">
-              {line}
-            </span>
-          ))}
+          <span className="beta-community-desc-body">{world.desc}</span>
         </p>
         <button className="beta-cta" type="button" onClick={() => setStayNoteOpen(true)}>
           {guest ? "Plan your next stay" : "Plan your stay"}{" "}
@@ -142,13 +123,11 @@ export default function CommunitySlide({
         </div>
       ) : (
         <div className="beta-community-locked">
-          <h3 className="beta-community-reserved-title">
-            Reserved for guests of the <em>house.</em>
-          </h3>
+          <h3 className="beta-community-reserved-title">Reserved for hotel guests</h3>
           <p className="beta-community-reserved-body">
             Private evenings, guest invitations and news
             <br />
-            from {world.property} open after your stay.
+            from {world.property} open with your stay.
           </p>
           <button className="beta-text-link" type="button" onClick={onRequestAccessCode}>
             Enter your access code
@@ -156,32 +135,11 @@ export default function CommunitySlide({
         </div>
       )}
 
-      {stayNoteOpen
-        ? createPortal(
-            <div
-              className="jmodal open beta-stay-note"
-              role="presentation"
-              onMouseDown={(event) => {
-                if (event.target === event.currentTarget) setStayNoteOpen(false);
-              }}
-            >
-              <section className="jm-in glass" role="dialog" aria-modal="true" aria-label="Plan your stay">
-                <p className="jm-text bn-lines">
-                  <span>In the live platform, this opens</span>
-                  <span>the booking page of {world.property}.</span>
-                </p>
-                <p className="jm-text bn-lines">
-                  <span>This demo is not connected to any booking system,</span>
-                  <span>and no card order is needed to plan a stay.</span>
-                </p>
-                <button className="beta-text-link" type="button" onClick={() => setStayNoteOpen(false)}>
-                  Close
-                </button>
-              </section>
-            </div>,
-            document.body,
-          )
-        : null}
+      <BetaExploreStayModal
+        property={world.property}
+        open={stayNoteOpen}
+        onClose={() => setStayNoteOpen(false)}
+      />
     </article>
   );
 }

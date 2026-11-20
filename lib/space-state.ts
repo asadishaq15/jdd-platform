@@ -1,3 +1,5 @@
+import type { SpacePropertySnapshot } from "./space-property-snapshot";
+
 export type ReminderFrequency = "off" | "once" | "daily" | "weekly";
 export type ProfileReminderFrequency = "off" | "once" | "daily";
 export type RitualReminderFrequency = "once" | "daily" | "weekly";
@@ -62,6 +64,14 @@ export type SpaceState = {
     tz?: string;
   };
   rsvps?: Record<string, boolean>;
+  /** Demo stays tied to access codes (HTML st.stays). */
+  stays?: { n: number; code: string }[];
+  /** After mark-received: invite keeping written intention on the card (HTML st.intentPrompt). */
+  intentPrompt?: boolean;
+  /** Ritual act text; cleared on resetCommitment when switching stay properties. */
+  action?: string;
+  /** Per-property card order + RSVP progress (HTML st.byProp); key `acct` = chosen-world, no code. */
+  byProp?: Record<string, SpacePropertySnapshot>;
 };
 
 export const SPACE_STATE_KEY = "jdd-space-react-v1";

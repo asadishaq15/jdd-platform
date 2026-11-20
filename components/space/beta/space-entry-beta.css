@@ -1919,6 +1919,26 @@ body:not(.night) .beta-scene-light {
   white-space: nowrap;
 }
 
+.beta-community-mantra {
+  margin: 12px 0 0;
+  text-align: center;
+}
+
+.beta-community-desc-body {
+  display: block;
+  white-space: normal;
+}
+
+.beta-intent-prompt {
+  margin: 18px 0 0;
+  padding: 12px 16px;
+  border: 1px solid var(--line);
+  max-width: 36ch;
+  font-size: 13.5px;
+  line-height: 1.6;
+  color: var(--beta-soft-text);
+}
+
 /* In-flow mid band between hero and locked/unlocked — scrolls with content, no overlap */
 .beta-community-video-band {
   position: relative;
@@ -2201,6 +2221,40 @@ body:not(.night) .beta-scene-light {
 
 .beta-stay-note .beta-text-link {
   margin-top: 28px;
+}
+
+.space-entry-beta .beta-orders-sheet {
+  max-width: 440px;
+}
+
+.space-entry-beta .beta-orders-acc {
+  display: grid;
+  gap: 0;
+  text-align: left;
+}
+
+.space-entry-beta .beta-orders-acc .acc-l {
+  margin: 18px 0 4px;
+  color: var(--beta-muted, var(--muted));
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.space-entry-beta .beta-orders-acc .acc-l:first-child {
+  margin-top: 0;
+}
+
+.space-entry-beta .beta-orders-acc .acc-v {
+  margin: 0;
+  color: var(--beta-fg, var(--fg));
+  font-size: 14px;
+  font-weight: 300;
+  line-height: 1.5;
+}
+
+.space-entry-beta .beta-orders-sheet .stay-actions {
+  margin-top: 22px;
 }
 
 @media (max-width: 560px) {

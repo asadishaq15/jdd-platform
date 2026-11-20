@@ -53,11 +53,13 @@ function canStageScroll(stage: HTMLElement, deltaY: number) {
 
 export default function SpaceDeck({
   index,
+  guest = false,
   onIndexChange,
   transitionEnabled = true,
   children,
 }: {
   index: number;
+  guest?: boolean;
   onIndexChange: (index: number) => void;
   transitionEnabled?: boolean;
   children: ReactNode;
@@ -77,6 +79,8 @@ export default function SpaceDeck({
   const animTimerRef = useRef<number | null>(null);
 
   const slide = SPACE_SLIDES[displayedIndex] || SPACE_SLIDES[0];
+  const slideTitle =
+    slide.id === "world" && guest ? "Your stay" : slide.title;
 
   useEffect(() => {
     if (phaseRef.current !== "idle") return;
@@ -285,7 +289,7 @@ export default function SpaceDeck({
     >
       <div className="beta-deck-top">
         <div key={displayedIndex} className="beta-slide-chrome-wrap beta-chrome--fade">
-          <SlideChrome index={displayedIndex} title={slide.title} />
+          <SlideChrome index={displayedIndex} title={slideTitle} />
         </div>
       </div>
 
