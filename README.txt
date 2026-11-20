@@ -27,7 +27,8 @@ Open index.html in a browser. Everything runs locally; demo progress is saved in
 "Restart demo" clears it.
 
 Demo access codes
-SRNK-KYOT-2026 (Serein Kyoto) · LIOR-AEST-2026 (Liora Estate) · SIER-RARE-2026 (Sierra Reserve)
+SRNK-KYOT-2026 (Serein Kyoto) · LIOR-AEST-2026 (Liora Estate) · SIER-RARE-2026 (Sierra Reserve editted
+)
 
 What is simulated
 Sign-in (Clerk to be connected), payment, card delivery, reminders, bookings and maps are mocked.
