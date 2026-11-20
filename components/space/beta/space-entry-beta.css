@@ -54,7 +54,7 @@
 }
 
 body.night .space-entry-beta {
-  --beta-bg: #0c0908;
+  --beta-bg: #000000;
   --beta-fg: #eee8de;
   --beta-muted: #a69f93;
   --beta-line: rgba(255, 255, 255, 0.14);
@@ -1988,8 +1988,8 @@ body:not(.night) .beta-scene-light {
 .beta-community-unlocked {
   position: relative;
   z-index: 2;
-  width: min(1248px, 100%);
-  padding-inline: clamp(24px, 6vw, 96px);
+  width: min(1280px, 100%);
+  padding-inline: 40px;
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
@@ -2052,9 +2052,9 @@ body:not(.night) .beta-scene-light {
 
 .beta-community-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 0;
-  width: 100%;
+  width: min(1200px, 100%);
   margin-top: 12px;
   border-top: 1px solid var(--beta-line);
   border-bottom: 1px solid var(--beta-line);
@@ -2064,13 +2064,43 @@ body:not(.night) .beta-scene-light {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 10px;
-  padding: 28px 22px;
+  gap: 6px;
+  padding: 22px 14px;
   border: 0;
   background: transparent;
   color: inherit;
   text-align: center;
   cursor: pointer;
+}
+
+.beta-community-thumb {
+  display: block;
+  width: 100%;
+  height: clamp(110px, 14vh, 170px);
+  margin: 0 0 8px;
+  overflow: hidden;
+  background: var(--beta-photo-bg, #f4f4f2);
+}
+
+.beta-community-thumb img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 1.2s var(--ease-lux, ease);
+}
+
+.beta-community-col:hover .beta-community-thumb img {
+  transform: scale(1.03);
+}
+
+.beta-community-copy {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  min-width: 0;
 }
 
 .beta-community-col + .beta-community-col {
@@ -2079,9 +2109,10 @@ body:not(.night) .beta-scene-light {
 
 .beta-community-col .beta-label {
   margin: 0;
-  color: var(--beta-soft-text-strong, var(--beta-muted));
-  font-size: 14px;
+  color: var(--beta-muted);
+  font-size: 11px;
   font-weight: 400;
+  letter-spacing: 0.16em;
 }
 
 .beta-community-col.empty { cursor: default; }
@@ -2089,19 +2120,23 @@ body:not(.night) .beta-scene-light {
 .beta-community-event-title {
   position: relative;
   margin: 0;
-  padding-bottom: 10px;
+  padding-bottom: 8px;
   font-family: var(--serif);
   font-size: 21px;
-  font-weight: 300;
+  font-weight: 400;
   line-height: 1.25;
   color: var(--beta-fg);
+}
+
+.beta-community-col:not(.empty) .beta-community-event-title {
+  display: inline-block;
 }
 
 .beta-community-col:not(.empty) .beta-community-event-title::after {
   content: "";
   position: absolute;
-  left: 10%;
-  right: 10%;
+  left: 0;
+  right: 0;
   bottom: 0;
   height: 1px;
   background: linear-gradient(
@@ -2114,17 +2149,18 @@ body:not(.night) .beta-scene-light {
   );
 }
 
-.beta-community-col:not(.empty):hover .beta-community-event-title {
-  color: var(--beta-accent-bright);
+.beta-community-col:not(.empty):hover .beta-community-event-title,
+.beta-community-col:not(.empty):hover .beta-label {
+  color: var(--beta-accent-soft, #b98b5c);
 }
 
 .beta-community-event-body {
   margin: 0;
-  max-width: 28ch;
+  width: 100%;
   color: var(--beta-muted);
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 300;
-  line-height: 25px;
+  line-height: 22px;
 }
 
 .beta-community-empty {
@@ -2134,6 +2170,43 @@ body:not(.night) .beta-scene-light {
 .beta-community-unlocked > .beta-text-link,
 .beta-community-unlocked .beta-code-form {
   margin-top: 12px;
+}
+
+.beta-stay-note {
+  z-index: 80;
+}
+
+.beta-stay-note .jm-in {
+  width: min(520px, calc(100vw - 32px));
+  max-width: 520px;
+  padding: 42px 36px 32px;
+}
+
+.beta-stay-note .jm-text {
+  margin: 0;
+  color: var(--beta-muted, var(--muted));
+  font-size: 16px;
+  font-weight: 300;
+  line-height: 1.55;
+}
+
+.beta-stay-note .jm-text + .jm-text {
+  margin-top: 22px;
+}
+
+.beta-stay-note .bn-lines span {
+  display: block;
+  white-space: nowrap;
+}
+
+.beta-stay-note .beta-text-link {
+  margin-top: 28px;
+}
+
+@media (max-width: 560px) {
+  .beta-stay-note .bn-lines span {
+    white-space: normal;
+  }
 }
 
 .beta-code-form {
@@ -2209,7 +2282,7 @@ body:not(.night) .beta-scene-light {
   display: flex;
   flex-direction: column;
   align-items: center;
-  width: min(560px, 100%);
+  width: min(980px, calc(100% - 48px));
   margin: auto;
   padding: 12px 0 40px;
   text-align: center;
@@ -2217,12 +2290,10 @@ body:not(.night) .beta-scene-light {
 
 .beta-circle-detail > .evt-photo {
   position: relative;
-  left: 50%;
   width: min(560px, calc(100vw - 48px));
   aspect-ratio: 3 / 2;
-  margin: 0 0 34px;
+  margin: 0 auto 34px;
   overflow: hidden;
-  transform: translateX(-50%);
 }
 
 .beta-circle-detail > .evt-photo img {
@@ -2259,10 +2330,19 @@ body:not(.night) .beta-scene-light {
 
 .beta-circle-detail > .body.dob-intro {
   margin: 14px auto 0;
-  max-width: 42ch;
+  max-width: none;
   color: var(--beta-soft-text);
-  font-size: 14.5px;
-  line-height: 1.8;
+  font-size: 16px;
+  font-weight: 300;
+  line-height: 25px;
+  white-space: nowrap;
+}
+
+@media (max-width: 1040px) {
+  .beta-circle-detail > .body.dob-intro {
+    white-space: normal;
+    max-width: 42ch;
+  }
 }
 
 body.night .beta-circle-detail > .body.dob-intro {
@@ -2706,14 +2786,7 @@ body.night .beta-circle-detail > .body.dob-intro {
 
   .beta-scent .beta-invite-visual::after,
   .beta-intention .beta-intention-preview::after {
-    left: 0;
-    background: linear-gradient(
-      180deg,
-      transparent 0%,
-      transparent 55%,
-      color-mix(in srgb, var(--beta-bg) 55%, transparent) 78%,
-      var(--beta-bg) 100%
-    );
+    content: none;
   }
 
   .beta-scene-img {
@@ -2868,7 +2941,7 @@ body.night .beta-circle-detail > .body.dob-intro {
   }
 
   .beta-community-col {
-    padding: 16px 12px;
+    padding: 22px 16px;
   }
 
   .beta-community-col + .beta-community-col {
@@ -2961,8 +3034,10 @@ body.night .beta-circle-detail > .body.dob-intro {
     font-size: 18px;
   }
 
-  .beta-community-event-body {
-    font-size: 14px;
-    line-height: 1.5;
+  .beta-community-event-body,
+  .beta-circle-detail > .body.dob-intro {
+    font-size: 13px;
+    line-height: 1.45;
+    white-space: normal;
   }
 }

@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useMemo, useState, type CSSProperties, type FormEvent, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type CSSProperties, type FormEvent, type ReactNode } from "react";
 import BrandMark from "../brand/BrandMark";
 import GradientDefs from "../layout/GradientDefs";
 import ThemeToggle from "../layout/ThemeToggle";
 import VisitorAuthPanel from "../auth/VisitorAuthPanel";
+import LocationSuggestField from "./LocationSuggestField";
 import { formatDateOfBirth } from "../../lib/zodiac";
 import { stateImageSrc } from "../../lib/state-images";
 import {
@@ -17,6 +18,12 @@ import {
   type HospitalityWorld,
 } from "../../lib/worlds";
 import { loadSpaceState, saveSpaceState, type SpaceState } from "../../lib/space-state";
+import {
+  CITIES,
+  COUNTRIES,
+  foldLocationQuery,
+  type CityEntry,
+} from "../../lib/world-cities";
 import "./visitor-onboarding.css";
 
 /** Matches HTML layout script: content in `.stage`, fixed action line below. */
@@ -160,12 +167,21 @@ export default function OnboardingFlow() {
   const [guest, setGuest] = useState<Guest | null>(null);
   const [accessCode, setAccessCode] = useState("");
   const [codeError, setCodeError] = useState("");
+  const cityInputRef = useRef<HTMLInputElement>(null);
+  const dobNextRef = useRef<HTMLButtonElement>(null);
 
   const recommended = state.recommended || 9;
   const recommendedWorld = useMemo(() => getWorld(recommended), [recommended]);
   const previewWorld = useMemo(() => getWorld(preview || recommended), [preview, recommended]);
   const guestWorld = useMemo(() => (guest ? getWorld(guest.n) : null), [guest]);
   const wide = scene === "states";
+
+  const citySuggestItems = useMemo(() => {
+    const key = foldLocationQuery(country);
+    if (!key) return CITIES;
+    const scoped = CITIES.filter((entry) => foldLocationQuery(entry.k) === key);
+    return scoped.length ? scoped : CITIES;
+  }, [country]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -423,7 +439,7 @@ export default function OnboardingFlow() {
           <SceneCol
             actions={(
               <div className="actions fade" style={{ "--d": "1.6s" } as CSSProperties}>
-                <button className="tlink bp" type="button" onClick={submitDob}>Continue</button>
+                <button ref={dobNextRef} className="tlink bp" type="button" onClick={submitDob}>Continue</button>
               </div>
             )}
           >
@@ -461,12 +477,45 @@ export default function OnboardingFlow() {
             <div className="fgroup fade" style={{ "--d": "1.4s" } as CSSProperties}>
               <p className="flabel loc-label" id="locLabel">Where you are from</p>
               <div className={`loc${locError ? " bad" : ""}`} role="group" aria-labelledby="locLabel">
-                <span className="loc-f">
-                  <input placeholder="COUNTRY" aria-label="Country" maxLength={60} autoComplete="off" spellCheck={false} required value={country} onChange={(e) => setCountry(e.target.value)} />
-                </span>
-                <span className="loc-f">
-                  <input placeholder="CITY" aria-label="City" maxLength={60} autoComplete="off" spellCheck={false} required value={city} onChange={(e) => setCity(e.target.value)} />
-                </span>
+                <LocationSuggestField
+                  value={country}
+                  onChange={setCountry}
+                  items={COUNTRIES}
+                  getMain={(item) => item}
+                  getAll={(item) => item}
+                  renderOption={(item) => <span className="sg-c">{item}</span>}
+                  placeholder="COUNTRY"
+                  aria-label="Country"
+                  onPick={(item) => {
+                    const changed = country !== item;
+                    setCountry(item);
+                    if (changed) setCity("");
+                    setLocError(false);
+                    cityInputRef.current?.focus({ preventScroll: true });
+                  }}
+                />
+                <LocationSuggestField
+                  value={city}
+                  onChange={setCity}
+                  items={citySuggestItems}
+                  getMain={(item: CityEntry) => item.c}
+                  getAll={(item: CityEntry) => `${item.c} ${item.k}`}
+                  renderOption={(item: CityEntry) => (
+                    <>
+                      <span className="sg-c">{item.c}</span>
+                      <span className="sg-k">{item.k}</span>
+                    </>
+                  )}
+                  placeholder="CITY"
+                  aria-label="City"
+                  inputRef={cityInputRef}
+                  onPick={(item) => {
+                    setCity(item.c);
+                    setCountry(item.k);
+                    setLocError(false);
+                    dobNextRef.current?.focus({ preventScroll: true });
+                  }}
+                />
               </div>
               <p className={`err${locError ? " show" : ""}`} role="alert">Please enter your country and city.</p>
             </div>

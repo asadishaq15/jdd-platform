@@ -371,13 +371,12 @@ body.night .entry-providers .btn {
 
 .doc-link {
   border: 0;
-  background: none;
-  padding: 0;
+  border-bottom: 0;
+  padding: 0 0 2px;
   font: inherit;
   color: var(--fg);
   text-decoration: none;
-  background: linear-gradient(var(--copper-light), var(--copper-light)) 0 100% / 100% 1px no-repeat;
-  padding-bottom: 1px;
+  background: var(--underline) left bottom / 100% 1px no-repeat;
   cursor: pointer;
 }
 

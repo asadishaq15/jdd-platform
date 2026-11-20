@@ -36,7 +36,6 @@ body.night .space-drawer-panel {
 
 .space-drawer-close {
   position: relative;
-  font-size: 13px;
   text-transform: uppercase;
   color: var(--muted);
   padding-bottom: 4px;
@@ -44,6 +43,7 @@ body.night .space-drawer-panel {
   border: 0;
   cursor: pointer;
   font: inherit;
+  font-size: 13px;
 }
 
 .space-drawer-close::after {
@@ -480,33 +480,54 @@ body.night .space-st-arch {
   }
 }
 
-/* Legal sheet */
+/* Legal sheet — same document as the sign-in #legalOv */
 .space-legal-sheet {
   position: fixed;
   inset: 0;
   z-index: 95;
-  display: flex;
-  align-items: flex-end;
-  justify-content: center;
-  background: rgba(0, 0, 0, 0.55);
+  background: #fff;
+  color: #000;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .space-legal-in {
-  width: min(720px, 100%);
-  max-height: min(88vh, 900px);
-  overflow: auto;
-  background: var(--bg);
-  color: var(--fg);
-  border-top: 1px solid var(--line);
-  padding: 28px 32px 48px;
+  max-width: 680px;
+  margin: 0 auto;
+  padding: 56px 24px 80px;
+  background: #fff;
+  color: #000;
+  border: 0;
+  font: 16px/1.6 -apple-system, "Helvetica Neue", Helvetica, Arial, sans-serif;
+  text-align: left;
+  letter-spacing: 0;
+}
+
+.space-legal-sheet .space-drawer-close {
+  position: fixed;
+  top: 16px;
+  right: 20px;
+  z-index: 2;
+  background: #fff;
+  border: 0;
+  padding: 8px;
+  font: 14px -apple-system, "Helvetica Neue", Helvetica, Arial, sans-serif;
+  color: #000;
+  text-decoration: underline;
+  text-transform: none;
+  letter-spacing: 0;
+  cursor: pointer;
+}
+
+.space-legal-sheet .space-drawer-close::after {
+  display: none;
 }
 
 .space-legal-top {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 16px;
-  margin-bottom: 22px;
+  justify-content: flex-start;
+  margin: 0 0 28px;
+  padding-right: 72px;
 }
 
 .space-legal-tabs {
@@ -519,14 +540,13 @@ body.night .space-st-arch {
   padding: 0 0 6px;
   border: 0;
   background: none;
-  color: var(--muted);
-  font: inherit;
-  font-size: 13px;
+  color: #555;
+  font: 14px -apple-system, "Helvetica Neue", Helvetica, Arial, sans-serif;
   cursor: pointer;
 }
 
 .space-legal-tabs button.on {
-  color: var(--fg);
+  color: #000;
 }
 
 .space-legal-tabs button.on::after {
@@ -536,46 +556,46 @@ body.night .space-st-arch {
   right: 0;
   bottom: 0;
   height: 1px;
-  background: var(--copper-gradient, #d6a06d);
+  background: #000;
 }
 
-.space-legal-doc .eyebrow {
-  font-size: 11px;
-  text-transform: uppercase;
-  color: var(--muted);
-  margin: 0 0 8px;
+.space-legal-doc h1 {
+  font: 700 28px/1.2 -apple-system, "Helvetica Neue", Helvetica, Arial, sans-serif;
+  margin: 0 0 6px;
+  color: #000;
 }
 
-.space-legal-doc .doc-title {
-  font-family: var(--serif);
-  font-weight: 400;
-  font-size: 34px;
-  margin: 0 0 8px;
+.space-legal-doc h2 {
+  font: 700 18px/1.3 -apple-system, "Helvetica Neue", Helvetica, Arial, sans-serif;
+  margin: 36px 0 8px;
+  color: #000;
 }
 
-.space-legal-doc .doc-date {
-  font-size: 12px;
-  color: var(--muted);
-  margin: 0 0 22px;
-}
-
-.space-legal-doc h3 {
-  font-family: var(--serif);
-  font-weight: 400;
-  font-size: 20px;
-  margin: 22px 0 8px;
-}
-
-.space-legal-doc p {
-  margin: 0 0 12px;
+.space-legal-doc .muted {
+  color: #555;
   font-size: 14px;
-  line-height: 1.65;
-  color: var(--muted);
+  margin: 0 0 12px;
 }
 
-.space-legal-doc p b {
-  color: var(--fg);
-  font-weight: 500;
+.space-legal-doc p,
+.space-legal-doc li {
+  margin: 0 0 12px;
+  font: inherit;
+  color: #000;
+}
+
+.space-legal-doc ul {
+  padding-left: 20px;
+  margin: 0 0 12px;
+}
+
+.space-legal-doc a {
+  color: #000;
+  text-decoration: underline;
+}
+
+.space-legal-doc strong {
+  font-weight: 700;
 }
 
 /* Reminders modal (profile) */

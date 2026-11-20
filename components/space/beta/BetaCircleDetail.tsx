@@ -36,7 +36,9 @@ export default function BetaCircleDetail({
 }) {
   const [rsvpError, setRsvpError] = useState("");
   const [rsvping, setRsvping] = useState(false);
-  const saved = Boolean(state.rsvps?.[event.id] || state.rsvps?.[event.category]);
+  const saved = event.id.startsWith("demo-")
+    ? Boolean(state.rsvps?.[event.id])
+    : Boolean(state.rsvps?.[event.id] || state.rsvps?.[event.category]);
   const rsvpCategory = event.category === "news" ? null : event.category;
   const photoAlt = event.subtitle || event.title;
 
@@ -85,7 +87,7 @@ export default function BetaCircleDetail({
       rsvps: {
         ...(state.rsvps || {}),
         [event.id]: true,
-        [event.category]: true,
+        ...(event.id.startsWith("demo-") ? {} : { [event.category]: true }),
       },
     });
   }

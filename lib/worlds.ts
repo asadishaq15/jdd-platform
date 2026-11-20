@@ -120,3 +120,11 @@ export const matrixDestinyExamples = [
 export function normalizeAccessCode(code: string) {
   return code.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 12);
 }
+
+/** The three stay codes shown in the HTML demo. Anything else is not a stay code. */
+export function worldNumberForDemoCode(code?: string | null) {
+  const raw = normalizeAccessCode(code || "");
+  const option = DEMO_CODE_OPTIONS.find((item) => normalizeAccessCode(item.code) === raw);
+  if (!option) return null;
+  return demoCodes[raw] ?? null;
+}

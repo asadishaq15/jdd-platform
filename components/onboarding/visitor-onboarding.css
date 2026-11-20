@@ -3,6 +3,7 @@
   --act-h: 214px;
   --pad-x: 24px;
   --gold: linear-gradient(90deg,#91572D 0%,#C07841 13%,#E29F63 27%,#FFD39A 41%,#F1B374 54%,#F1B374 69%,#CE864B 85%,#804E2D 100%);
+  --underline: linear-gradient(90deg, transparent 0%, #B98B5C 15%, #E2B07A 50%, #B98B5C 85%, transparent 100%);
   --btn-bg: #0E0D0B;
   --btn-fg: #EEE8DE;
   --ls: .04em;
@@ -574,13 +575,13 @@ body.night .visitor-app .btn.primary {
 .visitor-app .st-cell { background: none; color: inherit; font: inherit; padding: 0 0 18px; }
 
 .visitor-app .agree button.doc-link {
-  background: none;
   border: 0;
-  padding: 0;
+  border-bottom: 0;
+  padding: 0 0 2px;
   font: inherit;
   color: var(--fg);
   cursor: pointer;
   text-decoration: none;
-  border-bottom: 1px solid var(--copper-light, #e6b98a);
+  background: var(--underline) left bottom / 100% 1px no-repeat;
 }
 .visitor-app .scr:not(.on) { visibility: hidden; }

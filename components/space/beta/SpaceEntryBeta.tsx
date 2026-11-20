@@ -4,7 +4,8 @@ import { useEffect, useState } from "react";
 import GradientDefs from "../../layout/GradientDefs";
 import type { CardOrder } from "../../../lib/space-data";
 import type { SpaceUiVersion } from "../../../lib/space-ui-version";
-import { getWorld } from "../../../lib/worlds";
+import { communityCircleForWorld } from "../../../lib/community-circle";
+import { getWorld, worldNumberForDemoCode } from "../../../lib/worlds";
 import { loadSpaceState, saveSpaceState, type SpaceState } from "../../../lib/space-state";
 import { createClient } from "../../../lib/supabase/client";
 import AccountSettings from "../AccountSettings";
@@ -24,7 +25,7 @@ import SpaceEventsDrawer from "./SpaceEventsDrawer";
 import SpaceRemindersModal from "./SpaceRemindersModal";
 import BetaCircleDetail from "./BetaCircleDetail";
 import ChosenWorldSlide from "./slides/ChosenWorldSlide";
-import CommunitySlide, { DEMO_COMMUNITY_EVENTS } from "./slides/CommunitySlide";
+import CommunitySlide from "./slides/CommunitySlide";
 import IdentitySlide from "./slides/IdentitySlide";
 import IntentionSlide from "./slides/IntentionSlide";
 import RitualSlide from "./slides/RitualSlide";
@@ -106,9 +107,10 @@ export default function SpaceEntryBeta({
   }, [activeStayId, initialOrders, initialRsvps, initialState.chosen, initialState.dateOfBirth, initialState.recommended, stays]);
 
   const connectedStay = stays.find((stay) => stay.id === activeStayId) || stays[0];
-  const activeNumber = connectedStay?.property.worldNumber || state.visited || state.chosen || state.recommended || 9;
+  const codeWorldNumber = worldNumberForDemoCode(state.code);
+  const activeNumber = codeWorldNumber || connectedStay?.property.worldNumber || state.visited || state.chosen || state.recommended || 9;
   const baseWorld = getWorld(activeNumber);
-  const world = connectedStay
+  const world = connectedStay && !codeWorldNumber
     ? { ...baseWorld, property: connectedStay.property.name, country: connectedStay.property.country || baseWorld.country }
     : baseWorld;
   const guest = Boolean(connectedStay || (state.visited && state.code));
@@ -148,7 +150,7 @@ export default function SpaceEntryBeta({
 
   const slide = SPACE_SLIDES[slideIndex] || SPACE_SLIDES[0];
   const activeCircleEvent = circleDetailId
-    ? [...circleEvents, ...DEMO_COMMUNITY_EVENTS].find((event) => event.id === circleDetailId) || null
+    ? [...circleEvents, ...communityCircleForWorld(world)].find((event) => event.id === circleDetailId) || null
     : null;
 
   if (flow === "order") {

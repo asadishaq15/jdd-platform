@@ -1,6 +1,8 @@
 "use client";
 
-import Link from "next/link";
+import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
+import { communityCircleForWorld } from "../../../../lib/community-circle";
 import type { CommunityCircleEvent } from "../../../../lib/space-data";
 import { SPACE_ICON_PIN } from "../../../../lib/space-icons";
 import type { SpaceState } from "../../../../lib/space-state";
@@ -18,40 +20,6 @@ const CATEGORY_LABELS: Record<CommunityCircleEvent["category"], string> = {
 };
 
 const CATEGORIES = ["event", "invite", "news"] as const;
-
-/** Demo circle cards matching space (1).html circleItem for Stillness / Serein Kyoto. */
-export const DEMO_COMMUNITY_EVENTS: CommunityCircleEvent[] = [
-  {
-    id: "demo-event",
-    propertyId: "demo",
-    category: "event",
-    title: "A long table of Stillness",
-    timing: "Thursday, 22 October · 8 pm",
-    subtitle: "A silent kaiseki dinner",
-    body: "A silent kaiseki dinner. An evening for guests connected by Stillness.",
-    thumbnailUrl: "/assets/events/kaiseki.jpg",
-  },
-  {
-    id: "demo-invite",
-    propertyId: "demo",
-    category: "invite",
-    title: "An invitation at dawn",
-    timing: "Tuesday, 3 November · 4 pm",
-    subtitle: "Moss-garden contemplation at dawn",
-    body: "Moss-garden contemplation at dawn. A quiet invitation for guests of Serein Kyoto.",
-    thumbnailUrl: "/assets/events/moss.jpg",
-  },
-  {
-    id: "demo-news",
-    propertyId: "demo",
-    category: "news",
-    title: "Now open at Serein Kyoto",
-    timing: "This week",
-    subtitle: "Private meditation in the tea house",
-    body: "Private meditation in the tea house – now open to guests of Serein Kyoto.",
-    thumbnailUrl: "/assets/events/tea.jpg",
-  },
-];
 
 /** Four balanced lines sized to stay as four rows on mobile */
 const COMMUNITY_HERO_LINES = [
@@ -71,15 +39,26 @@ export default function CommunitySlide({
   world: HospitalityWorld;
   guest: boolean;
   state: SpaceState;
-  /** Kept for call-site compatibility; unlocked grid uses DEMO_COMMUNITY_EVENTS for now. */
+  /** Kept for call-site compatibility. The grid uses the HTML circle for the open stay. */
   circleEvents?: CommunityCircleEvent[];
   onOpenEvent: (eventId: string) => void;
   onRequestAccessCode: () => void;
 }) {
+  const [stayNoteOpen, setStayNoteOpen] = useState(false);
+  const circle = communityCircleForWorld(world);
+
+  useEffect(() => {
+    if (!stayNoteOpen) return;
+    function onKey(event: KeyboardEvent) {
+      if (event.key === "Escape") setStayNoteOpen(false);
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [stayNoteOpen]);
   const byCategory = Object.fromEntries(
     CATEGORIES.map((category) => [
       category,
-      DEMO_COMMUNITY_EVENTS.find((event) => event.category === category) || null,
+      circle.find((event) => event.category === category) || null,
     ]),
   ) as Record<(typeof CATEGORIES)[number], CommunityCircleEvent | null>;
 
@@ -94,10 +73,10 @@ export default function CommunitySlide({
             </span>
           ))}
         </p>
-        <Link className="beta-cta" href="/discover?mode=dash">
+        <button className="beta-cta" type="button" onClick={() => setStayNoteOpen(true)}>
           {guest ? "Plan your next stay" : "Plan your stay"}{" "}
           <span aria-hidden="true">→</span>
-        </Link>
+        </button>
       </div>
 
       <div className="beta-community-video-band" aria-hidden="true">
@@ -130,7 +109,7 @@ export default function CommunitySlide({
                   </div>
                 );
               }
-              const saved = Boolean(state.rsvps?.[item.id] || state.rsvps?.[item.category]);
+              const saved = Boolean(state.rsvps?.[item.id]);
               return (
                 <button
                   key={item.id}
@@ -138,12 +117,20 @@ export default function CommunitySlide({
                   className="beta-community-col"
                   onClick={() => onOpenEvent(item.id)}
                 >
-                  <p className="beta-label">
-                    {CATEGORY_LABELS[category]}
-                    {saved ? " · Saved" : ""}
-                  </p>
-                  <p className="beta-community-event-title">{item.title}</p>
-                  <p className="beta-community-event-body">{item.subtitle || item.body}</p>
+                  {item.thumbnailUrl ? (
+                    <span className="beta-community-thumb">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={item.thumbnailUrl} alt="" />
+                    </span>
+                  ) : null}
+                  <span className="beta-community-copy">
+                    <p className="beta-label">
+                      {CATEGORY_LABELS[category]}
+                      {saved ? " · Saved" : ""}
+                    </p>
+                    <p className="beta-community-event-title">{item.title}</p>
+                    <p className="beta-community-event-body">{item.body}</p>
+                  </span>
                 </button>
               );
             })}
@@ -168,6 +155,33 @@ export default function CommunitySlide({
           </button>
         </div>
       )}
+
+      {stayNoteOpen
+        ? createPortal(
+            <div
+              className="jmodal open beta-stay-note"
+              role="presentation"
+              onMouseDown={(event) => {
+                if (event.target === event.currentTarget) setStayNoteOpen(false);
+              }}
+            >
+              <section className="jm-in glass" role="dialog" aria-modal="true" aria-label="Plan your stay">
+                <p className="jm-text bn-lines">
+                  <span>In the live platform, this opens</span>
+                  <span>the booking page of {world.property}.</span>
+                </p>
+                <p className="jm-text bn-lines">
+                  <span>This demo is not connected to any booking system,</span>
+                  <span>and no card order is needed to plan a stay.</span>
+                </p>
+                <button className="beta-text-link" type="button" onClick={() => setStayNoteOpen(false)}>
+                  Close
+                </button>
+              </section>
+            </div>,
+            document.body,
+          )
+        : null}
     </article>
   );
 }

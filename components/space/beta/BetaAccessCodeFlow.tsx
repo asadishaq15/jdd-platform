@@ -12,9 +12,8 @@ import ThemeToggle from "../../layout/ThemeToggle";
 import { stateImageSrc } from "../../../lib/state-images";
 import {
   DEMO_CODE_OPTIONS,
-  demoCodes,
   getWorld,
-  normalizeAccessCode,
+  worldNumberForDemoCode,
   type HospitalityWorld,
 } from "../../../lib/worlds";
 import "../../onboarding/visitor-onboarding.css";
@@ -26,11 +25,6 @@ export type AccessCodeResult = {
   code: string;
   visited: number;
 };
-
-function formatCodeDisplay(raw: string) {
-  const normalized = normalizeAccessCode(raw);
-  return normalized.match(/.{1,4}/g)?.join("-") || "";
-}
 
 function SceneCol({ children, actions }: { children: ReactNode; actions?: ReactNode }) {
   return (
@@ -106,17 +100,12 @@ export default function BetaAccessCodeFlow({
 
   function submitCode(event?: FormEvent) {
     event?.preventDefault();
-    const raw = normalizeAccessCode(code);
-    if (!raw) {
-      setError("Please enter your access code.");
+    const visited = worldNumberForDemoCode(code);
+    if (!visited) {
+      setError("Choose one of the demo codes.");
       return;
     }
-    if (raw.length < 12) {
-      setError("Please enter the full 12-character code.");
-      return;
-    }
-    const visited = demoCodes[raw] || 9;
-    setResolvedCode(raw);
+    setResolvedCode(code);
     setPreviewWorld(getWorld(visited));
     setImageFailed(false);
     setError("");
@@ -184,19 +173,14 @@ export default function BetaAccessCodeFlow({
                 <input
                   className={`code-input${error ? " bad" : ""}`}
                   type="text"
-                  inputMode="text"
-                  autoCapitalize="characters"
+                  inputMode="none"
                   autoComplete="off"
                   spellCheck={false}
-                  maxLength={14}
+                  readOnly
                   placeholder="XXXX-XXXX-XXXX"
                   aria-label="Access code"
+                  aria-readonly="true"
                   value={code}
-                  autoFocus={step === "code"}
-                  onChange={(event) => {
-                    setCode(formatCodeDisplay(event.target.value));
-                    setError("");
-                  }}
                 />
                 <p className={`err${error ? " show" : ""}`} role="alert">
                   {error || "Please enter your access code."}

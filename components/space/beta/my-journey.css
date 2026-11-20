@@ -524,10 +524,11 @@
         display:flex;flex-direction:column;align-items:center;justify-content:center
 }
 .my-journey .card .w{
-  font-family:var(--serif);font-style:italic;font-size:7.2cqw;max-width:100%;line-height:1.15;display:inline-block;padding:0 4px 3px;border-bottom:1px solid #8f8a82
+  font-family:var(--serif);font-weight:400;font-style:italic;letter-spacing:0;font-size:7.2cqw;max-width:100%;line-height:1.15;display:inline-block;padding:0 4px 3px;border-bottom:1px solid #8f8a82;
+  opacity:1;transform:none;filter:none;animation:none
 }
 .my-journey .card .b{
-  font-family:var(--sans);font-size:3.4cqw;text-transform:uppercase;margin:3.6cqw 0 2.8cqw;color:#2a2622
+  font-family:var(--sans);font-weight:400;letter-spacing:0;font-size:3.4cqw;text-transform:uppercase;margin:3.6cqw 0 2.8cqw;color:#2a2622
 }
 .my-journey .card .w.sm{
   font-size:7.2cqw
