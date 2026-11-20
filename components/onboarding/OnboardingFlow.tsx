@@ -291,11 +291,6 @@ export default function OnboardingFlow() {
         </button>
         <BrandMark className="mark" />
         <div className="top-r">
-          {scene !== "login" && scene !== "code" ? (
-            <button className="top-signin" type="button" onClick={() => go("login")}>
-              Sign in
-            </button>
-          ) : null}
           <ThemeToggle />
         </div>
       </header>

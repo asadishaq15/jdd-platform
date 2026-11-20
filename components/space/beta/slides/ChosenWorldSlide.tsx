@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { SPACE_ICON_PIN, SPACE_ICON_SCENT } from "../../../../lib/space-icons";
 import type { HospitalityWorld } from "../../../../lib/worlds";
 import { worldDetails } from "../../../../lib/worlds";
@@ -68,9 +67,12 @@ export default function ChosenWorldSlide({
             <li key={experience}>{experience}</li>
           ))}
         </ul>
-        <Link className="beta-cta" href="/discover?mode=dash">
-          Book your stay <span aria-hidden="true">→</span>
-        </Link>
+        <div className="beta-world-cta">
+          <button className="beta-cta" type="button" disabled>
+            Reflect on your stay <span aria-hidden="true">→</span>
+          </button>
+          <p className="beta-cta-note">Opens after your check-out.</p>
+        </div>
         <div className="beta-scent-foot">
           <p className="beta-label beta-scent-label">
             <img className="beta-inline-icon" src={SPACE_ICON_SCENT} alt="" aria-hidden="true" />

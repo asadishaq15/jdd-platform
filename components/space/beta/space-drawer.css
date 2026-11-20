@@ -123,7 +123,7 @@ body.night .space-drawer-panel {
 
 .space-ev {
   display: grid;
-  grid-template-columns: 132px 1fr;
+  grid-template-columns: 132px minmax(0, 1fr);
   gap: 22px;
   align-items: start;
   padding: 26px 0;
@@ -133,10 +133,16 @@ body.night .space-drawer-panel {
 .space-ev-img {
   width: 132px;
   height: 88px;
+  flex-shrink: 0;
   border-radius: 2px;
   overflow: hidden;
   background: var(--field, #f4f4f2);
   border: 1px solid var(--line);
+}
+
+.space-ev-copy {
+  min-width: 0;
+  text-align: left;
 }
 
 .space-ev-img img {
@@ -187,6 +193,7 @@ body.night .space-drawer-panel {
   font-weight: 300;
   font-size: 14px;
   color: var(--muted);
+  text-align: left;
 }
 
 .space-ev .status {
@@ -194,6 +201,7 @@ body.night .space-drawer-panel {
   align-items: center;
   gap: 8px;
   font-size: 13px;
+  color: var(--fg);
   margin-top: 12px;
 }
 
@@ -207,22 +215,29 @@ body.night .space-drawer-panel {
 
 .space-ev .links {
   display: flex;
+  justify-content: flex-start;
+  align-items: center;
   gap: 22px;
   margin-top: 14px;
+  text-align: left;
 }
 
 .space-ev .links button,
 .space-ev .links a {
   position: relative;
-  font-size: 12px;
-  text-transform: uppercase;
-  color: var(--fg);
-  padding-bottom: 4px;
-  text-decoration: none;
-  background: none;
+  display: inline-block;
+  margin: 0;
+  padding: 0 0 3px;
   border: 0;
-  cursor: pointer;
+  background: none;
+  color: var(--fg);
   font: inherit;
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  text-decoration: none;
+  text-align: left;
+  cursor: pointer;
 }
 
 .space-ev .links button::after,
@@ -238,42 +253,87 @@ body.night .space-drawer-panel {
 
 .space-ev .links .muted {
   color: var(--muted);
+  font-size: 10.5px;
+}
+
+.space-ev .links .muted::after {
+  background: var(--line);
 }
 
 .space-ev .ask {
+  margin: 14px 0 0;
   font-family: var(--serif);
   font-style: italic;
   font-size: 19px;
-  margin-top: 14px;
+  color: var(--fg);
 }
 
 .space-ev .btn-row {
   display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: stretch;
+  justify-content: flex-start;
   gap: 10px;
-  flex-wrap: wrap;
   margin-top: 10px;
 }
 
 .space-ev .btn {
-  padding: 11px 18px;
-  font-size: 14px;
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: auto;
+  min-width: 0;
+  min-height: 40px;
+  margin: 0;
+  padding: 0 18px;
   border: 1px solid var(--line);
+  border-radius: 0;
   background: transparent;
   color: var(--fg);
-  cursor: pointer;
   font: inherit;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1;
+  letter-spacing: 0;
+  text-transform: none;
+  white-space: nowrap;
+  vertical-align: middle;
+  appearance: none;
+  -webkit-appearance: none;
+  cursor: pointer;
 }
 
+/* Filled CTA — space (1).html .tlink.bp tokens; no copper hover fill */
 .space-ev .btn.primary {
-  background: #111110;
-  border-color: #111110;
-  color: #fff;
+  background: var(--beta-cta-bg, #111110);
+  border-color: var(--beta-cta-bg, #111110);
+  color: var(--beta-cta-fg, #fff);
+}
+
+.space-ev .btn.primary:hover,
+.space-ev .btn.primary:focus-visible {
+  background: var(--beta-cta-bg, #111110);
+  border-color: var(--beta-cta-bg, #111110);
+  color: var(--beta-cta-fg, #fff);
+  opacity: 0.88;
+  outline: none;
 }
 
 body.night .space-ev .btn.primary {
-  background: #ede8df;
-  border-color: #ede8df;
-  color: #1a1612;
+  background: var(--beta-cta-bg, #ede8df);
+  border-color: var(--beta-cta-bg, #ede8df);
+  color: var(--beta-cta-fg, #1a1612);
+}
+
+body.night .space-ev .btn.primary:hover,
+body.night .space-ev .btn.primary:focus-visible {
+  background: var(--beta-cta-bg, #ede8df);
+  border-color: var(--beta-cta-bg, #ede8df);
+  color: var(--beta-cta-fg, #1a1612);
+  opacity: 0.88;
 }
 
 .space-ev .done {
@@ -379,13 +439,40 @@ body.night .space-st-arch {
     font-size: 36px;
   }
 
+  /* Keep prototype row layout on mobile: 132px thumb + copy (never stack) */
   .space-ev {
-    grid-template-columns: 1fr;
+    grid-template-columns: 132px minmax(0, 1fr);
+    gap: 22px;
+    padding: 26px 0;
   }
 
   .space-ev-img {
-    width: 100%;
-    height: 140px;
+    width: 132px;
+    height: 88px;
+  }
+
+  .space-ev h4 {
+    font-size: 26px;
+  }
+
+  .space-ev .btn-row {
+    flex-direction: row;
+    flex-wrap: nowrap;
+    align-items: stretch;
+    justify-content: flex-start;
+    gap: 8px;
+    margin-top: 10px;
+  }
+
+  .space-ev .btn {
+    flex: 0 0 auto;
+    width: auto;
+    min-height: 36px;
+    padding: 0 12px;
+    font-size: 13px;
+    line-height: 1;
+    white-space: nowrap;
+    text-transform: none;
   }
 
   .space-states-grid {

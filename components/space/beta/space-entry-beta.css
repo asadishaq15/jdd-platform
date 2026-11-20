@@ -50,6 +50,7 @@
   overflow: hidden;
   background: var(--beta-bg);
   color: var(--beta-fg);
+  /* Theme tokens snap with body.night — no delayed wash (avoids arch/panel flipping early). */
 }
 
 body.night .space-entry-beta {
@@ -247,14 +248,22 @@ body.night .space-entry-beta {
   animation: betaHeaderGlow 2.4s ease-in-out infinite;
 }
 
+.space-entry-beta .dash-top,
+.space-entry-beta .dash-controls,
+.space-entry-beta .beta-bell-wrap {
+  overflow: visible;
+}
+
 .space-entry-beta .beta-notifs {
   position: absolute;
   top: calc(100% + 10px);
   right: 0;
-  z-index: 40;
-  width: min(420px, calc(100vw - 24px));
+  z-index: 60;
+  width: 420px;
+  max-width: calc(100vw - 24px);
   max-height: 80vh;
   overflow: auto;
+  -webkit-overflow-scrolling: touch;
   text-align: left;
   background: var(--beta-panel);
   border: 1px solid var(--beta-line-strong);
@@ -302,12 +311,18 @@ body.night .space-entry-beta {
 
 .space-entry-beta .beta-notif-actions {
   display: flex;
+  flex-direction: row;
   flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-start;
   gap: 10px;
   margin-top: 16px;
 }
 
 .space-entry-beta .beta-notif-btn {
+  flex: 0 0 auto;
+  width: auto;
+  min-width: 0;
   padding: 11px 18px;
   font: inherit;
   font-size: 14px;
@@ -317,15 +332,20 @@ body.night .space-entry-beta {
   cursor: pointer;
 }
 
+/* Filled CTA — space (1).html .tlink.bp: stable fill, no copper hover */
 .space-entry-beta .beta-notif-btn.primary {
   background: var(--beta-cta-bg);
   border-color: var(--beta-cta-bg);
   color: var(--beta-cta-fg);
 }
 
-.space-entry-beta .beta-notif-btn.primary:hover {
-  background: var(--beta-cta-hover);
-  border-color: var(--beta-cta-hover);
+.space-entry-beta .beta-notif-btn.primary:hover,
+.space-entry-beta .beta-notif-btn.primary:focus-visible {
+  background: var(--beta-cta-bg);
+  border-color: var(--beta-cta-bg);
+  color: var(--beta-cta-fg);
+  opacity: 0.88;
+  outline: none;
 }
 
 .space-entry-beta .pmenu-wrap {
@@ -686,6 +706,36 @@ body.night .space-entry-beta {
   height: 100%;
   object-fit: cover;
   object-position: center center;
+}
+
+/* Dual theme loop videos — stacked layers, opacity crossfade (no src reload) */
+.beta-loop-video {
+  position: relative;
+  display: block;
+  overflow: hidden;
+}
+
+.beta-loop-video > .beta-loop-video-layer {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center center;
+  opacity: 0;
+  transition: opacity 0.6s var(--ease-lux, cubic-bezier(0.22, 1, 0.36, 1));
+  pointer-events: none;
+}
+
+.beta-loop-video > .beta-loop-video-layer.is-active {
+  opacity: 1;
+  z-index: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .beta-loop-video > .beta-loop-video-layer {
+    transition: none;
+  }
 }
 
 .beta-identity-hero {
@@ -1117,9 +1167,43 @@ body.night .beta-arch-btn {
   line-height: 1.75;
 }
 
-.beta-world .beta-cta {
+.beta-world-cta {
+  --beta-world-cta-tone: var(--beta-muted);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
   margin-top: 22px;
+  color: var(--beta-world-cta-tone);
+}
+
+.beta-world .beta-cta {
+  margin-top: 0;
   min-width: 280px;
+}
+
+.beta-world .beta-cta:disabled {
+  background: transparent;
+  border: 1px solid currentColor;
+  color: inherit;
+  opacity: 1;
+  cursor: not-allowed;
+}
+
+.beta-world .beta-cta:disabled:hover,
+.beta-world .beta-cta:disabled:focus-visible {
+  background: transparent;
+  border-color: currentColor;
+  color: inherit;
+  opacity: 1;
+}
+
+.beta-world .beta-cta-note {
+  margin: 10px 0 0;
+  color: inherit;
+  font-size: 13px;
+  font-style: italic;
+  font-weight: 300;
+  line-height: 1.4;
 }
 
 .beta-scent-foot {
@@ -1181,23 +1265,42 @@ body.night .beta-arch-btn {
   );
 }
 
-/* Night JPG by default; light PNG when body is not .night */
+/* Both themes stay mounted; crossfade instead of display swap (avoids flicker / decode flash) */
 .beta-invite-visual .beta-scene-img,
 .beta-intention-frame .beta-scene-img {
   position: absolute;
   inset: 0;
+  transition: opacity 0.6s var(--ease-lux, cubic-bezier(0.22, 1, 0.36, 1));
+}
+
+.beta-scene-night {
+  opacity: 1;
+  z-index: 1;
 }
 
 .beta-scene-light {
-  display: none;
+  opacity: 0;
+  z-index: 0;
+  pointer-events: none;
 }
 
 body:not(.night) .beta-scene-night {
-  display: none;
+  opacity: 0;
+  z-index: 0;
+  pointer-events: none;
 }
 
 body:not(.night) .beta-scene-light {
-  display: block;
+  opacity: 1;
+  z-index: 1;
+  pointer-events: auto;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .beta-invite-visual .beta-scene-img,
+  .beta-intention-frame .beta-scene-img {
+    transition: none;
+  }
 }
 
 /* Scent / Intention: full-page left visual behind navbar + pips */
@@ -1395,66 +1498,6 @@ body:not(.night) .beta-scene-light {
 
 .beta-scent .beta-split-copy > .beta-muted {
   margin-top: 16px;
-}
-
-/* Compact scent card chip — matches dashboard .order-card.dash-card */
-.beta-scent .beta-order-card {
-  width: min(220px, 60vw);
-  aspect-ratio: 3 / 4;
-  margin: 18px 0 16px;
-  border: 1px solid #e6b98a;
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  background: linear-gradient(
-    165deg,
-    hsl(var(--h, 30) 16% 90%),
-    hsl(var(--h, 30) 12% 74%) 70%,
-    hsl(var(--h, 30) 10% 64%)
-  );
-  text-align: center;
-}
-
-.beta-scent .beta-order-card::before {
-  content: "";
-  position: absolute;
-  inset: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.55);
-  pointer-events: none;
-}
-
-.beta-scent .beta-order-card .d-card-t {
-  font-family: var(--serif);
-  font-weight: 300;
-  font-size: 22px;
-  color: #fff;
-  position: relative;
-  z-index: 1;
-}
-
-.beta-scent .beta-order-card .d-card-s {
-  font-family: var(--serif);
-  font-style: italic;
-  font-size: 16px;
-  color: #fff;
-  position: relative;
-  z-index: 1;
-}
-
-.beta-scent .beta-order-card .oc-name {
-  font-size: 11px;
-  letter-spacing: 0.12em;
-  color: rgba(255, 255, 255, 0.9);
-  margin-top: 6px;
-  position: relative;
-  z-index: 1;
-}
-
-body.night .beta-scent .beta-order-card {
-  filter: brightness(0.72);
 }
 
 .beta-scent .beta-rcv {
@@ -2382,6 +2425,35 @@ body.night .beta-circle-detail > .body.dob-intro {
     font-size: 18px;
   }
 
+  /* Match my-journey-v6 / prototype mobile notifs: 92vw panel, content-sized btn row */
+  .space-entry-beta .beta-notifs {
+    position: fixed;
+    top: calc(env(safe-area-inset-top, 0px) + 56px);
+    left: auto;
+    right: 4vw;
+    width: 92vw;
+    max-width: none;
+    max-height: min(80vh, calc(100dvh - 72px));
+  }
+
+  .space-entry-beta .beta-notif-actions {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 10px;
+    margin-top: 16px;
+  }
+
+  .space-entry-beta .beta-notif-btn {
+    flex: 0 0 auto;
+    width: auto;
+    min-width: 0;
+    padding: 11px 18px;
+    font-size: 14px;
+  }
+
   /*
    * Two strategies:
    * - Fill stage: Identity / Ritual (ambient video needs a full containing block)
@@ -2539,6 +2611,10 @@ body.night .beta-circle-detail > .body.dob-intro {
   .beta-world .beta-world-place,
   .beta-world .beta-scent-label {
     justify-content: center;
+  }
+
+  .beta-world-cta {
+    align-items: center;
   }
 
   .beta-world .beta-scent-foot {

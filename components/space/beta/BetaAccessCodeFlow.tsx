@@ -1,30 +1,94 @@
 "use client";
 
-import { FormEvent, useState, type CSSProperties } from "react";
-import AuthShell from "../../auth/AuthShell";
 import {
+  FormEvent,
+  useState,
+  type CSSProperties,
+  type ReactNode,
+} from "react";
+import BrandMark from "../../brand/BrandMark";
+import GradientDefs from "../../layout/GradientDefs";
+import ThemeToggle from "../../layout/ThemeToggle";
+import { stateImageSrc } from "../../../lib/state-images";
+import {
+  DEMO_CODE_OPTIONS,
   demoCodes,
   getWorld,
   normalizeAccessCode,
   type HospitalityWorld,
 } from "../../../lib/worlds";
-import "../../discovery/discovery.css";
+import "../../onboarding/visitor-onboarding.css";
 import "./beta-access-flow.css";
 
-type AccessStep = "codewarn" | "code" | "stay" | "intent" | "becoming";
-
-const DEMO_CODE_OPTIONS = [
-  { code: "SRNK-KYOT-2026", label: "Serein Kyoto" },
-  { code: "LIOR-AEST-2026", label: "Liora Estate" },
-  { code: "SIER-RARE-2026", label: "Sierra Reserve" },
-] as const;
+type AccessStep = "code" | "stay";
 
 export type AccessCodeResult = {
   code: string;
   visited: number;
-  intention?: string;
-  becoming?: string;
 };
+
+function formatCodeDisplay(raw: string) {
+  const normalized = normalizeAccessCode(raw);
+  return normalized.match(/.{1,4}/g)?.join("-") || "";
+}
+
+function SceneCol({ children, actions }: { children: ReactNode; actions?: ReactNode }) {
+  return (
+    <div className="col">
+      <div className="stage">{children}</div>
+      {actions}
+    </div>
+  );
+}
+
+function PinIcon() {
+  return (
+    <svg className="pin" viewBox="0 0 20 26" aria-hidden="true">
+      <path d="M10 24.5 C10 24.5 2 15.5 2 9.5 A8 8 0 0 1 18 9.5 C18 15.5 10 24.5 10 24.5Z" />
+      <circle cx="10" cy="9.5" r="3.2" />
+    </svg>
+  );
+}
+
+function ArchBlock({
+  world,
+  label,
+  imageFailed,
+  onImageError,
+}: {
+  world: HospitalityWorld;
+  label?: string;
+  imageFailed?: boolean;
+  onImageError?: () => void;
+}) {
+  const image = stateImageSrc(world);
+  return (
+    <div className="copy">
+      {label ? (
+        <p className="arch-eye fade" style={{ "--d": ".2s" } as CSSProperties}>
+          {label}
+        </p>
+      ) : null}
+      <h1 className="title arch-state" data-type="">
+        <em className="cu">{world.state}</em>
+      </h1>
+      <div className="arch-row fade" style={{ "--d": ".8s" } as CSSProperties}>
+        <div className={`arch-img${imageFailed ? " noimg" : ""}`}>
+          <img src={image} alt={world.property} onError={onImageError} />
+        </div>
+        <div className="arch-info">
+          <p className="arch-prop">{world.property}</p>
+          <p className="arch-loc">
+            <PinIcon />
+            <span>{world.country}</span>
+          </p>
+          <p className="arch-desc">{world.desc}</p>
+          <p className="arch-line">Your State begins here.</p>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export default function BetaAccessCodeFlow({
   onClose,
@@ -33,16 +97,15 @@ export default function BetaAccessCodeFlow({
   onClose: () => void;
   onComplete: (result: AccessCodeResult) => void;
 }) {
-  const [step, setStep] = useState<AccessStep>("codewarn");
+  const [step, setStep] = useState<AccessStep>("code");
   const [code, setCode] = useState("");
   const [error, setError] = useState("");
   const [previewWorld, setPreviewWorld] = useState<HospitalityWorld | null>(null);
   const [resolvedCode, setResolvedCode] = useState("");
-  const [intention, setIntention] = useState("");
-  const [becoming, setBecoming] = useState("");
+  const [imageFailed, setImageFailed] = useState(false);
 
-  function submitCode(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
+  function submitCode(event?: FormEvent) {
+    event?.preventDefault();
     const raw = normalizeAccessCode(code);
     if (!raw) {
       setError("Please enter your access code.");
@@ -55,304 +118,138 @@ export default function BetaAccessCodeFlow({
     const visited = demoCodes[raw] || 9;
     setResolvedCode(raw);
     setPreviewWorld(getWorld(visited));
+    setImageFailed(false);
     setError("");
     setStep("stay");
   }
 
-  function finish(nextIntention = intention, nextBecoming = becoming) {
+  function finish() {
     if (!previewWorld || !resolvedCode) return;
     onComplete({
       code: resolvedCode,
       visited: previewWorld.n,
-      intention: nextIntention.trim() || undefined,
-      becoming: nextBecoming.trim() || undefined,
     });
   }
 
-  function submitIntention(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    if (!intention.trim()) {
-      setError("Please write your intention, or skip for now.");
+  function handleBack() {
+    if (step === "stay") {
+      setStep("code");
       return;
     }
-    setError("");
-    setStep("becoming");
-  }
-
-  function submitBecoming(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    if (!becoming.trim()) {
-      setError("Please write your answer, or skip for now.");
-      return;
-    }
-    setError("");
-    finish(intention, becoming);
+    onClose();
   }
 
   return (
     <div className="beta-access-overlay">
-      <AuthShell
-        className="beta-access-shell"
-        topStart={
-          <button className="demo-restart" type="button" onClick={onClose}>
-            Restart demo
+      <main className="visitor-app">
+        <GradientDefs />
+        <header className="top">
+          <button className="back show" type="button" onClick={handleBack}>
+            Back
           </button>
-        }
-      >
-        {step === "codewarn" && (
-          <section className="view-card beta-access-view" aria-label="Before you add a new stay">
-            <p className="eyebrow">Before you add a new stay</p>
-            <h1 className="title">
-              One State at a <em className="cu">time</em>.
-            </h1>
-            <p className="body dob-intro">
-              Every code opens its own world — its own scent, its own circle, its own intention.
-            </p>
-            <span className="stay-rule" aria-hidden="true" />
-            <p className="brand-note">
-              A new code starts a new commitment. Your current intention, who you are becoming and
-              your action will be cleared. My Space will show only the new property and its circle.
-            </p>
-            <p className="line-s close-line">Stay with one world. Let it change you.</p>
-            <div className="stay-actions">
-              <button className="tlink" type="button" onClick={() => setStep("code")}>
-                Continue with a new code
-              </button>
-            </div>
-            <p className="links small">
-              <button className="tlink" type="button" onClick={onClose}>
-                Keep my current world
-              </button>
-            </p>
-          </section>
-        )}
+          <BrandMark className="mark" />
+          <div className="top-r">
+            <ThemeToggle />
+          </div>
+        </header>
 
-        {step === "code" && (
-          <section className="view-card beta-access-view" aria-label="Continue your stay">
-            <h1 className="title">
-              Continue your <em className="cu">stay</em>.
-            </h1>
-            <p className="body code-intro">Enter the access code you received at your hotel.</p>
-            <form className="code-form" onSubmit={submitCode} noValidate>
-              <div className="field">
+        <div className="screens">
+          <section
+            className={`scr${step === "code" ? " on" : ""}`}
+            data-name="code"
+            aria-label="Continue your stay"
+            aria-hidden={step !== "code"}
+          >
+            <SceneCol
+              actions={(
+                <div className="actions fade" style={{ "--d": "1.2s" } as CSSProperties}>
+                  <button className="tlink bp" type="button" onClick={() => submitCode()}>
+                    Continue
+                  </button>
+                </div>
+              )}
+            >
+              <h1 className="title" data-type="">
+                Continue your <em className="cu">stay</em>.
+              </h1>
+              <p className="lede fade" style={{ "--d": ".9s" } as CSSProperties}>
+                Enter the access code you received at your hotel.
+              </p>
+              <form
+                className="fgroup fade"
+                style={{ "--d": "1.2s" } as CSSProperties}
+                onSubmit={submitCode}
+                noValidate
+              >
                 <input
-                  className="code-input"
+                  className={`code-input${error ? " bad" : ""}`}
                   type="text"
-                  value={code}
-                  placeholder="XXXX-XXXX-XXXX"
-                  aria-label="Access code"
+                  inputMode="text"
                   autoCapitalize="characters"
-                  autoFocus
+                  autoComplete="off"
                   spellCheck={false}
                   maxLength={14}
+                  placeholder="XXXX-XXXX-XXXX"
+                  aria-label="Access code"
+                  value={code}
+                  autoFocus={step === "code"}
                   onChange={(event) => {
-                    const raw = normalizeAccessCode(event.target.value);
-                    setCode(raw.match(/.{1,4}/g)?.join("-") || "");
+                    setCode(formatCodeDisplay(event.target.value));
                     setError("");
                   }}
                 />
-              </div>
-              {error && (
-                <p className="err show" role="alert">
-                  {error}
+                <p className={`err${error ? " show" : ""}`} role="alert">
+                  {error || "Please enter your access code."}
                 </p>
+              </form>
+              <div className="demo-codes fade" style={{ "--d": "1.5s" } as CSSProperties}>
+                <p className="demo-eye">Demo codes</p>
+                {DEMO_CODE_OPTIONS.map((option) => (
+                  <p key={option.code}>
+                    <button
+                      className="tlink tl dc"
+                      type="button"
+                      onClick={() => {
+                        setCode(option.code);
+                        setError("");
+                      }}
+                    >
+                      {option.code}
+                    </button>
+                    <span>{option.label}</span>
+                  </p>
+                ))}
+              </div>
+            </SceneCol>
+          </section>
+
+          <section
+            className={`scr${step === "stay" ? " on" : ""}`}
+            data-name="stay"
+            aria-label="Your stay"
+            aria-hidden={step !== "stay"}
+          >
+            <SceneCol
+              actions={(
+                <div className="actions fade" style={{ "--d": "1.8s" } as CSSProperties}>
+                  <button className="tlink bp" type="button" onClick={finish}>
+                    Continue
+                  </button>
+                </div>
               )}
-              <div className="stay-actions">
-                <button className="tlink" type="submit">
-                  Continue
-                </button>
-              </div>
-            </form>
-            <div className="demo-codes">
-              <p className="demo-code">Demo codes</p>
-              {DEMO_CODE_OPTIONS.map((option) => (
-                <p className="demo-code" key={option.code}>
-                  <button
-                    className="tlink"
-                    type="button"
-                    onClick={() => {
-                      setCode(option.code);
-                      setError("");
-                    }}
-                  >
-                    {option.code}
-                  </button>{" "}
-                  <span className="dc-p">{option.label}</span>
-                </p>
-              ))}
-            </div>
-            <p className="links small">
-              <button className="tlink" type="button" onClick={() => setStep("codewarn")}>
-                Back
-              </button>
-            </p>
-          </section>
-        )}
-
-        {step === "stay" && previewWorld && (
-          <section className="view-card beta-access-view" aria-label="Your stay">
-            <p className="eyebrow">Your stay</p>
-            <StayPropertyImage world={previewWorld} />
-            <h1 className="title stay-name">{previewWorld.property}</h1>
-            <p className="country">{previewWorld.country}</p>
-            <span className="stay-rule" aria-hidden="true" />
-            <p className="stay-state">
-              <em className="cu">{previewWorld.state}</em>
-            </p>
-            <p className="body result-desc">{previewWorld.desc}</p>
-            <p className="line-s stay-line">Continue the feeling of your stay.</p>
-            <div className="stay-actions">
-              <button
-                className="tlink"
-                type="button"
-                onClick={() => {
-                  setIntention("");
-                  setBecoming("");
-                  setError("");
-                  setStep("intent");
-                }}
-              >
-                Continue
-              </button>
-            </div>
-            <p className="links small">
-              <button className="tlink" type="button" onClick={() => setStep("code")}>
-                Back
-              </button>
-            </p>
-          </section>
-        )}
-
-        {step === "intent" && previewWorld && (
-          <section className="view-card beta-access-view" aria-label="Your intention">
-            <p className="eyebrow">
-              {previewWorld.state} · {previewWorld.property}
-            </p>
-            <h1 className="title">
-              Your <em className="cu">intention</em>.
-            </h1>
-            <p className="body dob-intro">What intention did you write on your card?</p>
-            <form onSubmit={submitIntention} noValidate>
-              <div className="field textarea-field">
-                <textarea
-                  className="free"
-                  rows={2}
-                  maxLength={220}
-                  aria-label="Your intention"
-                  placeholder="In your own words"
-                  value={intention}
-                  autoFocus
-                  onChange={(event) => {
-                    setIntention(event.target.value);
-                    setError("");
-                  }}
+            >
+              {previewWorld ? (
+                <ArchBlock
+                  world={previewWorld}
+                  label="Your stay"
+                  imageFailed={imageFailed}
+                  onImageError={() => setImageFailed(true)}
                 />
-              </div>
-              {error && (
-                <p className="err show" role="alert">
-                  {error}
-                </p>
-              )}
-              <div className="stay-actions">
-                <button className="tlink" type="submit">
-                  Continue
-                </button>
-              </div>
-            </form>
-            <p className="links small">
-              <button
-                className="tlink"
-                type="button"
-                onClick={() => {
-                  setError("");
-                  setStep("becoming");
-                }}
-              >
-                Skip for now
-              </button>
-              <span className="sep">·</span>
-              <button className="tlink" type="button" onClick={() => setStep("stay")}>
-                Back
-              </button>
-            </p>
+              ) : null}
+            </SceneCol>
           </section>
-        )}
-
-        {step === "becoming" && previewWorld && (
-          <section className="view-card beta-access-view" aria-label="Who you are becoming">
-            {intention.trim() && <p className="saved-intent">{intention.trim()}</p>}
-            <h1 className="title beta-access-become-title">
-              <span className="bl">Who do you</span>
-              <span className="bl">
-                need to <em className="cu">become</em>
-              </span>
-              <span className="bl">to welcome this</span>
-              <span className="bl">into your life</span>
-              <span className="bl">and sustain it?</span>
-            </h1>
-            <p className="body dob-intro">Think of the qualities and habits you want to develop.</p>
-            <form onSubmit={submitBecoming} noValidate>
-              <div className="field textarea-field">
-                <textarea
-                  className="free"
-                  rows={2}
-                  maxLength={260}
-                  aria-label="Who you need to become"
-                  placeholder="In your own words"
-                  value={becoming}
-                  autoFocus
-                  onChange={(event) => {
-                    setBecoming(event.target.value);
-                    setError("");
-                  }}
-                />
-              </div>
-              {error && (
-                <p className="err show" role="alert">
-                  {error}
-                </p>
-              )}
-              <div className="stay-actions">
-                <button className="tlink" type="submit">
-                  Save and continue
-                </button>
-              </div>
-            </form>
-            <p className="links small">
-              <button className="tlink" type="button" onClick={() => finish(intention, "")}>
-                Skip for now
-              </button>
-              <span className="sep">·</span>
-              <button className="tlink" type="button" onClick={() => setStep("intent")}>
-                Back
-              </button>
-            </p>
-          </section>
-        )}
-      </AuthShell>
-    </div>
-  );
-}
-
-function StayPropertyImage({ world }: { world: HospitalityWorld }) {
-  return (
-    <div className="pimg-wrap">
-      <div
-        className="pimg"
-        style={{ "--h": (world.n * 37) % 360 } as CSSProperties}
-        role="img"
-        aria-label={`${world.property} image placeholder`}
-      >
-        <svg viewBox="0 0 400 240" aria-hidden="true">
-          <path d="M40 200 L360 200" />
-          <path d="M150 200 L150 120 A50 50 0 0 1 250 120 L250 200" />
-          <path d="M175 200 L175 132 A25 25 0 0 1 225 132 L225 200" opacity=".6" />
-          <circle cx="300" cy="70" r="14" opacity=".7" />
-        </svg>
-        <span className="pimg-cap">
-          {world.property} · {world.country}
-        </span>
-      </div>
+        </div>
+      </main>
     </div>
   );
 }

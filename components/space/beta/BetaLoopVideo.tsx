@@ -2,9 +2,34 @@
 
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 
+const FADE_MS = 600;
+
 function isNightTheme() {
   if (typeof document === "undefined") return false;
   return document.body.classList.contains("night");
+}
+
+function prefersReducedMotion() {
+  if (typeof window === "undefined") return false;
+  return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+}
+
+function playVideo(video: HTMLVideoElement | null) {
+  if (!video) return;
+  void video.play().catch(() => {});
+}
+
+function whenCanPlay(video: HTMLVideoElement): Promise<void> {
+  if (video.readyState >= HTMLMediaElement.HAVE_FUTURE_DATA) {
+    return Promise.resolve();
+  }
+  return new Promise((resolve) => {
+    const done = () => {
+      video.removeEventListener("canplay", done);
+      resolve();
+    };
+    video.addEventListener("canplay", done);
+  });
 }
 
 export default function BetaLoopVideo({
@@ -18,12 +43,19 @@ export default function BetaLoopVideo({
   poster: string;
   className?: string;
 }) {
-  const videoRef = useRef<HTMLVideoElement | null>(null);
-  const [night, setNight] = useState(false);
-  const activeSrc = !night && lightSrc ? lightSrc : src;
+  const nightRef = useRef<HTMLVideoElement | null>(null);
+  const lightRef = useRef<HTMLVideoElement | null>(null);
+  const singleRef = useRef<HTMLVideoElement | null>(null);
+  const fadeTimerRef = useRef<number | null>(null);
+  const [night, setNight] = useState(isNightTheme);
+  const [activeLayer, setActiveLayer] = useState<"night" | "light">(() =>
+    isNightTheme() ? "night" : "light",
+  );
 
   useLayoutEffect(() => {
-    setNight(isNightTheme());
+    const initialNight = isNightTheme();
+    setNight(initialNight);
+    setActiveLayer(initialNight ? "night" : "light");
     const observer = new MutationObserver(() => {
       setNight(isNightTheme());
     });
@@ -31,42 +63,124 @@ export default function BetaLoopVideo({
     return () => observer.disconnect();
   }, []);
 
+  // Single-source path (no light variant)
   useEffect(() => {
-    const video = videoRef.current;
+    if (lightSrc) return;
+    const video = singleRef.current;
     if (!video) return;
 
-    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    if (reduced) {
+    if (prefersReducedMotion()) {
       video.pause();
       video.removeAttribute("autoplay");
       return;
     }
 
-    if (video.getAttribute("src") !== activeSrc) {
-      video.setAttribute("src", activeSrc);
-      video.load();
-    }
-
-    const play = () => {
-      void video.play().catch(() => {});
-    };
-    play();
+    playVideo(video);
     return () => {
       video.pause();
     };
-  }, [activeSrc]);
+  }, [lightSrc, src]);
+
+  // Dual-source path — keep both loaded; crossfade without load() swap
+  useEffect(() => {
+    if (!lightSrc) return;
+
+    const nightVideo = nightRef.current;
+    const lightVideo = lightRef.current;
+    if (!nightVideo || !lightVideo) return;
+
+    if (fadeTimerRef.current) {
+      window.clearTimeout(fadeTimerRef.current);
+      fadeTimerRef.current = null;
+    }
+
+    if (prefersReducedMotion()) {
+      nightVideo.pause();
+      lightVideo.pause();
+      nightVideo.removeAttribute("autoplay");
+      lightVideo.removeAttribute("autoplay");
+      setActiveLayer(night || !lightSrc ? "night" : "light");
+      return;
+    }
+
+    const nextLayer: "night" | "light" = night ? "night" : "light";
+    const incoming = nextLayer === "night" ? nightVideo : lightVideo;
+    const outgoing = nextLayer === "night" ? lightVideo : nightVideo;
+
+    let cancelled = false;
+
+    void (async () => {
+      await whenCanPlay(incoming);
+      if (cancelled) return;
+      playVideo(incoming);
+      setActiveLayer(nextLayer);
+      fadeTimerRef.current = window.setTimeout(() => {
+        if (!cancelled && outgoing !== incoming) {
+          outgoing.pause();
+        }
+        fadeTimerRef.current = null;
+      }, FADE_MS);
+    })();
+
+    return () => {
+      cancelled = true;
+      if (fadeTimerRef.current) {
+        window.clearTimeout(fadeTimerRef.current);
+        fadeTimerRef.current = null;
+      }
+    };
+  }, [lightSrc, night]);
+
+  useEffect(() => {
+    return () => {
+      if (fadeTimerRef.current) {
+        window.clearTimeout(fadeTimerRef.current);
+      }
+    };
+  }, []);
+
+  if (!lightSrc) {
+    return (
+      <video
+        ref={singleRef}
+        className={className}
+        src={src}
+        poster={poster}
+        muted
+        loop
+        playsInline
+        preload="metadata"
+        autoPlay
+      />
+    );
+  }
+
+  const wrapClass = ["beta-loop-video", className].filter(Boolean).join(" ");
 
   return (
-    <video
-      ref={videoRef}
-      className={className}
-      src={activeSrc}
-      poster={poster}
-      muted
-      loop
-      playsInline
-      preload="metadata"
-      autoPlay
-    />
+    <div className={wrapClass}>
+      <video
+        ref={nightRef}
+        className={`beta-loop-video-layer${activeLayer === "night" ? " is-active" : ""}`}
+        src={src}
+        poster={poster}
+        muted
+        loop
+        playsInline
+        preload="auto"
+        autoPlay={night}
+      />
+      <video
+        ref={lightRef}
+        className={`beta-loop-video-layer${activeLayer === "light" ? " is-active" : ""}`}
+        src={lightSrc}
+        poster={poster}
+        muted
+        loop
+        playsInline
+        preload="auto"
+        autoPlay={!night}
+      />
+    </div>
   );
 }

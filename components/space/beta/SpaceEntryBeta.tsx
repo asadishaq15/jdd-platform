@@ -202,14 +202,14 @@ export default function SpaceEntryBeta({
     return (
       <BetaAccessCodeFlow
         onClose={() => setAccessCodeOpen(false)}
-        onComplete={({ code, visited, intention, becoming }) => {
+        onComplete={({ code, visited }) => {
           updateState({
             ...state,
             code,
             visited,
             entryMode: "code",
-            intention,
-            becoming,
+            intention: undefined,
+            becoming: undefined,
             reminder: undefined,
           });
           setAccessCodeOpen(false);

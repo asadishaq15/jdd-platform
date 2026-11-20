@@ -4,6 +4,17 @@ import { useLayoutEffect, useState } from "react";
 
 const THEME_KEY = "jdd-theme";
 
+function readInitialNight() {
+  if (typeof document !== "undefined" && document.body.classList.contains("night")) {
+    return true;
+  }
+  try {
+    return localStorage.getItem(THEME_KEY) === "dark";
+  } catch {
+    return false;
+  }
+}
+
 function applyTheme(night: boolean) {
   document.body.classList.toggle("night", night);
   const theme = document.querySelector('meta[name="theme-color"]') || document.createElement("meta");
@@ -12,26 +23,41 @@ function applyTheme(night: boolean) {
   if (!theme.parentElement) document.head.appendChild(theme);
 }
 
+function prefersReducedMotion() {
+  return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+}
+
+function commitTheme(
+  nextNight: boolean,
+  setNight: (value: boolean) => void,
+) {
+  setNight(nextNight);
+  try {
+    localStorage.setItem(THEME_KEY, nextNight ? "dark" : "light");
+  } catch {}
+  applyTheme(nextNight);
+}
+
 export default function ThemeToggle() {
-  const [night, setNight] = useState(false);
+  const [night, setNight] = useState(readInitialNight);
 
   useLayoutEffect(() => {
-    let savedTheme: string | null = null;
-    try {
-      savedTheme = localStorage.getItem(THEME_KEY);
-    } catch {}
-    const initialNight = savedTheme === "dark";
+    const initialNight = readInitialNight();
     setNight(initialNight);
     applyTheme(initialNight);
   }, []);
 
   function toggleTheme() {
     const nextNight = !night;
-    setNight(nextNight);
-    try {
-      localStorage.setItem(THEME_KEY, nextNight ? "dark" : "light");
-    } catch {}
-    applyTheme(nextNight);
+
+    if (prefersReducedMotion() || typeof document.startViewTransition !== "function") {
+      commitTheme(nextNight, setNight);
+      return;
+    }
+
+    document.startViewTransition(() => {
+      commitTheme(nextNight, setNight);
+    });
   }
 
   return (

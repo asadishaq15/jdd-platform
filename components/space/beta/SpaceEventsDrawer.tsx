@@ -90,7 +90,7 @@ export default function SpaceEventsDrawer({
               <div className="space-ev-img">
                 {event.photo ? <img src={event.photo} alt="" /> : <CameraPlaceholder />}
               </div>
-              <div>
+              <div className="space-ev-copy">
                 <div className="meta">{event.date}</div>
                 <h4>{event.title}</h4>
                 <div className="ev-hotel">{event.hotel}</div>
@@ -98,7 +98,6 @@ export default function SpaceEventsDrawer({
                   <>
                     <div className="status">Your place is reserved</div>
                     <div className="links">
-                      <a href={event.url || "#"} onClick={(e) => e.preventDefault()}>View event</a>
                       <button className="muted" type="button" onClick={() => cancelEvent(event.id)}>Cancel</button>
                     </div>
                   </>
@@ -109,7 +108,7 @@ export default function SpaceEventsDrawer({
                     <div className="done">{event.answered}</div>
                   ) : (
                     <>
-                      <div className="ask">Did you attend?</div>
+                      <p className="ask">Did you attend?</p>
                       <div className="btn-row">
                         <button className="btn primary" type="button" onClick={() => answerAttendance(event.id, true)}>
                           Yes, I was there

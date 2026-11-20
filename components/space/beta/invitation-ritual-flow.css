@@ -116,14 +116,15 @@
 .beta-ritual-overlay .oil-p1 .sc-title {
   margin: 0 0 18px;
   font-size: clamp(28px, 7vw, 34px);
+  white-space: nowrap;
 }
 
 .beta-ritual-overlay .oil-p1 .dob-intro {
   margin: 0 auto;
-  max-width: 36ch;
+  max-width: none;
   line-height: 1.8;
   text-align: center;
-  text-wrap: balance;
+  white-space: nowrap;
 }
 
 .beta-ritual-overlay .stay-rule {
@@ -526,7 +527,21 @@ body.night .beta-ritual-overlay .ae-seg .seg-b.on {
     font-size: 22px;
   }
 
-  .beta-ritual-overlay .bn-lines span,
+  /* Flow as one paragraph on narrow screens so line breaks don’t leave orphan words */
+  .beta-ritual-overlay .bn-lines {
+    max-width: 34ch;
+    text-wrap: pretty;
+  }
+
+  .beta-ritual-overlay .bn-lines span {
+    display: inline;
+    white-space: normal;
+  }
+
+  .beta-ritual-overlay .bn-lines span + span::before {
+    content: " ";
+  }
+
   .beta-ritual-overlay .close-line {
     white-space: normal;
   }
