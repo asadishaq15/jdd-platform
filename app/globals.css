@@ -270,6 +270,16 @@ body.night input:-webkit-autofill:active {
       linear-gradient(180deg, color-mix(in srgb, var(--neutral-7) 72%, transparent) 0%, transparent 28%),
       linear-gradient(0deg, color-mix(in srgb, var(--neutral-7) 88%, transparent) 0%, transparent 42%);
   }
+  body:not(.night) .auth-shell .aside .art::after {
+    background:
+      linear-gradient(180deg, color-mix(in srgb, var(--neutral-0) 78%, transparent) 0%, transparent 32%),
+      linear-gradient(
+        0deg,
+        color-mix(in srgb, var(--neutral-1) 96%, transparent) 0%,
+        color-mix(in srgb, var(--neutral-1) 72%, transparent) 38%,
+        transparent 68%
+      );
+  }
   body.night .aside .art::after {
     background:
       linear-gradient(180deg, color-mix(in srgb, var(--neutral-6) 72%, transparent) 0%, transparent 28%),
@@ -283,6 +293,26 @@ body.night input:-webkit-autofill:active {
   .aside .quote { position: relative; z-index: 1; font-family: var(--serif); font-weight: 300; font-size: 38px; line-height: 1.15; margin: 0; max-width: 14ch; }
   .aside .quote .cu { background: var(--copper-gradient-light); background-clip: text; -webkit-background-clip: text; }
   .aside .sub { position: relative; z-index: 1; margin: 16px 0 0; font-size: 13px; letter-spacing: .02em; color: var(--muted-grey); }
+  body:not(.night) .auth-shell .aside {
+    color: var(--neutral-6);
+  }
+  body:not(.night) .auth-shell .aside .quote {
+    color: var(--neutral-7);
+    font-weight: 400;
+    max-width: none;
+    text-shadow: 0 1px 0 rgba(255, 255, 255, 0.65);
+  }
+  body:not(.night) .auth-shell .aside .quote .cu {
+    background: var(--copper-gradient);
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    text-shadow: none;
+  }
+  body:not(.night) .auth-shell .aside .sub {
+    color: var(--neutral-4);
+    font-weight: 400;
+  }
   .auth-shell .top .mark { display: none; }
   .auth-shell .top { padding: 28px 40px 0; }
   .auth-shell .stage { padding: 0 40px; }

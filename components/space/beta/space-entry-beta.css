@@ -2267,6 +2267,22 @@ body:not(.night) .beta-scene-light {
   margin-top: 28px;
 }
 
+/* My account — close matches events drawer (space-drawer-close) */
+.space-entry-beta .beta-account-sheet .beta-jmodal-top {
+  display: flex;
+  justify-content: flex-end;
+  margin: -6px 0 2px;
+  text-align: left;
+}
+
+.space-entry-beta .beta-account-sheet .jm-title {
+  margin-top: 4px;
+}
+
+.space-entry-beta .beta-account-sheet .jm-text {
+  margin-bottom: 8px;
+}
+
 .space-entry-beta .beta-orders-sheet {
   max-width: 440px;
 }

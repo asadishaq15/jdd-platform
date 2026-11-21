@@ -310,6 +310,215 @@ body.night .entry-providers .btn {
   border-color: rgba(233,228,217,.2);
 }
 
+/* Admin portal chooser — attachment layout (centered hero, footer at bottom) */
+.auth-shell .stage:has(.admin-portal) {
+  align-items: stretch;
+  justify-content: stretch;
+  padding: 4px var(--pad-x) calc(env(safe-area-inset-bottom) + 28px);
+}
+
+.auth-shell .panel:has(.admin-portal) {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  max-width: min(500px, 100%);
+  min-height: min(720px, calc(100dvh - 108px));
+}
+
+.auth-view.admin-portal {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  width: 100%;
+  text-align: center;
+}
+
+.admin-portal-main {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding: 12px 0 24px;
+}
+
+.admin-portal-eyebrow {
+  margin: 0 0 20px;
+  font-size: 11px;
+  letter-spacing: 0.06em;
+}
+
+.admin-portal-title {
+  margin: 0;
+  font-size: clamp(34px, 7.5vw, 46px);
+  line-height: 1.14;
+}
+
+.admin-portal-title-line {
+  display: block;
+  color: var(--fg);
+}
+
+.admin-portal-title-accent {
+  display: block;
+  margin-top: 2px;
+  font-size: 1em;
+}
+
+.admin-portal-body {
+  margin: 24px auto 0;
+  max-width: 44ch;
+  font-size: 15px;
+  font-weight: 300;
+  line-height: 1.65;
+  text-wrap: balance;
+}
+
+.admin-portal-providers {
+  width: 100%;
+  max-width: 420px;
+  margin-top: 40px;
+  gap: 14px;
+}
+
+.admin-portal-providers .btn {
+  height: 52px;
+  font-size: 13px;
+  font-weight: 400;
+  letter-spacing: 0.02em;
+  text-transform: none;
+  transition: opacity 0.35s var(--ease-lux), background 0.35s var(--ease-lux), color 0.35s var(--ease-lux);
+}
+
+.admin-portal-providers .btn:hover {
+  opacity: 0.9;
+  border-color: inherit;
+}
+
+/* Light: partner black, team white */
+.admin-portal-providers .btn-portal-partner {
+  background: var(--neutral-7);
+  color: #f4f4f2;
+  border-color: var(--neutral-7);
+}
+
+.admin-portal-providers .btn-portal-team {
+  background: #ffffff;
+  color: var(--neutral-7);
+  border-color: rgba(17, 17, 16, 0.2);
+}
+
+/* Night shift: swap fills */
+body.night .admin-portal-providers .btn-portal-partner {
+  background: #eee8de;
+  color: var(--neutral-7);
+  border-color: #eee8de;
+}
+
+body.night .admin-portal-providers .btn-portal-team {
+  background: var(--neutral-7);
+  color: var(--warm-white);
+  border-color: var(--neutral-7);
+}
+
+.admin-portal-foot {
+  flex: 0 0 auto;
+  margin-top: auto;
+  width: 100%;
+  padding-top: 40px;
+}
+
+.admin-portal-security {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin: 0 auto;
+  max-width: none;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 300;
+  line-height: 1.55;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.admin-portal-security span {
+  text-align: center;
+  white-space: nowrap;
+}
+
+.admin-portal-lock {
+  flex: none;
+  width: 15px;
+  height: 15px;
+  color: var(--muted);
+  opacity: 0.85;
+}
+
+.admin-portal-partner-line {
+  margin: 22px 0 0;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 300;
+  line-height: 1.6;
+}
+
+.admin-portal-request {
+  position: relative;
+  border: 0;
+  padding: 0 0 6px;
+  background: none;
+  color: var(--copper-dark);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 400;
+  text-decoration: none;
+  cursor: pointer;
+  -webkit-text-fill-color: currentColor;
+}
+
+body.night .admin-portal-request {
+  color: var(--copper-light);
+}
+
+.admin-portal-request::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 1px;
+  background: var(--underline);
+  opacity: 0.9;
+}
+
+.admin-portal-request:hover,
+.admin-portal-request:focus-visible {
+  outline: none;
+  color: var(--copper);
+}
+
+@media (min-width: 900px) {
+  .auth-shell .stage:has(.admin-portal) {
+    padding: 8px 40px calc(env(safe-area-inset-bottom) + 36px);
+  }
+
+  .auth-shell .auth-view.admin-portal .admin-portal-title {
+    font-size: 46px;
+  }
+
+  .auth-shell .auth-view.admin-portal .admin-portal-body {
+    font-size: 15.5px;
+    margin-top: 26px;
+  }
+
+  .auth-shell .auth-view.admin-portal .admin-portal-providers {
+    margin-top: 44px;
+  }
+}
+
 .agree {
   display: inline-flex;
   align-items: flex-start;

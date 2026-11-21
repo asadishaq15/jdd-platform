@@ -50,7 +50,13 @@ export default function AuthShell({
             />
           </div>
           <div>
-            <p className="quote">Choose your stay by <em className="cu">State</em>,<br />not status.</p>
+            <p className="quote">
+              Choose your stay
+              <br />
+              by <em className="cu">State</em>,
+              <br />
+              not status.
+            </p>
             <p className="sub">22 States. 22 hospitality worlds.</p>
           </div>
         </aside>

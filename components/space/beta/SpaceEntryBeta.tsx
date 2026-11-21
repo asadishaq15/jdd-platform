@@ -35,6 +35,7 @@ import RitualSlide from "./slides/RitualSlide";
 import ScentInvitationSlide from "./slides/ScentInvitationSlide";
 import { SPACE_SLIDES } from "./slides";
 import "./space-entry-beta.css";
+import "./space-drawer.css";
 
 type ProfilePanel = "account" | "orders" | "stays" | "reminders" | "delete" | null;
 
@@ -266,14 +267,16 @@ export default function SpaceEntryBeta({
             if (event.target === event.currentTarget) setProfilePanel(null);
           }}
         >
-          <section className="jm-in glass" role="dialog" aria-modal="true" aria-label="My account">
+          <section className="jm-in glass beta-account-sheet" role="dialog" aria-modal="true" aria-label="My account">
+            <div className="beta-jmodal-top">
+              <button className="space-drawer-close" type="button" onClick={() => setProfilePanel(null)}>
+                Close
+              </button>
+            </div>
             <h2 className="jm-title">My account</h2>
             <div className="jm-text">
               <AccountSettings account={account} onAccountChange={setAccount} />
             </div>
-            <p className="links small">
-              <button className="tlink" type="button" onClick={() => setProfilePanel(null)}>Close</button>
-            </p>
           </section>
         </div>
       )}
