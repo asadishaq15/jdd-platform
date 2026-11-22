@@ -11,6 +11,7 @@ import DeleteAccountDialog from "./DeleteAccountDialog";
 import GuestFeedbackCard from "./GuestFeedbackCard";
 import InvitationRitualFlow from "./beta/InvitationRitualFlow";
 import MyJourneyPage from "./beta/MyJourneyPage";
+import type { SpaceProfileAction } from "./beta/SpaceBetaHeader";
 import OrderCardFlow from "./beta/OrderCardFlow";
 import PerfumeOilFlow from "./beta/PerfumeOilFlow";
 import SpaceUiToggle from "./SpaceUiToggle";
@@ -19,14 +20,13 @@ import SpaceNotificationsDropdown, { useSpaceNotifications } from "./beta/SpaceN
 import { getWorld, HospitalityWorld, worldDetails } from "../../lib/worlds";
 import {
   asProfileReminderFrequency,
-  loadSpaceState,
-  saveSpaceState,
+  persistSpaceState,
   type ProfileReminderFrequency,
   type SpaceState,
 } from "../../lib/space-state";
+import { buildDashboardSpaceState, signOutToLogin, type PrivateSpaceSnapshot } from "../../lib/space-state-sync";
 import type { AccountSummary, CardOrder, CommunityCircleEvent, ConnectedStay } from "../../lib/space-data";
 import type { SpaceUiVersion } from "../../lib/space-ui-version";
-import { createClient } from "../../lib/supabase/client";
 import { trackProductEvent } from "../../lib/product-events";
 import { zodiacFromDateOfBirth } from "../../lib/zodiac";
 
@@ -58,6 +58,7 @@ export type SpaceEntryProps = {
   circleEvents?: CommunityCircleEvent[];
   initialRsvps?: Record<string, boolean>;
   initialState?: Pick<SpaceState, "recommended" | "chosen" | "dateOfBirth">;
+  initialSpaceSnapshot?: PrivateSpaceSnapshot | null;
   uiVersion?: SpaceUiVersion;
   onUiVersionChange?: (version: SpaceUiVersion) => void;
 };
@@ -70,6 +71,7 @@ export default function SpaceEntry({
   circleEvents = [],
   initialRsvps = {},
   initialState = {},
+  initialSpaceSnapshot = null,
   uiVersion = "new",
   onUiVersionChange,
 }: SpaceEntryProps) {
@@ -83,23 +85,17 @@ export default function SpaceEntry({
   const connectedStay = stays.find((stay) => stay.id === activeStayId) || stays[0];
 
   useEffect(() => {
-    const loaded = loadSpaceState();
-    const synced = {
-      ...loaded,
-      ...(initialState.recommended ? { recommended: initialState.recommended } : {}),
-      ...(initialState.chosen ? { chosen: initialState.chosen } : {}),
-      ...(initialState.dateOfBirth ? { dateOfBirth: initialState.dateOfBirth } : {}),
-      rsvps: { ...(loaded.rsvps || {}), ...initialRsvps },
-    };
-    const latestOrder = initialOrders[0];
-    const persistedOrder = latestOrder ? {
-      cardStatus: orderStatusForSpace(latestOrder.status),
-      order: { property: latestOrder.propertyName, state: getWorld(connectedStay?.property.worldNumber || synced.chosen || synced.recommended || 9).state, recipient: latestOrder.recipientName },
-    } : {};
-    const next = connectedStay ? { ...synced, ...persistedOrder, visited: connectedStay.property.worldNumber } : { ...synced, ...persistedOrder };
+    const next = buildDashboardSpaceState({
+      initialState,
+      initialSpaceSnapshot,
+      initialRsvps,
+      initialOrders,
+      stays,
+      activeStayId,
+    });
     setState(next);
-    saveSpaceState(next);
-  }, [connectedStay, initialOrders, initialRsvps, initialState.chosen, initialState.dateOfBirth, initialState.recommended]);
+    persistSpaceState(next);
+  }, [activeStayId, initialOrders, initialRsvps, initialSpaceSnapshot, initialState, stays]);
 
   const activeNumber = connectedStay?.property.worldNumber || state.visited || state.chosen || state.recommended || 9;
   const baseWorld = getWorld(activeNumber);
@@ -116,13 +112,11 @@ export default function SpaceEntry({
 
   function updateState(next: SpaceState) {
     setState(next);
-    saveSpaceState(next);
+    persistSpaceState(next);
   }
 
-  async function signOut() {
-    const supabase = createClient();
-    await supabase.auth.signOut();
-    window.location.assign("/sign-in");
+  function signOut() {
+    void signOutToLogin();
   }
 
   if (flow === "order") {
@@ -155,7 +149,6 @@ export default function SpaceEntry({
         active={ritualActive}
         onSave={updateState}
         onClose={() => setFlow(null)}
-        onEditIntention={() => setFlow(null)}
       />
     );
   }
@@ -164,13 +157,21 @@ export default function SpaceEntry({
     return <StatesExplorePage onClose={() => setExploreOpen(false)} />;
   }
 
+  function handleJourneyProfileAction(action: SpaceProfileAction) {
+    if (action === "journey") return;
+    if (action === "explore") {
+      setExploreOpen(true);
+      return;
+    }
+    setModal(action);
+  }
+
   if (modal === "journey") {
     return (
       <MyJourneyPage
         account={account}
         onClose={() => setModal(null)}
-        onOpenAccount={() => setModal("account")}
-        onOpenExplore={() => setExploreOpen(true)}
+        onProfileAction={handleJourneyProfileAction}
         onSignOut={signOut}
       />
     );
@@ -330,6 +331,16 @@ function DashboardHeader({ account, guest, menuOpen, uiVersion, onUiVersionChang
   useEffect(() => {
     if (menuOpen) setBellOpen(false);
   }, [menuOpen]);
+
+  useEffect(() => {
+    if (!menuOpen) return;
+    function onDocClick(event: MouseEvent) {
+      const target = event.target as HTMLElement | null;
+      if (!target?.closest(".pmenu-wrap")) onToggleMenu();
+    }
+    document.addEventListener("click", onDocClick);
+    return () => document.removeEventListener("click", onDocClick);
+  }, [menuOpen, onToggleMenu]);
 
   function openModal(modal: Exclude<ProfileMenu, null>) {
     setBellOpen(false);

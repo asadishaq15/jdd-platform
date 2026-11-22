@@ -9,6 +9,8 @@ import {
   type JourneyStay,
   type JourneyWorld,
 } from "../../../lib/my-journey-demo";
+import BrandMark from "../../brand/BrandMark";
+import type { SpaceProfileAction } from "./SpaceBetaHeader";
 import "./my-journey.css";
 
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
@@ -200,19 +202,13 @@ function WorldTabs({
 export default function MyJourneyPage({
   account,
   onClose,
-  onOpenAccount,
-  onOpenEvents,
-  onOpenExplore,
-  onOpenLegal,
+  onProfileAction,
   onSignOut,
 }: {
   account: AccountSummary;
   onClose: () => void;
-  onOpenAccount?: () => void;
-  onOpenEvents?: () => void;
-  onOpenExplore?: () => void;
-  onOpenLegal?: () => void;
-  onSignOut?: () => void;
+  onProfileAction: (action: SpaceProfileAction) => void;
+  onSignOut: () => void;
 }) {
   const [light, setLight] = useState(true);
   const [worlds, setWorlds] = useState<JourneyWorld[]>(() =>
@@ -251,6 +247,11 @@ export default function MyJourneyPage({
   function closeMenus() {
     setBellOpen(false);
     setAccountOpen(false);
+  }
+
+  function runProfileAction(action: SpaceProfileAction) {
+    closeMenus();
+    onProfileAction(action);
   }
 
   function answerAction(id: string, yes: boolean) {
@@ -303,10 +304,8 @@ export default function MyJourneyPage({
           Back
         </button>
         <button className="brand" type="button" onClick={onClose} aria-label="Back to My Space">
-          <svg viewBox="0 0 16 22" fill="none" stroke="currentColor" strokeWidth="1" aria-hidden="true">
-            <path d="M8 21V3M8 12C4 10 3 6 4 2M8 9c3-1 5-3 6-6" />
-          </svg>
-          My Space
+          <BrandMark className="journey-logo" decorative />
+          <span className="journey-brand-title">My Space</span>
         </button>
         <div className="icons">
           <button
@@ -388,66 +387,38 @@ export default function MyJourneyPage({
               <div className="mail">{account.email}</div>
             </div>
             <hr className="sep" />
-            <button
-              type="button"
-              onClick={() => {
-                closeMenus();
-                onOpenAccount?.();
-              }}
-            >
+            <button type="button" onClick={() => runProfileAction("account")}>
               My account
             </button>
-            <button type="button" onClick={closeMenus}>My orders</button>
+            <button type="button" onClick={() => runProfileAction("orders")}>
+              My orders
+            </button>
             <button type="button" className="current" onClick={closeMenus}>My journey</button>
-            <button
-              type="button"
-              onClick={() => {
-                closeMenus();
-                onOpenEvents?.();
-              }}
-            >
+            <button type="button" onClick={() => runProfileAction("events")}>
               My events
             </button>
-            <button
-              type="button"
-              onClick={() => {
-                closeMenus();
-                onOpenExplore?.();
-              }}
-            >
+            <button type="button" onClick={() => runProfileAction("explore")}>
               Explore all States
             </button>
             <hr className="sep cg-line" />
             <div className="small">
-              <button
-                type="button"
-                className="small"
-                onClick={() => {
-                  closeMenus();
-                  onOpenLegal?.();
-                }}
-              >
+              <button type="button" className="small" onClick={() => runProfileAction("legal")}>
                 Terms of Use
               </button>
               {" · "}
-              <button
-                type="button"
-                className="small"
-                onClick={() => {
-                  closeMenus();
-                  onOpenLegal?.();
-                }}
-              >
+              <button type="button" className="small" onClick={() => runProfileAction("legal")}>
                 Privacy Policy
               </button>
             </div>
-            <button type="button" className="small" onClick={closeMenus}>Delete account</button>
+            <button type="button" className="small" onClick={() => runProfileAction("delete")}>
+              Delete account
+            </button>
             <button
               type="button"
               className="small"
               onClick={() => {
                 closeMenus();
-                onSignOut?.();
+                onSignOut();
               }}
             >
               Sign out

@@ -15,9 +15,32 @@ type ReminderDraft = {
   action: string;
   frequency: RitualReminderFrequency;
   date: string;
+  weekDay: string;
   time: string;
   tz: string;
 };
+
+const WEEK_DAYS = [
+  { value: "monday", label: "Monday" },
+  { value: "tuesday", label: "Tuesday" },
+  { value: "wednesday", label: "Wednesday" },
+  { value: "thursday", label: "Thursday" },
+  { value: "friday", label: "Friday" },
+  { value: "saturday", label: "Saturday" },
+  { value: "sunday", label: "Sunday" },
+] as const;
+
+function weekDayIn(tz: string) {
+  try {
+    const long = new Intl.DateTimeFormat("en-US", {
+      timeZone: tz,
+      weekday: "long",
+    }).format(new Date());
+    return long.toLowerCase();
+  } catch {
+    return "monday";
+  }
+}
 
 function userTimeZone() {
   try {
@@ -70,6 +93,7 @@ function blankReminder(): ReminderDraft {
     action: "",
     frequency: "once",
     date: dayIn(tz),
+    weekDay: weekDayIn(tz),
     time: "09:00",
     tz,
   };
@@ -80,12 +104,14 @@ function reminderFromState(state: SpaceState): ReminderDraft {
   const saved = state.reminder;
   if (!saved) return base;
   const frequency = asRitualFrequency(saved.frequency);
+  const tz = saved.tz || base.tz;
   return {
     action: saved.action || "",
     frequency,
-    date: saved.date || (frequency === "once" ? dayIn(saved.tz || base.tz) : ""),
+    date: saved.date || (frequency === "once" ? dayIn(tz) : ""),
+    weekDay: saved.weekDay || weekDayIn(tz),
     time: saved.time || "09:00",
-    tz: saved.tz || base.tz,
+    tz,
   };
 }
 
@@ -107,20 +133,25 @@ function RemindersModal({
       ...prev,
       frequency,
       date: frequency === "once" && !prev.date ? dayIn(prev.tz) : prev.date,
+      weekDay:
+        frequency === "weekly" && !prev.weekDay ? weekDayIn(prev.tz) : prev.weekDay,
     }));
     setNote("");
   }
 
   function save() {
+    const tz = draft.tz || userTimeZone();
     const next: ReminderDraft = {
       ...draft,
       action: draft.action.trim(),
       frequency: draft.frequency,
       time: draft.time || "09:00",
-      tz: draft.tz || userTimeZone(),
-      date: draft.frequency === "once"
-        ? draft.date || dayIn(draft.tz || userTimeZone())
-        : draft.date,
+      tz,
+      date: draft.frequency === "once" ? draft.date || dayIn(tz) : "",
+      weekDay:
+        draft.frequency === "weekly"
+          ? draft.weekDay || weekDayIn(tz)
+          : draft.weekDay,
     };
     onSave(next);
     setDraft(next);
@@ -192,7 +223,37 @@ function RemindersModal({
                 />
               </label>
             </div>
-          ) : (
+          ) : null}
+          {draft.frequency === "weekly" ? (
+            <div className="ae-row">
+              <label className="ae-sub">
+                Day of the week
+                <select
+                  className="ae-in ae-select"
+                  value={draft.weekDay}
+                  onChange={(event) =>
+                    setDraft((prev) => ({ ...prev, weekDay: event.target.value }))
+                  }
+                >
+                  {WEEK_DAYS.map((day) => (
+                    <option key={day.value} value={day.value}>
+                      {day.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label className="ae-sub">
+                Time
+                <input
+                  type="time"
+                  className="ae-in"
+                  value={draft.time}
+                  onChange={(event) => setDraft((prev) => ({ ...prev, time: event.target.value }))}
+                />
+              </label>
+            </div>
+          ) : null}
+          {draft.frequency === "daily" ? (
             <div className="ae-row">
               <label className="ae-sub">
                 Time
@@ -204,7 +265,7 @@ function RemindersModal({
                 />
               </label>
             </div>
-          )}
+          ) : null}
 
           <label className="ae-sub ae-tz">
             Timezone
@@ -238,13 +299,11 @@ export default function InvitationRitualFlow({
   active,
   onClose,
   onSave,
-  onEditIntention,
 }: {
   state: SpaceState;
   active: boolean;
   onClose: () => void;
   onSave: (next: SpaceState) => void;
-  onEditIntention: () => void;
 }) {
   const [step, setStep] = useState<Step>("intro");
   const [remindersOpen, setRemindersOpen] = useState(false);
@@ -357,15 +416,6 @@ export default function InvitationRitualFlow({
                 </span>
               </li>
             </ol>
-            <p className="links small">
-              <button className="tlink" type="button" onClick={onEditIntention}>
-                Edit my intention
-              </button>
-              <span className="sep">·</span>
-              <button className="tlink" type="button" onClick={() => setStep("intro")}>
-                Back
-              </button>
-            </p>
           </section>
         )}
       </AuthShell>
@@ -380,7 +430,9 @@ export default function InvitationRitualFlow({
               reminder: {
                 action: draft.action,
                 frequency: draft.frequency,
-                date: draft.date || undefined,
+                date: draft.frequency === "once" ? draft.date || undefined : undefined,
+                weekDay:
+                  draft.frequency === "weekly" ? draft.weekDay || undefined : undefined,
                 time: draft.time || undefined,
                 tz: draft.tz || undefined,
               },

@@ -3,5 +3,9 @@ import AuthShell from "../../../components/auth/AuthShell";
 import "../../../components/auth/auth.css";
 
 export default function StaffSignInPage() {
-  return <AuthShell><AdminSignInForm audience="staff" /></AuthShell>;
+  return (
+    <AuthShell className="admin-auth">
+      <AdminSignInForm audience="staff" />
+    </AuthShell>
+  );
 }

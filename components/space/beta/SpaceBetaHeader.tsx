@@ -59,6 +59,16 @@ export default function SpaceBetaHeader({
     if (menuOpen) setBellOpen(false);
   }, [menuOpen]);
 
+  useEffect(() => {
+    if (!menuOpen) return;
+    function onDocClick(event: MouseEvent) {
+      const target = event.target as HTMLElement | null;
+      if (!target?.closest(".pmenu-wrap")) onCloseMenu();
+    }
+    document.addEventListener("click", onDocClick);
+    return () => document.removeEventListener("click", onDocClick);
+  }, [menuOpen, onCloseMenu]);
+
   function openAction(action: SpaceProfileAction) {
     setBellOpen(false);
     onCloseMenu();

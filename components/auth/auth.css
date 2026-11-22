@@ -310,6 +310,23 @@ body.night .entry-providers .btn {
   border-color: rgba(233,228,217,.2);
 }
 
+/* Admin auth surfaces — gold copper (not brown copper-dark / default .cu gradient) */
+.auth-shell.admin-auth .auth-view .cu {
+  background: var(--copper-gradient-light);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.auth-shell.admin-auth .forgot-row button:hover,
+.auth-shell.admin-auth .forgot-row button:focus-visible {
+  color: var(--copper-light);
+}
+
+.auth-shell.admin-auth .auth-notice {
+  color: var(--copper-light);
+}
+
 /* Admin portal chooser — attachment layout (centered hero, footer at bottom) */
 .auth-shell .stage:has(.admin-portal) {
   align-items: stretch;
@@ -470,7 +487,7 @@ body.night .admin-portal-providers .btn-portal-team {
   border: 0;
   padding: 0 0 6px;
   background: none;
-  color: var(--copper-dark);
+  color: var(--copper-light);
   font: inherit;
   font-size: 13px;
   font-weight: 400;
@@ -497,7 +514,7 @@ body.night .admin-portal-request {
 .admin-portal-request:hover,
 .admin-portal-request:focus-visible {
   outline: none;
-  color: var(--copper);
+  color: var(--copper-highlight);
 }
 
 @media (min-width: 900px) {

@@ -90,7 +90,7 @@ export default function StatesExplorePage({ onClose }: { onClose: () => void }) 
             else onClose();
           }}
         >
-          {selected ? "Back" : "Close"}
+          Back
         </button>
         <p className="states-explore-mark">My Space</p>
         <span aria-hidden="true" style={{ minWidth: 44 }} />

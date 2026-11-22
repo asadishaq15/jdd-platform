@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import SpaceApp from "../../components/space/SpaceApp";
 import { resolveProviderAvatarUrl } from "../../lib/avatar";
 import type { CardOrder, CommunityCircleEvent, ConnectedStay } from "../../lib/space-data";
+import { parsePrivateSpaceSnapshot } from "../../lib/space-state-sync";
 import { createClient } from "../../lib/supabase/server";
 import "../../components/discovery/discovery.css";
 import "../../components/space/space-entry.css";
@@ -34,7 +35,9 @@ export default async function SpacePage({ searchParams }: SpacePageProps) {
   const [{ data: profile }, { data: stayRows }, { data: orderRows }] = await Promise.all([
     supabase
       .from("profiles")
-      .select("full_name, avatar_url, recommended_world_number, chosen_world_number, date_of_birth, based_in")
+      .select(
+        "full_name, avatar_url, recommended_world_number, chosen_world_number, date_of_birth, based_in, private_space",
+      )
       .eq("id", userData.user.id)
       .maybeSingle(),
     supabase
@@ -149,6 +152,7 @@ export default async function SpacePage({ searchParams }: SpacePageProps) {
 
   const providerAvatarUrl = resolveProviderAvatarUrl(userData.user.user_metadata);
   const avatarUrl = profile?.avatar_url || providerAvatarUrl || null;
+  const initialSpaceSnapshot = parsePrivateSpaceSnapshot(profile?.private_space);
 
   return (
     <SpaceApp
@@ -175,6 +179,7 @@ export default async function SpacePage({ searchParams }: SpacePageProps) {
         chosen: profile?.chosen_world_number || undefined,
         dateOfBirth: profile?.date_of_birth || undefined,
       }}
+      initialSpaceSnapshot={initialSpaceSnapshot}
     />
   );
 }

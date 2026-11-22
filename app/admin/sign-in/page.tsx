@@ -11,7 +11,7 @@ function partnerAccessMailto() {
 
 export default function AdminSignInPage() {
   return (
-    <AuthShell>
+    <AuthShell className="admin-auth">
       <section className="auth-view admin-portal" aria-label="Administration portal entry">
         <div className="admin-portal-main">
           <p className="eyebrow admin-portal-eyebrow">State-based hospitality system</p>

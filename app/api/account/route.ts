@@ -19,6 +19,8 @@ export async function DELETE() {
       return NextResponse.json({ error: "We could not delete your account. Please try again." }, { status: 500 });
     }
 
+    await supabase.auth.signOut();
+
     return NextResponse.json({ ok: true });
   } catch (caughtError) {
     console.error("Account deletion is not configured", caughtError instanceof Error ? caughtError.message : caughtError);

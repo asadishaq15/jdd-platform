@@ -76,6 +76,32 @@ body.night .space-drawer-panel {
   color: var(--muted);
 }
 
+/* My events — scrollable body, centered Close at bottom (jmodal / order flow) */
+.space-drawer-panel.space-events-drawer {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding-bottom: calc(env(safe-area-inset-bottom) + 28px);
+}
+
+.space-events-drawer .space-drawer-scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.space-events-drawer .space-drawer-foot {
+  flex: 0 0 auto;
+  margin: auto 0 0;
+  padding-top: 40px;
+  text-align: center;
+}
+
+.space-events-drawer .space-drawer-foot .tlink {
+  font-size: 13.5px;
+}
+
 /* Events */
 .space-ev-tabs {
   display: flex;

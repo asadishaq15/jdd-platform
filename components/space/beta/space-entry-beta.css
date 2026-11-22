@@ -53,6 +53,11 @@
   /* Theme tokens snap with body.night — no delayed wash (avoids arch/panel flipping early). */
 }
 
+/* My Journey (z-index 80) is a sibling of profile jmodals in this shell */
+.space-entry-beta .my-journey ~ .jmodal {
+  z-index: 92;
+}
+
 body.night .space-entry-beta {
   --beta-bg: #000000;
   --beta-fg: #eee8de;
@@ -1140,15 +1145,28 @@ body.night .beta-arch-btn {
   height: 100%;
   justify-content: flex-start;
   box-sizing: border-box;
-  padding-top: clamp(48px, 8vh, 96px);
+  padding-top: clamp(88px, 12vh, 136px);
   padding-left: clamp(16px, 3vw, 40px);
   gap: 14px;
 }
 
 .beta-world .beta-world-place {
   color: var(--beta-soft-text-strong, var(--beta-fg));
-  margin: 4px 0 20px;
+  margin: 4px 0 34px;
   font-size: 15px;
+}
+
+.beta-world-body {
+  display: flex;
+  flex-direction: column;
+  align-items: inherit;
+  gap: 14px;
+  margin-top: 24px;
+  width: 100%;
+}
+
+.beta-world .beta-world-body {
+  align-items: flex-start;
 }
 
 .beta-world .beta-scent-foot {
@@ -1164,7 +1182,7 @@ body.night .beta-arch-btn {
 }
 
 .beta-world-lead {
-  margin: 4px 0 0;
+  margin: 0;
   font-family: var(--serif);
   font-size: 22px;
   font-weight: 300;
@@ -1177,7 +1195,7 @@ body.night .beta-arch-btn {
 }
 
 .beta-world-list {
-  margin: 8px 0 0;
+  margin: -4px 0 0;
   padding: 0;
   list-style: none;
   color: var(--beta-soft-text);
@@ -2267,20 +2285,81 @@ body:not(.night) .beta-scene-light {
   margin-top: 28px;
 }
 
-/* My account — close matches events drawer (space-drawer-close) */
-.space-entry-beta .beta-account-sheet .beta-jmodal-top {
-  display: flex;
-  justify-content: flex-end;
-  margin: -6px 0 2px;
-  text-align: left;
+/* My account + delete modals — gold copper accents (not brown copper-dark) */
+.space-entry-beta .beta-account-sheet,
+.space-entry-beta .beta-delete-sheet {
+  --sheet-copper: var(--copper-light);
+  --sheet-copper-hover: var(--copper-highlight);
 }
 
-.space-entry-beta .beta-account-sheet .jm-title {
-  margin-top: 4px;
+.space-entry-beta .beta-account-sheet .account-photo-edit,
+.space-entry-beta .beta-account-sheet .account-edit,
+.space-entry-beta .beta-account-sheet .password-field button {
+  color: var(--sheet-copper);
 }
 
-.space-entry-beta .beta-account-sheet .jm-text {
-  margin-bottom: 8px;
+.space-entry-beta .beta-account-sheet .account-photo-edit:hover,
+.space-entry-beta .beta-account-sheet .account-photo-edit:focus-visible,
+.space-entry-beta .beta-account-sheet .account-row:hover .account-edit,
+.space-entry-beta .beta-account-sheet .account-row:focus-visible .account-edit,
+.space-entry-beta .beta-account-sheet .password-field button:hover,
+.space-entry-beta .beta-account-sheet .password-field button:focus-visible {
+  color: var(--sheet-copper-hover);
+}
+
+.space-entry-beta .beta-account-sheet .account-row:focus-visible,
+.space-entry-beta .beta-account-sheet .password-field button:focus-visible,
+.space-entry-beta .beta-account-sheet .account-actions button:focus-visible {
+  outline-color: var(--sheet-copper);
+}
+
+.space-entry-beta .beta-account-sheet .account-form input:focus,
+.space-entry-beta .beta-account-sheet .account-dob input:focus {
+  border-bottom-color: var(--sheet-copper);
+}
+
+.space-entry-beta .beta-account-sheet .account-photo-remove:hover,
+.space-entry-beta .beta-account-sheet .account-photo-remove:focus-visible {
+  color: var(--muted);
+}
+
+.space-entry-beta .beta-account-sheet .account-actions button.save {
+  border-color: var(--sheet-copper);
+  color: var(--sheet-copper);
+}
+
+.space-entry-beta .beta-account-sheet .account-actions button.save:hover:not(:disabled) {
+  border-color: var(--sheet-copper-hover);
+  color: var(--sheet-copper-hover);
+}
+
+.space-entry-beta .beta-account-sheet .account-notice.success {
+  color: var(--sheet-copper-hover);
+}
+
+.space-entry-beta .beta-account-sheet .links.small .tlink:hover,
+.space-entry-beta .beta-account-sheet .links.small .tlink:focus-visible,
+.space-entry-beta .beta-delete-sheet .links.small .tlink:hover,
+.space-entry-beta .beta-delete-sheet .links.small .tlink:focus-visible {
+  background: var(--copper-gradient-light);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.space-entry-beta .beta-delete-sheet .delete-confirm input:focus {
+  border-bottom-color: var(--sheet-copper);
+}
+
+.space-entry-beta .beta-delete-sheet .btn.primary,
+.space-entry-beta .beta-delete-sheet .delete-account-button {
+  border-color: color-mix(in srgb, var(--sheet-copper) 55%, var(--line));
+}
+
+.space-entry-beta .beta-delete-sheet .btn.primary:hover:not(:disabled),
+.space-entry-beta .beta-delete-sheet .delete-account-button:hover:not(:disabled) {
+  border-color: var(--sheet-copper);
+  color: var(--sheet-copper-hover);
 }
 
 .space-entry-beta .beta-orders-sheet {
@@ -2808,9 +2887,13 @@ body.night .beta-circle-detail > .body.dob-intro {
 
   .beta-world .beta-split-copy {
     align-items: center;
-    padding-top: 0;
+    padding-top: 36px;
     padding-left: 0;
     text-align: center;
+  }
+
+  .beta-world .beta-world-body {
+    align-items: center;
   }
 
   .beta-world .beta-world-place,

@@ -4,6 +4,13 @@ import { worldDetails, type HospitalityWorld } from "./worlds";
 
 const pick = <T,>(items: readonly T[], index: number) => items[index % items.length];
 
+const SIERRA_RESERVE_WORLD = 4;
+const SIERRA_COMMUNITY_PHOTOS = {
+  event: "/assets/Golden Hour Gym Jump Rope.png",
+  invite: "/assets/Candlelit Dusk Dinner Gathering.png",
+  news: "/assets/Warm Bookshelf by the Fireplace.png",
+} as const;
+
 /** Keyword match from space (1).html `EVT_PHOTO`. */
 const EVENT_PHOTOS = [
   ["kaiseki", "kaiseki"],
@@ -99,14 +106,35 @@ export function communityCircleForWorld(world: HospitalityWorld): CommunityCircl
     },
   ];
 
-  return cards.map((card) => ({
-    id: `demo-${n}-${card.category}`,
-    propertyId: "demo",
-    category: card.category,
-    title: card.title,
-    timing: card.timing,
-    subtitle: card.subtitle,
-    body: card.body,
-    thumbnailUrl: eventPhoto(`${card.subtitle} ${card.body}`, world),
-  }));
+  return cards.map((card) => {
+    let title = card.title;
+    let body = card.body;
+    let thumbnailUrl = eventPhoto(`${card.subtitle} ${card.body}`, world);
+
+    if (n === SIERRA_RESERVE_WORLD) {
+      if (card.category === "event") {
+        title = "A Morning of Stability.";
+        body = `${card.subtitle}. A morning for guests connected by ${world.state}.`;
+        thumbnailUrl = SIERRA_COMMUNITY_PHOTOS.event;
+      }
+      if (card.category === "invite") {
+        thumbnailUrl = SIERRA_COMMUNITY_PHOTOS.invite;
+      }
+      if (card.category === "news") {
+        title = "A New Season at Sierra Reserve";
+        thumbnailUrl = SIERRA_COMMUNITY_PHOTOS.news;
+      }
+    }
+
+    return {
+      id: `demo-${n}-${card.category}`,
+      propertyId: "demo",
+      category: card.category,
+      title,
+      timing: card.timing,
+      subtitle: card.subtitle,
+      body,
+      thumbnailUrl,
+    };
+  });
 }

@@ -8,8 +8,8 @@ import { communityCircleForWorld } from "../../../lib/community-circle";
 import { getWorld, worldNumberForDemoCode } from "../../../lib/worlds";
 import { activeWorldNumber, isGuestSpace } from "../../../lib/space-active-world";
 import { attachDemoCode, migrateStaysFromCode } from "../../../lib/space-property-snapshot";
-import { loadSpaceState, saveSpaceState, type SpaceState } from "../../../lib/space-state";
-import { createClient } from "../../../lib/supabase/client";
+import { persistSpaceState, type SpaceState } from "../../../lib/space-state";
+import { buildDashboardSpaceState, signOutToLogin } from "../../../lib/space-state-sync";
 import AccountSettings from "../AccountSettings";
 import DeleteAccountDialog from "../DeleteAccountDialog";
 import type { SpaceEntryProps } from "../SpaceEntry";
@@ -35,10 +35,10 @@ import RitualSlide from "./slides/RitualSlide";
 import ScentInvitationSlide from "./slides/ScentInvitationSlide";
 import { SPACE_SLIDES } from "./slides";
 import "./space-entry-beta.css";
-import "./space-drawer.css";
 
 type ProfilePanel = "account" | "orders" | "stays" | "reminders" | "delete" | null;
 
+const IDENTITY_SLIDE_INDEX = SPACE_SLIDES.findIndex((slide) => slide.id === "identity");
 const SCENT_SLIDE_INDEX = SPACE_SLIDES.findIndex((slide) => slide.id === "scent");
 const RITUAL_SLIDE_INDEX = SPACE_SLIDES.findIndex((slide) => slide.id === "ritual");
 const INTENTION_SLIDE_INDEX = SPACE_SLIDES.findIndex((slide) => slide.id === "intention");
@@ -48,12 +48,6 @@ type SpaceEntryBetaProps = SpaceEntryProps & {
   onUiVersionChange: (version: SpaceUiVersion) => void;
 };
 
-function orderStatusForSpace(status: CardOrder["status"]): NonNullable<SpaceState["cardStatus"]> {
-  if (status === "requested") return "preparing";
-  if (status === "cancelled") return "none";
-  return status;
-}
-
 export default function SpaceEntryBeta({
   account: initialAccount,
   stays,
@@ -62,6 +56,7 @@ export default function SpaceEntryBeta({
   circleEvents = [],
   initialRsvps = {},
   initialState = {},
+  initialSpaceSnapshot = null,
   uiVersion,
   onUiVersionChange,
 }: SpaceEntryBetaProps) {
@@ -83,35 +78,26 @@ export default function SpaceEntryBeta({
   }, [initialAccount]);
 
   useEffect(() => {
-    const loaded = migrateStaysFromCode(loadSpaceState());
-    const synced = {
-      ...loaded,
-      ...(initialState.recommended ? { recommended: initialState.recommended } : {}),
-      ...(initialState.chosen ? { chosen: initialState.chosen } : {}),
-      ...(initialState.dateOfBirth ? { dateOfBirth: initialState.dateOfBirth } : {}),
-      rsvps: { ...(loaded.rsvps || {}), ...initialRsvps },
-    };
-    const hasDemoCode = Boolean(worldNumberForDemoCode(synced.code));
-    const connected = stays.find((stay) => stay.id === activeStayId) || stays[0];
-    const latestOrder = initialOrders[0];
-    const persistedOrder = latestOrder
-      ? {
-          cardStatus: orderStatusForSpace(latestOrder.status),
-          order: {
-            property: latestOrder.propertyName,
-            state: getWorld(connected?.property.worldNumber || synced.chosen || synced.recommended || 9).state,
-            recipient: latestOrder.recipientName,
-          },
-        }
-      : {};
-    const next = hasDemoCode
-      ? synced
-      : connected
-        ? { ...synced, ...persistedOrder, visited: connected.property.worldNumber }
-        : { ...synced, ...persistedOrder };
+    const next = buildDashboardSpaceState({
+      initialState,
+      initialSpaceSnapshot,
+      initialRsvps,
+      initialOrders,
+      stays,
+      activeStayId,
+    });
     setState(next);
-    saveSpaceState(next);
-  }, [activeStayId, initialOrders, initialRsvps, initialState.chosen, initialState.dateOfBirth, initialState.recommended, stays]);
+    persistSpaceState(next);
+  }, [
+    activeStayId,
+    initialOrders,
+    initialRsvps,
+    initialSpaceSnapshot,
+    initialState.chosen,
+    initialState.dateOfBirth,
+    initialState.recommended,
+    stays,
+  ]);
 
   const connectedStay = stays.find((stay) => stay.id === activeStayId) || stays[0];
   const guest = isGuestSpace(state);
@@ -129,7 +115,7 @@ export default function SpaceEntryBeta({
 
   function updateState(next: SpaceState) {
     setState(next);
-    saveSpaceState(next);
+    persistSpaceState(next);
   }
 
   function simulateDelivery() {
@@ -153,10 +139,8 @@ export default function SpaceEntryBeta({
     if (INTENTION_SLIDE_INDEX >= 0) setSlideIndex(INTENTION_SLIDE_INDEX);
   }
 
-  async function signOut() {
-    const supabase = createClient();
-    await supabase.auth.signOut();
-    window.location.assign("/sign-in");
+  function signOut() {
+    void signOutToLogin();
   }
 
   const activeCircleEvent = circleDetailId
@@ -202,10 +186,6 @@ export default function SpaceEntryBeta({
           setFlow(null);
           if (RITUAL_SLIDE_INDEX >= 0) setSlideIndex(RITUAL_SLIDE_INDEX);
         }}
-        onEditIntention={() => {
-          setFlow(null);
-          if (INTENTION_SLIDE_INDEX >= 0) setSlideIndex(INTENTION_SLIDE_INDEX);
-        }}
       />
     );
   }
@@ -217,6 +197,8 @@ export default function SpaceEntryBeta({
         onComplete={({ code, visited }) => {
           updateState(attachDemoCode(state, code, visited));
           setAccessCodeOpen(false);
+          // HTML toSpace(): new code opens the first dashboard slide (My Space), not the previous one.
+          if (IDENTITY_SLIDE_INDEX >= 0) setSlideIndex(IDENTITY_SLIDE_INDEX);
         }}
       />
     );
@@ -268,15 +250,15 @@ export default function SpaceEntryBeta({
           }}
         >
           <section className="jm-in glass beta-account-sheet" role="dialog" aria-modal="true" aria-label="My account">
-            <div className="beta-jmodal-top">
-              <button className="space-drawer-close" type="button" onClick={() => setProfilePanel(null)}>
-                Close
-              </button>
-            </div>
             <h2 className="jm-title">My account</h2>
             <div className="jm-text">
               <AccountSettings account={account} onAccountChange={setAccount} />
             </div>
+            <p className="links small">
+              <button className="tlink" type="button" onClick={() => setProfilePanel(null)}>
+                Close
+              </button>
+            </p>
           </section>
         </div>
       )}
@@ -403,7 +385,7 @@ export default function SpaceEntryBeta({
             if (event.target === event.currentTarget) setProfilePanel(null);
           }}
         >
-          <section className="jm-in glass" role="dialog" aria-modal="true" aria-label="Delete account">
+          <section className="jm-in glass beta-delete-sheet" role="dialog" aria-modal="true" aria-label="Delete account">
             <DeleteAccountDialog />
             <p className="links small">
               <button className="tlink" type="button" onClick={() => setProfilePanel(null)}>Close</button>
@@ -418,25 +400,17 @@ export default function SpaceEntryBeta({
     </>
   );
 
-  if (journeyOpen) {
-    return (
-      <>
+  return (
+    <main className="space-entry-beta">
+      {journeyOpen ? (
         <MyJourneyPage
           account={account}
           onClose={() => setJourneyOpen(false)}
-          onOpenAccount={() => setProfilePanel("account")}
-          onOpenEvents={() => setEventsOpen(true)}
-          onOpenExplore={() => setExploreOpen(true)}
-          onOpenLegal={() => setLegalOpen(true)}
+          onProfileAction={handleProfileAction}
           onSignOut={signOut}
         />
-        {profileOverlays}
-      </>
-    );
-  }
-
-  return (
-    <main className="space-entry-beta">
+      ) : (
+        <>
       <GradientDefs />
       <SpaceBetaHeader
         account={account}
@@ -517,6 +491,8 @@ export default function SpaceEntryBeta({
             </BetaSlideLayer>
           ))}
         </SpaceDeck>
+      )}
+        </>
       )}
 
       {profileOverlays}

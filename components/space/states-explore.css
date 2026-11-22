@@ -19,6 +19,26 @@
   flex: 0 0 auto;
 }
 
+/* Top-left Back — plain muted text (no copper fill, no underline), like beta-hback */
+.states-explore.visitor-app .back {
+  text-decoration: none;
+  -webkit-text-fill-color: currentColor;
+}
+
+.states-explore.visitor-app .back::after {
+  display: none;
+}
+
+.states-explore.visitor-app .back:hover,
+.states-explore.visitor-app .back:focus-visible {
+  background: none;
+  -webkit-background-clip: initial;
+  background-clip: initial;
+  -webkit-text-fill-color: currentColor;
+  color: var(--fg);
+  outline: none;
+}
+
 .states-explore .states-explore-mark {
   position: absolute;
   left: 50%;

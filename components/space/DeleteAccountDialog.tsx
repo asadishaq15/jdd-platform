@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { SPACE_STATE_KEY } from "../../lib/space-state";
+import { clearSpaceLocalData } from "../../lib/space-state";
 import { createClient } from "../../lib/supabase/client";
 
 export default function DeleteAccountDialog() {
@@ -19,10 +19,9 @@ export default function DeleteAccountDialog() {
       const result = await response.json() as { error?: string };
       if (!response.ok) throw new Error(result.error || "We could not delete your account.");
 
-      localStorage.removeItem(SPACE_STATE_KEY);
-      localStorage.removeItem("jdd-onboarded");
-      await createClient().auth.signOut({ scope: "local" });
-      window.location.assign("/sign-in?deleted=1");
+      clearSpaceLocalData();
+      await createClient().auth.signOut();
+      window.location.assign("/");
     } catch (caughtError) {
       setDeleting(false);
       setError(caughtError instanceof Error ? caughtError.message : "We could not delete your account.");

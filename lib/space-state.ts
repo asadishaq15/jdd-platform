@@ -60,6 +60,8 @@ export type SpaceState = {
     action: string;
     frequency: ReminderFrequency;
     date?: string;
+    /** monday–sunday when frequency is weekly */
+    weekDay?: string;
     time?: string;
     tz?: string;
   };
@@ -76,10 +78,35 @@ export type SpaceState = {
 
 export const SPACE_STATE_KEY = "jdd-space-react-v1";
 
+const LEGACY_SPACE_STATE_KEY = "jdd-space-demo-v2";
+const ONBOARDED_KEY = "jdd-onboarded";
+const PRODUCT_SESSION_KEY = "jdd-product-session";
+
+/** Clear browser demo/onboarding progress (HTML acc-delete → index.html parity). */
+export function clearSpaceLocalData() {
+  try {
+    localStorage.removeItem(SPACE_STATE_KEY);
+    localStorage.removeItem(LEGACY_SPACE_STATE_KEY);
+    localStorage.removeItem(ONBOARDED_KEY);
+    sessionStorage.removeItem(PRODUCT_SESSION_KEY);
+  } catch {
+    // ignore storage errors
+  }
+}
+
 export function saveSpaceState(state: SpaceState) {
   try {
     localStorage.setItem(SPACE_STATE_KEY, JSON.stringify(state));
   } catch {}
+}
+
+/** Save locally and debounce-sync to the server when authenticated (dashboard). */
+export function persistSpaceState(state: SpaceState) {
+  saveSpaceState(state);
+  if (typeof window === "undefined") return;
+  void import("./space-state-sync").then(({ scheduleSpaceStateSync }) => {
+    scheduleSpaceStateSync(state);
+  });
 }
 
 export function loadSpaceState(): SpaceState {

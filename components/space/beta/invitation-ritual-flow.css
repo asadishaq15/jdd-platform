@@ -401,6 +401,52 @@ body.night .beta-ritual-overlay .stay-actions .tlink:focus-visible {
   cursor: pointer;
 }
 
+/* Day-of-week (weekly) — bordered field + chevron, like demo date picker row */
+.beta-ritual-overlay select.ae-in.ae-select {
+  box-sizing: border-box;
+  min-height: 42px;
+  border: 1px solid var(--line);
+  padding: 8px 36px 8px 12px;
+  font-family: var(--serif);
+  font-size: 16px;
+  font-weight: 300;
+  line-height: 1.35;
+  color: var(--fg);
+  background-color: transparent;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='7' viewBox='0 0 12 7' fill='none'%3E%3Cpath d='M1 1.5 6 5.5 11 1.5' stroke='%238c8c88' stroke-width='1.15' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+}
+
+.beta-ritual-overlay select.ae-in.ae-select:focus {
+  border-color: var(--copper, #c58452);
+}
+
+body.night .beta-ritual-overlay select.ae-in.ae-select {
+  border-color: rgba(255, 255, 255, 0.22);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='7' viewBox='0 0 12 7' fill='none'%3E%3Cpath d='M1 1.5 6 5.5 11 1.5' stroke='%23a8a8a5' stroke-width='1.15' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+}
+
+/* Once row: match date control footprint to weekly day field */
+.beta-ritual-overlay .ae-row input.ae-in[type="date"] {
+  box-sizing: border-box;
+  min-height: 42px;
+  border: 1px solid var(--line);
+  padding: 8px 10px;
+  font-family: var(--serif);
+  font-size: 16px;
+  font-weight: 300;
+}
+
+.beta-ritual-overlay .ae-row input.ae-in[type="date"]:focus {
+  border-color: var(--copper, #c58452);
+}
+
+body.night .beta-ritual-overlay .ae-row input.ae-in[type="date"] {
+  border-color: rgba(255, 255, 255, 0.22);
+  color-scheme: dark;
+}
+
 .beta-ritual-overlay .ae-seg {
   display: inline-flex;
   margin: 0;

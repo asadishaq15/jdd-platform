@@ -5,6 +5,11 @@
 .my-journey button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; }
 .my-journey a { color: inherit; text-decoration: none; }
 .my-journey a:visited { color: inherit; }
+/* Profile jmodals (account, orders, delete) render as siblings after the journey shell. */
+.my-journey ~ .jmodal {
+  z-index: 92;
+}
+
 .my-journey {
   position: fixed;
   inset: 0;
@@ -27,6 +32,7 @@
     --gold-text:linear-gradient(92deg,#A66A3F 0%,#C58452 28%,#D6A06D 50%,#F0C79B 68%,#B47749 88%,#A66A3F 100%);
     --serif:'Cormorant Garamond',Georgia,serif; --sans:'Inter',Helvetica,Arial,sans-serif;
     --arch-w:230px; --arch-h:306px; --swing:105px;
+    --ease-lux:cubic-bezier(0.22, 1, 0.36, 1);
 }
 .my-journey.light{
   --bg:#ffffff;--panel:#ffffff;--line:#e8e8e8;--line-2:#d4d4d4;--path:#c4ad8c;--text:#141414;--muted:#636363;--dim:#9a9a9a
@@ -39,6 +45,10 @@
 }
 @keyframes shimmer{
   from{background-position:0 0}to{background-position:-200% 0}
+}
+@keyframes journey-panel-in{
+  from{opacity:0;transform:translateX(14px)}
+  to{opacity:1;transform:none}
 }
 @keyframes glow{
   0%,100%{box-shadow:0 0 4px 1px rgba(240,199,155,.45)}50%{box-shadow:0 0 12px 4px rgba(240,199,155,.85)}
@@ -57,10 +67,17 @@
   color:var(--text)
 }
 .my-journey .brand{
-  grid-column:2;display:flex;align-items:center;gap:10px;font-size:13px;letter-spacing:0;color:var(--muted);text-transform:uppercase
+  grid-column:2;display:flex;align-items:center;gap:12px;padding:0;color:var(--text);text-transform:none
 }
-.my-journey .brand svg{
-  width:16px;height:22px;color:var(--gold)
+.my-journey .journey-logo{
+  width:auto;height:28px;display:block
+}
+.my-journey .journey-brand-title{
+  font-family:var(--sans);font-size:18px;font-weight:400;letter-spacing:0.04em;text-transform:uppercase;line-height:1;white-space:nowrap;color:var(--text)
+}
+@media (max-width:560px){
+  .my-journey .journey-logo{height:22px}
+  .my-journey .journey-brand-title{font-size:14px}
 }
 .my-journey .icons{
   grid-column:3;justify-self:end;display:flex;gap:22px;align-items:center;position:relative
@@ -493,7 +510,13 @@
   text-align:left;display:none;margin-top:24px;padding:18px 0 4px;border-top:1px solid var(--line)
 }
 .my-journey .panel.open{
-  display:block
+  display:block;
+  animation:journey-panel-in 0.5s var(--ease-lux) both
+}
+@media (prefers-reduced-motion:reduce){
+  .my-journey .panel.open{
+    animation:none
+  }
 }
 .my-journey .panel ul{
   list-style:none

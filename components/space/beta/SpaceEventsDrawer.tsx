@@ -68,15 +68,19 @@ export default function SpaceEventsDrawer({
         if (event.target === event.currentTarget) onClose();
       }}
     >
-      <aside className="space-drawer-panel" role="dialog" aria-modal="true" aria-label="My events" onClick={(event) => event.stopPropagation()}>
-        <div className="space-drawer-top">
+      <aside
+        className="space-drawer-panel space-events-drawer"
+        role="dialog"
+        aria-modal="true"
+        aria-label="My events"
+        onClick={(event) => event.stopPropagation()}
+      >
+        <div className="space-drawer-scroll">
           <div className="space-drawer-eyebrow">My events</div>
-          <button className="space-drawer-close" type="button" onClick={onClose}>Close</button>
-        </div>
-        <h3>
-          Your <span className="cg">events</span>.
-        </h3>
-        <div className="space-ev-tabs">
+          <h3>
+            Your <span className="cg">events</span>.
+          </h3>
+          <div className="space-ev-tabs">
           <button type="button" className={evTab === "upcoming" ? "on" : ""} onClick={() => setEvTab("upcoming")}>
             Upcoming<span className="count">{upcoming.length}</span>
           </button>
@@ -128,6 +132,12 @@ export default function SpaceEventsDrawer({
             {evTab === "upcoming" ? "No upcoming events." : "No past events yet."}
           </div>
         )}
+        </div>
+        <p className="links small space-drawer-foot">
+          <button className="tlink" type="button" onClick={onClose}>
+            Close
+          </button>
+        </p>
       </aside>
     </div>
   );

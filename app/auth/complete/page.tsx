@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import GradientDefs from "../../../components/layout/GradientDefs";
 import { persistDiscoveryProfile } from "../../../lib/discovery-persist";
 import { loadSpaceState } from "../../../lib/space-state";
+import { hydrateLocalSpaceFromServer } from "../../../lib/space-state-sync";
 import { createClient } from "../../../lib/supabase/client";
 import "../../../components/onboarding/visitor-onboarding.css";
 
@@ -14,6 +15,19 @@ export default function AuthCompletePage() {
 
   useEffect(() => {
     let cancelled = false;
+
+    async function hydrateSpaceProgress(userId: string) {
+      const supabase = createClient();
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("recommended_world_number, chosen_world_number")
+        .eq("id", userId)
+        .maybeSingle();
+      await hydrateLocalSpaceFromServer({
+        recommended: profile?.recommended_world_number ?? null,
+        chosen: profile?.chosen_world_number ?? null,
+      });
+    }
 
     async function run() {
       const supabase = createClient();
@@ -36,12 +50,18 @@ export default function AuthCompletePage() {
           window.setTimeout(() => router.replace("/discover"), 1600);
           return;
         }
+        await hydrateSpaceProgress(userData.user.id);
+        if (cancelled) return;
         router.replace("/space");
         return;
       }
 
       const [{ data: profile }, { data: stays }, { data: adminMemberships }] = await Promise.all([
-        supabase.from("profiles").select("discovery_completed_at").eq("id", userData.user.id).maybeSingle(),
+        supabase
+          .from("profiles")
+          .select("discovery_completed_at, recommended_world_number, chosen_world_number")
+          .eq("id", userData.user.id)
+          .maybeSingle(),
         supabase.from("stays").select("id").eq("guest_id", userData.user.id).limit(1),
         supabase.from("admin_memberships").select("id").eq("user_id", userData.user.id).eq("is_active", true).limit(1),
       ]);
@@ -52,6 +72,8 @@ export default function AuthCompletePage() {
         return;
       }
       if (profile?.discovery_completed_at || stays?.length) {
+        await hydrateSpaceProgress(userData.user.id);
+        if (cancelled) return;
         router.replace("/space");
         return;
       }

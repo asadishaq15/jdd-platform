@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { stateImageSrc } from "../../../../lib/state-images";
 import { SPACE_ICON_PIN, SPACE_ICON_SCENT } from "../../../../lib/space-icons";
 import type { HospitalityWorld } from "../../../../lib/worlds";
 import { worldDetails } from "../../../../lib/worlds";
@@ -30,9 +31,8 @@ export default function ChosenWorldSlide({
         >
           <img
             className="beta-arch-photo"
-            src="/assets/photo-oblique-house-lake-lounge.jpg"
-            alt=""
-            aria-hidden="true"
+            src={stateImageSrc(world)}
+            alt={world.property}
           />
           <div className="beta-arch-nav" aria-hidden="true">
             <span className="beta-arch-btn">
@@ -62,32 +62,34 @@ export default function ChosenWorldSlide({
       </div>
 
       <div className="beta-split-copy">
-        <h2 className="beta-world-name">{world.property}</h2>
-        <p className="beta-world-place">
-          <img className="beta-inline-icon" src={SPACE_ICON_PIN} alt="" aria-hidden="true" />
-          {world.country}
-        </p>
-        <p className="beta-world-lead">
-          Experience your <em>State</em> here.
-        </p>
-        <ul className="beta-world-list">
-          {detail.experiences.map((experience) => (
-            <li key={experience}>{experience}</li>
-          ))}
-        </ul>
-        <div className="beta-world-cta">
-          {guest ? (
-            <>
-              <button className="beta-cta" type="button" disabled>
-                Reflect on your stay <span aria-hidden="true">→</span>
+        <div className="beta-world-body">
+          <h2 className="beta-world-name">{world.property}</h2>
+          <p className="beta-world-place">
+            <img className="beta-inline-icon" src={SPACE_ICON_PIN} alt="" aria-hidden="true" />
+            {world.country}
+          </p>
+          <p className="beta-world-lead">
+            Experience your <em>State</em> here.
+          </p>
+          <ul className="beta-world-list">
+            {detail.experiences.map((experience) => (
+              <li key={experience}>{experience}</li>
+            ))}
+          </ul>
+          <div className="beta-world-cta">
+            {guest ? (
+              <>
+                <button className="beta-cta" type="button" disabled>
+                  Reflect on your stay <span aria-hidden="true">→</span>
+                </button>
+                <p className="beta-cta-note">Opens after your check-out.</p>
+              </>
+            ) : (
+              <button className="beta-cta" type="button" onClick={() => setBookOpen(true)}>
+                Book your stay <span aria-hidden="true">→</span>
               </button>
-              <p className="beta-cta-note">Opens after your check-out.</p>
-            </>
-          ) : (
-            <button className="beta-cta" type="button" onClick={() => setBookOpen(true)}>
-              Book your stay <span aria-hidden="true">→</span>
-            </button>
-          )}
+            )}
+          </div>
         </div>
         <div className="beta-scent-foot">
           <p className="beta-label beta-scent-label">
