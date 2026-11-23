@@ -15,3 +15,17 @@ export function activeWorldNumber(
   }
   return state.chosen ?? state.recommended;
 }
+
+/**
+ * World shown on the dashboard deck. An explicit Explore “Choose this world”
+ * (entryMode === "chosen") wins over stay/visited so slide 2 updates immediately.
+ */
+export function dashboardWorldNumber(
+  state: Pick<SpaceState, "code" | "visited" | "chosen" | "recommended" | "entryMode">,
+  fallback?: number,
+): number {
+  if (state.entryMode === "chosen" && state.chosen != null) {
+    return state.chosen;
+  }
+  return activeWorldNumber(state) ?? fallback ?? 9;
+}

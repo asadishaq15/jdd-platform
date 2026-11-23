@@ -1,0 +1,246 @@
+/* Shared property arch panel — mirrors ChosenWorldSlide (.beta-world) sizing */
+
+.state-arch-panel {
+  width: 100%;
+  max-width: 1248px;
+  margin-inline: auto;
+  box-sizing: border-box;
+  padding-inline: clamp(24px, 6vw, 96px);
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.95fr);
+  gap: 40px 64px;
+  align-items: center;
+  text-align: left;
+}
+
+.state-arch-panel-media {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  min-width: 0;
+}
+
+.state-arch-panel-arch {
+  position: relative;
+  width: 100%;
+  max-width: 612px;
+  aspect-ratio: 612 / 720;
+  overflow: hidden;
+  border-radius: 50% 50% 0 0;
+  background: var(--neutral-6, #eceae4);
+}
+
+.state-arch-panel-arch.noimg {
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--copper, #c58452) 16%, var(--neutral-6, #eceae4)) 0%,
+    var(--neutral-6, #eceae4) 100%
+  );
+}
+
+.state-arch-panel-arch.noimg img {
+  visibility: hidden;
+}
+
+.state-arch-panel-arch img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center center;
+}
+
+.state-arch-panel-copy {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-start;
+  gap: 14px;
+  min-width: 0;
+  box-sizing: border-box;
+  padding-top: clamp(48px, 8vh, 112px);
+  padding-left: clamp(16px, 3vw, 40px);
+}
+
+.state-arch-panel-eye {
+  margin: 0 0 4px;
+  font-family: var(--sans);
+  font-size: 10.5px;
+  font-weight: 400;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.state-arch-panel-state {
+  margin: 0;
+  font-family: var(--serif);
+  font-weight: 300;
+  font-size: clamp(34px, 4.4vw, 46px);
+  line-height: 1.14;
+}
+
+.state-arch-panel-state .cu {
+  font-size: 1.12em;
+}
+
+.state-arch-panel-prop {
+  margin: 8px 0 0;
+  font-family: var(--serif);
+  font-weight: 400;
+  font-size: clamp(28px, 3.5vw, 40px);
+  line-height: 1.1;
+  letter-spacing: 0;
+  color: var(--fg);
+}
+
+.state-arch-panel-loc {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin: 4px 0 8px;
+  font-family: var(--sans);
+  font-weight: 400;
+  font-size: 15px;
+  letter-spacing: 0;
+  color: var(--txt-2, #5d5a55);
+}
+
+.state-arch-panel-pin {
+  display: block;
+  width: 22px;
+  height: 22px;
+  flex-shrink: 0;
+  object-fit: contain;
+}
+
+.state-arch-panel-desc {
+  margin: 12px 0 0;
+  max-width: 38ch;
+  font-family: var(--sans);
+  font-weight: 300;
+  font-size: 15px;
+  line-height: 24px;
+  letter-spacing: 0;
+  color: var(--muted);
+}
+
+body.night .state-arch-panel-desc {
+  color: var(--txt-muted, var(--muted));
+  opacity: 1;
+}
+
+.state-arch-panel-line {
+  margin: 16px 0 0;
+  font-family: var(--serif);
+  font-style: italic;
+  font-weight: 300;
+  font-size: 22px;
+  letter-spacing: 0;
+  color: var(--fg);
+}
+
+.state-arch-panel-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 14px;
+  margin-top: 36px;
+  width: 100%;
+}
+
+.state-arch-panel-actions .tlink.bp {
+  width: auto;
+  min-width: 280px;
+}
+
+.state-arch-panel-actions .tlink.tl.cg {
+  margin-top: 0;
+}
+
+/* Host scenes need a wide column so the large arch is not clipped */
+.visitor-app .state-arch-panel {
+  padding-inline: 0;
+}
+
+.visitor-app .scr[data-name="stay"] .col,
+.visitor-app .scr[data-name="result"] .col,
+.visitor-app .scr[data-name="prop"] .col {
+  max-width: 1248px;
+}
+
+.visitor-app .scr[data-name="stay"] .stage,
+.visitor-app .scr[data-name="result"] .stage,
+.visitor-app .scr[data-name="prop"] .stage {
+  width: 100%;
+  align-items: stretch;
+  flex: 1 1 auto;
+  justify-content: center;
+}
+
+.states-explore .scr[data-name="prop"] .col {
+  max-width: 1248px;
+}
+
+.states-explore .scr[data-name="prop"] .stage {
+  align-items: stretch;
+  justify-content: center;
+}
+
+@media (max-width: 900px) {
+  .state-arch-panel {
+    grid-template-columns: 1fr;
+    max-width: none;
+    padding-inline: var(--pad-x, 24px);
+    gap: 28px;
+  }
+
+  .state-arch-panel-media {
+    justify-content: center;
+  }
+
+  .state-arch-panel-arch {
+    max-width: 420px;
+    height: auto;
+    margin-inline: auto;
+  }
+
+  .state-arch-panel-copy {
+    align-items: center;
+    padding-top: 24px;
+    padding-left: 0;
+    text-align: center;
+  }
+
+  .state-arch-panel-loc {
+    justify-content: center;
+  }
+
+  .state-arch-panel-desc {
+    margin-left: auto;
+    margin-right: auto;
+    max-width: none;
+  }
+
+  .state-arch-panel-actions {
+    align-items: center;
+  }
+
+  .state-arch-panel-actions .tlink.bp {
+    min-width: min(280px, 100%);
+  }
+}
+
+@media (max-width: 640px) {
+  .state-arch-panel-arch {
+    max-width: min(100%, 320px);
+  }
+
+  .state-arch-panel-prop {
+    font-size: clamp(24px, 7vw, 32px);
+  }
+
+  .state-arch-panel-line {
+    font-size: 19px;
+  }
+}

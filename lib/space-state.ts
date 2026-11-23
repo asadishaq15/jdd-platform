@@ -70,6 +70,8 @@ export type SpaceState = {
   stays?: { n: number; code: string }[];
   /** After mark-received: invite keeping written intention on the card (HTML st.intentPrompt). */
   intentPrompt?: boolean;
+  /** After Keep my intention: fields and card writing are read-only. */
+  intentionLocked?: boolean;
   /** Ritual act text; cleared on resetCommitment when switching stay properties. */
   action?: string;
   /** Per-property card order + RSVP progress (HTML st.byProp); key `acct` = chosen-world, no code. */

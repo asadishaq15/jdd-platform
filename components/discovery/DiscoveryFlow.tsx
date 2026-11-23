@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import BrandMark from "../brand/BrandMark";
 import GradientDefs from "../layout/GradientDefs";
 import ThemeToggle from "../layout/ThemeToggle";
@@ -35,6 +35,9 @@ export default function DiscoveryFlow() {
   const [finishing, setFinishing] = useState(false);
   const [exploreMode, setExploreMode] = useState<ExploreMode>("onb");
   const router = useRouter();
+  const dobDayRef = useRef<HTMLInputElement>(null);
+  const dobMonthRef = useRef<HTMLInputElement>(null);
+  const dobYearRef = useRef<HTMLInputElement>(null);
 
   const activeWorld = useMemo(() => getWorld(preview || state.visited || state.chosen || state.recommended || 9), [preview, state]);
   const recommendedWorld = getWorld(state.recommended || 9);
@@ -75,6 +78,20 @@ export default function DiscoveryFlow() {
     setStack((items) => items.slice(0, -1));
     setError("");
     setStep(previous);
+  }
+
+  function onDobPartChange(part: "day" | "month" | "year", raw: string) {
+    const max = part === "year" ? 4 : 2;
+    const digits = raw.replace(/\D/g, "").slice(0, max);
+    setDob((value) => ({ ...value, [part]: digits }));
+    setError("");
+    if (part === "day" && digits.length === 2) {
+      dobMonthRef.current?.focus();
+      dobMonthRef.current?.select();
+    } else if (part === "month" && digits.length === 2) {
+      dobYearRef.current?.focus();
+      dobYearRef.current?.select();
+    }
   }
 
   function submitDob(event: FormEvent<HTMLFormElement>) {
@@ -197,11 +214,11 @@ export default function DiscoveryFlow() {
               <form onSubmit={submitDob} noValidate>
                 <p className="flabel">Date of birth</p>
                 <div className="dob">
-                  <input inputMode="numeric" maxLength={2} placeholder="DD" aria-label="Day" value={dob.day} onChange={(e) => setDob((v) => ({ ...v, day: e.target.value.replace(/\D/g, "") }))} />
+                  <input ref={dobDayRef} inputMode="numeric" maxLength={2} placeholder="DD" aria-label="Day" value={dob.day} onChange={(e) => onDobPartChange("day", e.target.value)} />
                   <span className="slash">/</span>
-                  <input inputMode="numeric" maxLength={2} placeholder="MM" aria-label="Month" value={dob.month} onChange={(e) => setDob((v) => ({ ...v, month: e.target.value.replace(/\D/g, "") }))} />
+                  <input ref={dobMonthRef} inputMode="numeric" maxLength={2} placeholder="MM" aria-label="Month" value={dob.month} onChange={(e) => onDobPartChange("month", e.target.value)} />
                   <span className="slash">/</span>
-                  <input className="yyyy" inputMode="numeric" maxLength={4} placeholder="YYYY" aria-label="Year" value={dob.year} onChange={(e) => setDob((v) => ({ ...v, year: e.target.value.replace(/\D/g, "") }))} />
+                  <input ref={dobYearRef} className="yyyy" inputMode="numeric" maxLength={4} placeholder="YYYY" aria-label="Year" value={dob.year} onChange={(e) => onDobPartChange("year", e.target.value)} />
                 </div>
                 <p className={`err ${error ? "show" : ""}`}>{error}</p>
                 <button className="btn primary" type="submit">Continue</button>

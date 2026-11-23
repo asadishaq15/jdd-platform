@@ -30,6 +30,7 @@ export type PrivateSpaceSnapshot = Pick<
   | "rsvps"
   | "stays"
   | "intentPrompt"
+  | "intentionLocked"
   | "action"
   | "byProp"
 >;
@@ -52,6 +53,7 @@ const SYNC_FIELDS: (keyof PrivateSpaceSnapshot)[] = [
   "rsvps",
   "stays",
   "intentPrompt",
+  "intentionLocked",
   "action",
   "byProp",
 ];
@@ -170,7 +172,13 @@ export function mergeSpaceState(
     merged.visited = local.visited ?? snapshot.visited;
   }
   if (local.chosen != null || snapshot.chosen != null || profile.chosen != null) {
-    merged.chosen = profile.chosen ?? local.chosen ?? snapshot.chosen;
+    // Prefer a just-chosen local world (Explore) over a stale profile value until sync lands.
+    if (local.entryMode === "chosen" && local.chosen != null) {
+      merged.chosen = local.chosen;
+      merged.entryMode = "chosen";
+    } else {
+      merged.chosen = profile.chosen ?? local.chosen ?? snapshot.chosen;
+    }
   }
   if (local.recommended != null || snapshot.recommended != null || profile.recommended != null) {
     merged.recommended = profile.recommended ?? local.recommended ?? snapshot.recommended;

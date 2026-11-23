@@ -27,6 +27,8 @@ import {
 import { buildDashboardSpaceState, signOutToLogin, type PrivateSpaceSnapshot } from "../../lib/space-state-sync";
 import type { AccountSummary, CardOrder, CommunityCircleEvent, ConnectedStay } from "../../lib/space-data";
 import type { SpaceUiVersion } from "../../lib/space-ui-version";
+import { dashboardWorldNumber } from "../../lib/space-active-world";
+import { persistDiscoveryProfile } from "../../lib/discovery-persist";
 import { trackProductEvent } from "../../lib/product-events";
 import { zodiacFromDateOfBirth } from "../../lib/zodiac";
 
@@ -97,11 +99,13 @@ export default function SpaceEntry({
     persistSpaceState(next);
   }, [activeStayId, initialOrders, initialRsvps, initialSpaceSnapshot, initialState, stays]);
 
-  const activeNumber = connectedStay?.property.worldNumber || state.visited || state.chosen || state.recommended || 9;
+  const stayWorldNumber = connectedStay?.property.worldNumber;
+  const activeNumber = dashboardWorldNumber(state, stayWorldNumber);
   const baseWorld = getWorld(activeNumber);
-  const world = connectedStay
-    ? { ...baseWorld, property: connectedStay.property.name, country: connectedStay.property.country || baseWorld.country }
-    : baseWorld;
+  const world =
+    connectedStay && stayWorldNumber === activeNumber
+      ? { ...baseWorld, property: connectedStay.property.name, country: connectedStay.property.country || baseWorld.country }
+      : baseWorld;
   const guest = Boolean(connectedStay || (state.visited && state.code));
   const guestName = connectedStay?.guestName || account.fullName;
   const zodiac = zodiacFromDateOfBirth(account.dateOfBirth || state.dateOfBirth);
@@ -113,6 +117,22 @@ export default function SpaceEntry({
   function updateState(next: SpaceState) {
     setState(next);
     persistSpaceState(next);
+  }
+
+  function chooseWorldFromExplore(n: number) {
+    const next = { ...state, chosen: n, entryMode: "chosen" as const };
+    updateState(next);
+    void trackProductEvent({
+      name: "world_chosen",
+      worldNumber: n,
+      metadata: {
+        recommended_world: state.recommended || 0,
+        chosen_world: n,
+        source: "explore",
+      },
+    });
+    void persistDiscoveryProfile(next);
+    setExploreOpen(false);
   }
 
   function signOut() {
@@ -154,7 +174,15 @@ export default function SpaceEntry({
   }
 
   if (exploreOpen) {
-    return <StatesExplorePage onClose={() => setExploreOpen(false)} />;
+    return (
+      <StatesExplorePage
+        chosen={state.chosen}
+        visited={state.visited}
+        recommended={state.recommended}
+        onClose={() => setExploreOpen(false)}
+        onChooseWorld={chooseWorldFromExplore}
+      />
+    );
   }
 
   function handleJourneyProfileAction(action: SpaceProfileAction) {

@@ -39,15 +39,40 @@
   outline: none;
 }
 
-.states-explore .states-explore-mark {
+.states-explore .states-explore-brand {
   position: absolute;
   left: 50%;
   transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  pointer-events: none;
+}
+
+.states-explore .states-explore-logo {
+  width: auto;
+  height: 28px;
+  display: block;
+}
+
+.states-explore .states-explore-mark {
   margin: 0;
-  font: 400 13px var(--sans);
+  font: 400 18px var(--sans);
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  color: var(--muted);
+  line-height: 1;
+  white-space: nowrap;
+  color: var(--fg);
+}
+
+@media (max-width: 560px) {
+  .states-explore .states-explore-logo {
+    height: 22px;
+  }
+
+  .states-explore .states-explore-mark {
+    font-size: 14px;
+  }
 }
 
 .states-explore .screens {

@@ -51,8 +51,24 @@ export default function AccountSettings({ account, onAccountChange }: {
   const [photoSaving, setPhotoSaving] = useState(false);
   const [notice, setNotice] = useState<Notice>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const dobDayRef = useRef<HTMLInputElement>(null);
+  const dobMonthRef = useRef<HTMLInputElement>(null);
+  const dobYearRef = useRef<HTMLInputElement>(null);
   const hasCustomPhoto = isCustomAvatarUrl(account.avatarUrl);
   const initial = account.fullName.trim().charAt(0).toUpperCase() || "G";
+
+  function onDobPartChange(part: keyof DobParts, raw: string) {
+    const max = part === "year" ? 4 : 2;
+    const digits = raw.replace(/\D/g, "").slice(0, max);
+    setDob((value) => ({ ...value, [part]: digits }));
+    if (part === "day" && digits.length === 2) {
+      dobMonthRef.current?.focus();
+      dobMonthRef.current?.select();
+    } else if (part === "month" && digits.length === 2) {
+      dobYearRef.current?.focus();
+      dobYearRef.current?.select();
+    }
+  }
 
   function openEditor(next: Exclude<Editor, null>) {
     setEditor(next);
@@ -302,32 +318,35 @@ export default function AccountSettings({ account, onAccountChange }: {
             <p className="account-form-label" id="account-dob-label">Date of birth</p>
             <div className="account-dob" role="group" aria-labelledby="account-dob-label">
               <input
+                ref={dobDayRef}
                 inputMode="numeric"
                 maxLength={2}
                 placeholder="DD"
                 aria-label="Day"
                 value={dob.day}
-                onChange={(event) => setDob((value) => ({ ...value, day: event.target.value.replace(/\D/g, "") }))}
+                onChange={(event) => onDobPartChange("day", event.target.value)}
                 autoFocus
               />
               <span className="account-dob-slash" aria-hidden="true">/</span>
               <input
+                ref={dobMonthRef}
                 inputMode="numeric"
                 maxLength={2}
                 placeholder="MM"
                 aria-label="Month"
                 value={dob.month}
-                onChange={(event) => setDob((value) => ({ ...value, month: event.target.value.replace(/\D/g, "") }))}
+                onChange={(event) => onDobPartChange("month", event.target.value)}
               />
               <span className="account-dob-slash" aria-hidden="true">/</span>
               <input
+                ref={dobYearRef}
                 className="yyyy"
                 inputMode="numeric"
                 maxLength={4}
                 placeholder="YYYY"
                 aria-label="Year"
                 value={dob.year}
-                onChange={(event) => setDob((value) => ({ ...value, year: event.target.value.replace(/\D/g, "") }))}
+                onChange={(event) => onDobPartChange("year", event.target.value)}
               />
             </div>
             <FormActions saving={saving} onCancel={() => setEditor(null)} />

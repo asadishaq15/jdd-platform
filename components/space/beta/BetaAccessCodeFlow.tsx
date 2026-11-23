@@ -9,13 +9,13 @@ import {
 import BrandMark from "../../brand/BrandMark";
 import GradientDefs from "../../layout/GradientDefs";
 import ThemeToggle from "../../layout/ThemeToggle";
-import { stateImageSrc } from "../../../lib/state-images";
 import {
   DEMO_CODE_OPTIONS,
   getWorld,
   worldNumberForDemoCode,
   type HospitalityWorld,
 } from "../../../lib/worlds";
+import StateArchPanel from "../StateArchPanel";
 import "../../onboarding/visitor-onboarding.css";
 import "./beta-access-flow.css";
 
@@ -31,55 +31,6 @@ function SceneCol({ children, actions }: { children: ReactNode; actions?: ReactN
     <div className="col">
       <div className="stage">{children}</div>
       {actions}
-    </div>
-  );
-}
-
-function PinIcon() {
-  return (
-    <svg className="pin" viewBox="0 0 20 26" aria-hidden="true">
-      <path d="M10 24.5 C10 24.5 2 15.5 2 9.5 A8 8 0 0 1 18 9.5 C18 15.5 10 24.5 10 24.5Z" />
-      <circle cx="10" cy="9.5" r="3.2" />
-    </svg>
-  );
-}
-
-function ArchBlock({
-  world,
-  label,
-  imageFailed,
-  onImageError,
-}: {
-  world: HospitalityWorld;
-  label?: string;
-  imageFailed?: boolean;
-  onImageError?: () => void;
-}) {
-  const image = stateImageSrc(world);
-  return (
-    <div className="copy">
-      {label ? (
-        <p className="arch-eye fade" style={{ "--d": ".2s" } as CSSProperties}>
-          {label}
-        </p>
-      ) : null}
-      <h1 className="title arch-state" data-type="">
-        <em className="cu">{world.state}</em>
-      </h1>
-      <div className="arch-row fade" style={{ "--d": ".8s" } as CSSProperties}>
-        <div className={`arch-img${imageFailed ? " noimg" : ""}`}>
-          <img src={image} alt={world.property} onError={onImageError} />
-        </div>
-        <div className="arch-info">
-          <p className="arch-prop">{world.property}</p>
-          <p className="arch-loc">
-            <PinIcon />
-            <span>{world.country}</span>
-          </p>
-          <p className="arch-desc">{world.desc}</p>
-          <p className="arch-line">Your State begins here.</p>
-        </div>
-      </div>
     </div>
   );
 }
@@ -213,21 +164,18 @@ export default function BetaAccessCodeFlow({
             aria-label="Your stay"
             aria-hidden={step !== "stay"}
           >
-            <SceneCol
-              actions={(
-                <div className="actions fade" style={{ "--d": "1.8s" } as CSSProperties}>
-                  <button className="tlink bp" type="button" onClick={finish}>
-                    Continue
-                  </button>
-                </div>
-              )}
-            >
+            <SceneCol>
               {previewWorld ? (
-                <ArchBlock
+                <StateArchPanel
                   world={previewWorld}
                   label="Your stay"
                   imageFailed={imageFailed}
                   onImageError={() => setImageFailed(true)}
+                  actions={(
+                    <button className="tlink bp" type="button" onClick={finish}>
+                      Continue
+                    </button>
+                  )}
                 />
               ) : null}
             </SceneCol>

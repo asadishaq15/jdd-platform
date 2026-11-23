@@ -47,7 +47,7 @@ export default function AuthCompletePage() {
         if (cancelled) return;
         if (message) {
           setError(message);
-          window.setTimeout(() => router.replace("/discover"), 1600);
+          window.setTimeout(() => router.replace("/"), 1600);
           return;
         }
         await hydrateSpaceProgress(userData.user.id);
@@ -77,7 +77,7 @@ export default function AuthCompletePage() {
         router.replace("/space");
         return;
       }
-      router.replace("/discover");
+      router.replace("/");
     }
 
     void run();

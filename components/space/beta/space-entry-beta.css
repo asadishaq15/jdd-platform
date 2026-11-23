@@ -1577,25 +1577,30 @@ body:not(.night) .beta-scene-light {
   font-style: italic;
 }
 
-/* Card delivery row — space-signin .track / demo-ctl-in */
+/* Card delivery status — DESIGN_SYSTEM 4.13 (under ORDER MY CARD) */
 .beta-scent-order-status {
   width: 100%;
-  margin-top: 16px;
+  margin-top: 28px;
+}
+
+.beta-scent-order-status.with-cta {
+  margin-top: 0;
 }
 
 .beta-scent-demo-ctl {
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   gap: 10px;
-  margin: 14px 0 0;
+  margin: 18px 0 0;
 }
 
 .beta-track {
   display: flex;
   flex-wrap: wrap;
-  justify-content: center;
-  gap: 18px;
+  justify-content: flex-start;
+  align-items: center;
+  gap: 28px 36px;
   width: 100%;
   margin: 0;
   padding: 0;
@@ -1603,37 +1608,39 @@ body:not(.night) .beta-scene-light {
 }
 
 .beta-track li {
-  position: relative;
-  padding-top: 12px;
-  color: var(--beta-muted, var(--muted));
-  font-size: 10px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--beta-soft-text-strong, #bdb7ad);
+  font-size: 12px;
   font-weight: 400;
-  letter-spacing: 0.2em;
+  letter-spacing: 0.04em;
   text-transform: uppercase;
-  text-align: center;
+  text-align: left;
+  line-height: 1;
 }
 
 .beta-track li::before {
   content: "";
-  position: absolute;
-  top: 0;
-  left: 50%;
-  width: 6px;
-  height: 6px;
-  margin-left: -3px;
+  width: 11px;
+  height: 11px;
+  flex: none;
   box-sizing: border-box;
-  border: 1px solid var(--beta-muted, var(--muted));
+  border: 1px solid #b98b5c;
   border-radius: 50%;
   background: transparent;
 }
 
 .beta-track li.done {
-  color: var(--beta-fg, var(--fg));
+  color: var(--beta-soft-text-strong, #bdb7ad);
 }
 
 .beta-track li.done::before {
   border: 0;
-  background: radial-gradient(circle at 40% 40%, #fff0da, #f0c79b 45%, #d6a06d);
+  background: var(
+    --beta-gradient-gold,
+    linear-gradient(100deg, #d6a06d 0%, #f0c79b 40%, #e6b98a 65%, #c58452 100%)
+  );
 }
 
 .beta-scent-actions {
@@ -1665,10 +1672,7 @@ body:not(.night) .beta-scene-light {
   margin-top: 0;
 }
 
-.beta-scent-demo-ctl .beta-text-link {
-  font-size: 12px;
-  color: var(--beta-muted, var(--muted));
-}
+/* Simulate uses component 4.5 text link (serif italic + copper fade underline) */
 
 .beta-intention-card {
   position: absolute;
@@ -1991,14 +1995,60 @@ body:not(.night) .beta-scene-light {
   white-space: normal;
 }
 
+.beta-intent-keep {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 22px;
+  margin-top: 22px;
+  width: 100%;
+  max-width: 506px;
+}
+
 .beta-intent-prompt {
-  margin: 18px 0 0;
-  padding: 12px 16px;
-  border: 1px solid var(--line);
-  max-width: 36ch;
+  margin: 0;
+  padding: 14px 16px;
+  border: 1px solid var(--beta-field-border);
+  width: 100%;
+  max-width: 34ch;
+  box-sizing: border-box;
   font-size: 13.5px;
-  line-height: 1.6;
+  font-weight: 300;
+  line-height: 1.55;
   color: var(--beta-soft-text);
+}
+
+.beta-intent-keep .beta-text-link {
+  margin: 0;
+}
+
+.beta-intent-keep .beta-text-link:disabled,
+.beta-intent-keep .beta-text-link[aria-disabled="true"] {
+  opacity: 0.4;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.beta-intent-keep-error {
+  margin: 0;
+  max-width: 34ch;
+  font-size: 13px;
+  font-weight: 300;
+  line-height: 1.5;
+  color: var(--beta-error, #c45c4a);
+}
+
+.beta-field-shell.is-locked {
+  opacity: 0.92;
+}
+
+.beta-field-shell.is-locked:focus-within {
+  border-color: var(--beta-field-border);
+}
+
+.beta-field[readonly] {
+  cursor: default;
+  caret-color: transparent;
 }
 
 /* In-flow mid band between hero and locked/unlocked — scrolls with content, no overlap */
@@ -2957,10 +3007,35 @@ body.night .beta-circle-detail > .body.dob-intro {
     margin-inline: auto;
   }
 
+  .beta-scent .beta-scent-order-status {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .beta-scent .beta-track {
+    justify-content: center;
+  }
+
+  .beta-scent .beta-scent-demo-ctl {
+    justify-content: center;
+  }
+
   .beta-intention .beta-field-shell {
     width: 100%;
     max-width: 420px;
     margin-inline: auto;
+    text-align: left;
+  }
+
+  .beta-intention .beta-intent-keep {
+    align-items: center;
+    max-width: 420px;
+    margin-inline: auto;
+  }
+
+  .beta-intention .beta-intent-prompt {
+    max-width: 100%;
     text-align: left;
   }
 

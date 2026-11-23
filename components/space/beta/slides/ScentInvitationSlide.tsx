@@ -41,12 +41,21 @@ export default function ScentInvitationSlide({
   const guestReceived = guest && !hasOrder && status === "received";
   const guestBedside = guest && !hasOrder && status !== "received";
   const memberNotOrdered = !guest && !hasOrder && (status === "none" || !status);
-  const showTrack = hasOrder && status !== "none" && status !== "received";
   const showPostalReceived = hasOrder && status === "received";
-  const canSimulate = status === "preparing" || status === "sent";
-  const showMarkPostal = hasOrder && status === "delivered";
+  /* New UI screen 03: track + simulate sit under Order my card (DESIGN_SYSTEM 4.13). */
+  const showDeliveryUi = !guest && status !== "received";
+  const canSimulate = status === "none" || status === "preparing" || status === "sent";
+  const showMarkPostal = status === "delivered";
   const showMarkBedside = guestBedside;
-  const activeIndex = status === "none" ? -1 : TRACK.indexOf(status as CardStatus);
+  /* Design mock shows PREPARING as the current step before/at first order. */
+  const activeIndex =
+    status === "none" || status === "preparing"
+      ? 0
+      : status === "sent"
+        ? 1
+        : status === "delivered"
+          ? 2
+          : -1;
 
   // HTML: Order my card only when there is no order yet (no “Order another”).
   const showOrderCta = canOrder && memberNotOrdered;
@@ -87,16 +96,30 @@ export default function ScentInvitationSlide({
           </>
         ) : null}
 
-        {memberNotOrdered ? (
+        {!guest && !showPostalReceived ? (
           <p className="beta-scent-body">
-            A personalised card that introduces the aroma of {world.property}. It arrives by post
-            and becomes part of your ritual.
+            A personalized card that captures the signature aroma of <em>{world.property}</em> and
+            introduces the atmosphere of this hospitality world.
           </p>
         ) : null}
 
-        {showTrack ? (
-          <div className="beta-scent-order-status">
-            <ol className="beta-track">
+        {showPostalReceived ? (
+          <p className="beta-d-saved beta-d-recv">
+            Received<span className="cu">.</span>
+          </p>
+        ) : null}
+
+        {showOrderCta ? (
+          <div className="beta-scent-actions">
+            <button className="beta-cta" type="button" onClick={onOrder}>
+              Order my card <span aria-hidden="true">→</span>
+            </button>
+          </div>
+        ) : null}
+
+        {showDeliveryUi ? (
+          <div className={`beta-scent-order-status${showOrderCta ? " with-cta" : ""}`}>
+            <ol className="beta-track" aria-label="Card delivery status">
               {TRACK.map((step, index) => (
                 <li key={step} className={index <= activeIndex ? "done" : ""}>
                   {statusLabel(step)}
@@ -110,34 +133,23 @@ export default function ScentInvitationSlide({
                 </button>
               </p>
             ) : null}
+            {showMarkPostal ? (
+              <p className="beta-scent-demo-ctl">
+                <button className="beta-text-link" type="button" onClick={onMarkReceived}>
+                  I received my card
+                </button>
+              </p>
+            ) : null}
           </div>
         ) : null}
 
-        {showPostalReceived ? (
-          <p className="beta-d-saved beta-d-recv">
-            Received<span className="cu">.</span>
-          </p>
-        ) : null}
-
-        <div className="beta-scent-actions">
-          {showMarkBedside ? (
+        {showMarkBedside ? (
+          <div className="beta-scent-actions">
             <button className="beta-text-link" type="button" onClick={onMarkReceived}>
               Mark as received
             </button>
-          ) : null}
-
-          {showMarkPostal ? (
-            <button className="beta-text-link" type="button" onClick={onMarkReceived}>
-              I received my card
-            </button>
-          ) : null}
-
-          {showOrderCta ? (
-            <button className="beta-cta" type="button" onClick={onOrder}>
-              Order my card <span aria-hidden="true">→</span>
-            </button>
-          ) : null}
-        </div>
+          </div>
+        ) : null}
       </div>
     </article>
   );

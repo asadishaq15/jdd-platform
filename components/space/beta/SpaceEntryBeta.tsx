@@ -6,8 +6,10 @@ import type { CardOrder } from "../../../lib/space-data";
 import type { SpaceUiVersion } from "../../../lib/space-ui-version";
 import { communityCircleForWorld } from "../../../lib/community-circle";
 import { getWorld, worldNumberForDemoCode } from "../../../lib/worlds";
-import { activeWorldNumber, isGuestSpace } from "../../../lib/space-active-world";
+import { dashboardWorldNumber, isGuestSpace } from "../../../lib/space-active-world";
 import { attachDemoCode, migrateStaysFromCode } from "../../../lib/space-property-snapshot";
+import { persistDiscoveryProfile } from "../../../lib/discovery-persist";
+import { trackProductEvent } from "../../../lib/product-events";
 import { persistSpaceState, type SpaceState } from "../../../lib/space-state";
 import { buildDashboardSpaceState, signOutToLogin } from "../../../lib/space-state-sync";
 import AccountSettings from "../AccountSettings";
@@ -39,6 +41,7 @@ import "./space-entry-beta.css";
 type ProfilePanel = "account" | "orders" | "stays" | "reminders" | "delete" | null;
 
 const IDENTITY_SLIDE_INDEX = SPACE_SLIDES.findIndex((slide) => slide.id === "identity");
+const WORLD_SLIDE_INDEX = SPACE_SLIDES.findIndex((slide) => slide.id === "world");
 const SCENT_SLIDE_INDEX = SPACE_SLIDES.findIndex((slide) => slide.id === "scent");
 const RITUAL_SLIDE_INDEX = SPACE_SLIDES.findIndex((slide) => slide.id === "ritual");
 const INTENTION_SLIDE_INDEX = SPACE_SLIDES.findIndex((slide) => slide.id === "intention");
@@ -101,10 +104,12 @@ export default function SpaceEntryBeta({
 
   const connectedStay = stays.find((stay) => stay.id === activeStayId) || stays[0];
   const guest = isGuestSpace(state);
-  const activeNumber = activeWorldNumber(state) ?? connectedStay?.property.worldNumber ?? 9;
+  const stayWorldNumber = connectedStay?.property.worldNumber;
+  const activeNumber = dashboardWorldNumber(state, stayWorldNumber);
   const baseWorld = getWorld(activeNumber);
+  // Only brand with the connected stay when that stay is the active world.
   const world =
-    connectedStay && !guest
+    connectedStay && !guest && stayWorldNumber === activeNumber
       ? { ...baseWorld, property: connectedStay.property.name, country: connectedStay.property.country || baseWorld.country }
       : baseWorld;
   const guestName = connectedStay?.guestName || account.fullName;
@@ -118,11 +123,28 @@ export default function SpaceEntryBeta({
     persistSpaceState(next);
   }
 
+  function chooseWorldFromExplore(n: number) {
+    const next = { ...state, chosen: n, entryMode: "chosen" as const };
+    updateState(next);
+    void trackProductEvent({
+      name: "world_chosen",
+      worldNumber: n,
+      metadata: {
+        recommended_world: state.recommended || 0,
+        chosen_world: n,
+        source: "explore",
+      },
+    });
+    void persistDiscoveryProfile(next);
+    setExploreOpen(false);
+    if (WORLD_SLIDE_INDEX >= 0) setSlideIndex(WORLD_SLIDE_INDEX);
+  }
+
   function simulateDelivery() {
-    // HTML simulate: preparing → sent → delivered only (never jumps to received)
+    // Demo control: none/preparing → sent → delivered (never jumps to received)
     const current = state.cardStatus || "none";
     const nextStatus =
-      current === "preparing" ? "sent"
+      current === "none" || current === "preparing" ? "sent"
         : current === "sent" ? "delivered"
           : current;
     if (nextStatus === current) return;
@@ -130,11 +152,11 @@ export default function SpaceEntryBeta({
   }
 
   function markReceived() {
-    // HTML card-received → received; members with intention get intentPrompt + scroll to intention
+    // Guests and members: after Received, open intention with Keep my intention prompt
     updateState({
       ...state,
       cardStatus: "received",
-      ...(!guest && state.intention?.trim() ? { intentPrompt: true } : {}),
+      intentPrompt: true,
     });
     if (INTENTION_SLIDE_INDEX >= 0) setSlideIndex(INTENTION_SLIDE_INDEX);
   }
@@ -395,7 +417,15 @@ export default function SpaceEntryBeta({
       )}
 
       <SpaceEventsDrawer open={eventsOpen} onClose={() => setEventsOpen(false)} />
-      {exploreOpen ? <StatesExplorePage onClose={() => setExploreOpen(false)} /> : null}
+      {exploreOpen ? (
+        <StatesExplorePage
+          chosen={state.chosen}
+          visited={state.visited}
+          recommended={state.recommended}
+          onClose={() => setExploreOpen(false)}
+          onChooseWorld={chooseWorldFromExplore}
+        />
+      ) : null}
       <LegalSheet open={legalOpen} onClose={() => setLegalOpen(false)} />
     </>
   );
@@ -454,7 +484,7 @@ export default function SpaceEntryBeta({
           {SPACE_SLIDES.map((def, i) => (
             <BetaSlideLayer key={def.id} index={i} slideId={def.id}>
               {def.id === "identity" && <IdentitySlide account={account} world={world} />}
-              {def.id === "world" && <ChosenWorldSlide world={world} guest={guest} />}
+              {def.id === "world" && <ChosenWorldSlide key={world.n} world={world} guest={guest} />}
               {def.id === "scent" && (
                 <ScentInvitationSlide
                   world={world}

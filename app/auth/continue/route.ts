@@ -35,7 +35,7 @@ export async function GET(request: Request) {
 
   const destination = profile?.discovery_completed_at || stays?.length
     ? "/space"
-    : "/discover";
+    : "/";
 
   return NextResponse.redirect(new URL(destination, url.origin));
 }

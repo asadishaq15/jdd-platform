@@ -35,6 +35,7 @@ function resetCommitmentPatch(): Partial<SpaceState> {
     action: undefined,
     reminder: undefined,
     intentPrompt: false,
+    intentionLocked: false,
   };
 }
 

@@ -1,63 +1,31 @@
 "use client";
 
 import { useEffect, useMemo, useState, type CSSProperties } from "react";
+import BrandMark from "../brand/BrandMark";
 import { stateImageSrc } from "../../lib/state-images";
 import { loadSpaceState } from "../../lib/space-state";
 import { worlds, type HospitalityWorld } from "../../lib/worlds";
+import StateArchPanel from "./StateArchPanel";
 import "../onboarding/visitor-onboarding.css";
 import "./states-explore.css";
 
-function PinIcon() {
-  return (
-    <svg className="pin" viewBox="0 0 20 26" aria-hidden="true">
-      <path d="M10 24.5 C10 24.5 2 15.5 2 9.5 A8 8 0 0 1 18 9.5 C18 15.5 10 24.5 10 24.5Z" />
-      <circle cx="10" cy="9.5" r="3.2" />
-    </svg>
-  );
-}
-
-function ArchBlock({
-  world,
-  label,
-  imageFailed,
-  onImageError,
+export default function StatesExplorePage({
+  onClose,
+  chosen: chosenProp,
+  visited: visitedProp,
+  recommended: recommendedProp,
+  onChooseWorld,
 }: {
-  world: HospitalityWorld;
-  label?: string;
-  imageFailed?: boolean;
-  onImageError?: () => void;
+  onClose: () => void;
+  chosen?: number;
+  visited?: number;
+  recommended?: number;
+  onChooseWorld?: (n: number) => void;
 }) {
-  const image = stateImageSrc(world);
-  return (
-    <div className="copy">
-      {label ? (
-        <p className="arch-eye fade" style={{ "--d": ".2s" } as CSSProperties}>
-          {label}
-        </p>
-      ) : null}
-      <h1 className="title arch-state">
-        <em className="cu">{world.state}</em>
-      </h1>
-      <div className="arch-row fade" style={{ "--d": ".8s" } as CSSProperties}>
-        <div className={`arch-img${imageFailed ? " noimg" : ""}`}>
-          <img src={image} alt={world.property} onError={onImageError} />
-        </div>
-        <div className="arch-info">
-          <p className="arch-prop">{world.property}</p>
-          <p className="arch-loc">
-            <PinIcon />
-            <span>{world.country}</span>
-          </p>
-          <p className="arch-desc">{world.desc}</p>
-          <p className="arch-line">Your State begins here.</p>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-export default function StatesExplorePage({ onClose }: { onClose: () => void }) {
-  const space = useMemo(() => loadSpaceState(), []);
+  const stored = useMemo(() => loadSpaceState(), []);
+  const chosen = chosenProp ?? stored.chosen;
+  const visited = visitedProp ?? stored.visited;
+  const recommended = recommendedProp ?? stored.recommended;
   const [selected, setSelected] = useState<HospitalityWorld | null>(null);
   const [failedImages, setFailedImages] = useState<Record<number, boolean>>({});
 
@@ -79,6 +47,9 @@ export default function StatesExplorePage({ onClose }: { onClose: () => void }) 
     return () => document.removeEventListener("keydown", onKey);
   }, [selected, onClose]);
 
+  const canChoose =
+    Boolean(onChooseWorld) && selected != null && selected.n !== chosen;
+
   return (
     <div className="visitor-app states-explore wide" role="dialog" aria-modal="true" aria-label="Explore all States">
       <header className="top states-explore-top">
@@ -92,7 +63,10 @@ export default function StatesExplorePage({ onClose }: { onClose: () => void }) 
         >
           Back
         </button>
-        <p className="states-explore-mark">My Space</p>
+        <div className="states-explore-brand" aria-hidden="true">
+          <BrandMark className="states-explore-logo" decorative />
+          <span className="states-explore-mark">My Space</span>
+        </div>
         <span aria-hidden="true" style={{ minWidth: 44 }} />
       </header>
 
@@ -101,18 +75,27 @@ export default function StatesExplorePage({ onClose }: { onClose: () => void }) 
           <div className="col">
             <div className="stage">
               {selected ? (
-                <>
-                  <ArchBlock
-                    world={selected}
-                    imageFailed={failedImages[selected.n]}
-                    onImageError={() => setFailedImages((prev) => ({ ...prev, [selected.n]: true }))}
-                  />
-                  <div className="actions fade" style={{ "--d": "1.2s" } as CSSProperties}>
-                    <button className="tlink tl cg" type="button" onClick={() => setSelected(null)}>
-                      Back to all States
-                    </button>
-                  </div>
-                </>
+                <StateArchPanel
+                  world={selected}
+                  imageFailed={failedImages[selected.n]}
+                  onImageError={() => setFailedImages((prev) => ({ ...prev, [selected.n]: true }))}
+                  actions={(
+                    <>
+                      {canChoose ? (
+                        <button
+                          className="tlink bp"
+                          type="button"
+                          onClick={() => onChooseWorld?.(selected.n)}
+                        >
+                          Choose this world
+                        </button>
+                      ) : null}
+                      <button className="tlink tl cg" type="button" onClick={() => setSelected(null)}>
+                        Back to all States
+                      </button>
+                    </>
+                  )}
+                />
               ) : (
                 <>
                   <p className="eyebrow fade" style={{ "--d": ".2s" } as CSSProperties}>
@@ -124,13 +107,13 @@ export default function StatesExplorePage({ onClose }: { onClose: () => void }) 
                   <div className="states-grid fade" style={{ "--d": ".9s" } as CSSProperties}>
                     {worlds.map((world) => {
                       const image = stateImageSrc(world);
-                      const rec = world.n === space.recommended;
-                      const chosen = world.n === space.chosen;
-                      const stay = world.n === space.visited;
-                      const cls = stay ? "stay" : chosen ? "chosen" : rec ? "rec" : "";
+                      const rec = world.n === recommended;
+                      const isChosen = world.n === chosen;
+                      const stay = world.n === visited;
+                      const cls = stay ? "stay" : isChosen ? "chosen" : rec ? "rec" : "";
                       const tag = stay
                         ? "Your stay"
-                        : chosen
+                        : isChosen
                           ? "Your chosen world"
                           : rec
                             ? "Your recommended world"

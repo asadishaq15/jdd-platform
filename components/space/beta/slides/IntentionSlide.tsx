@@ -12,6 +12,11 @@ export default function IntentionSlide({
 }) {
   const [intention, setIntention] = useState(state.intention || "");
   const [becoming, setBecoming] = useState(state.becoming || "");
+  const [keepError, setKeepError] = useState("");
+  const locked = Boolean(state.intentionLocked);
+  const intentionText = intention.trim();
+  const becomingText = becoming.trim();
+  const canKeep = Boolean(intentionText && becomingText);
 
   useEffect(() => {
     setIntention(state.intention || "");
@@ -19,10 +24,32 @@ export default function IntentionSlide({
   }, [state.intention, state.becoming]);
 
   function persist(nextIntention = intention, nextBecoming = becoming) {
+    if (locked) return;
     onSave({
       ...state,
       intention: nextIntention.trim() || undefined,
       becoming: nextBecoming.trim() || undefined,
+    });
+  }
+
+  function keepIntention() {
+    if (!intentionText || !becomingText) {
+      setKeepError(
+        !intentionText && !becomingText
+          ? "Write your intention and who you are becoming before keeping them."
+          : !intentionText
+            ? "Write your intention before keeping it."
+            : "Write who you are becoming before keeping your intention.",
+      );
+      return;
+    }
+    setKeepError("");
+    onSave({
+      ...state,
+      intention: intentionText,
+      becoming: becomingText,
+      intentPrompt: false,
+      intentionLocked: true,
     });
   }
 
@@ -62,51 +89,66 @@ export default function IntentionSlide({
           Set your <em>intention.</em>
         </h2>
 
-        <div className="beta-field-shell">
+        <div className={`beta-field-shell${locked ? " is-locked" : ""}`}>
           <label className="beta-field-label" htmlFor="beta-intention">
-            Edit intention
+            {locked ? "Intention" : "Edit intention"}
           </label>
           <textarea
             id="beta-intention"
             className="beta-field"
             rows={2}
             value={intention}
-            onChange={(event) => setIntention(event.target.value)}
+            readOnly={locked}
+            onChange={(event) => {
+              if (locked) return;
+              setIntention(event.target.value);
+              if (keepError) setKeepError("");
+            }}
             onBlur={() => persist()}
             placeholder="More at peace with myself"
           />
         </div>
 
-        <div className="beta-field-shell">
+        <div className={`beta-field-shell${locked ? " is-locked" : ""}`}>
           <label className="beta-field-label" htmlFor="beta-becoming">
-            Edit I am becoming
+            {locked ? "I am becoming" : "Edit I am becoming"}
           </label>
           <textarea
             id="beta-becoming"
             className="beta-field"
             rows={2}
             value={becoming}
-            onChange={(event) => setBecoming(event.target.value)}
+            readOnly={locked}
+            onChange={(event) => {
+              if (locked) return;
+              setBecoming(event.target.value);
+              if (keepError) setKeepError("");
+            }}
             onBlur={() => persist()}
             placeholder="a more present version of myself"
           />
         </div>
 
-        {state.intentPrompt && intention.trim() ? (
-          <>
+        {state.intentPrompt && !locked ? (
+          <div className="beta-intent-keep">
             <p className="beta-intent-prompt">
               Write your intention on your card, then keep the same words here.
             </p>
-            <div className="beta-scent-actions">
-              <button
-                className="beta-text-link"
-                type="button"
-                onClick={() => onSave({ ...state, intentPrompt: false })}
-              >
-                Keep my intention
-              </button>
-            </div>
-          </>
+            {keepError ? (
+              <p className="beta-intent-keep-error" role="alert">
+                {keepError}
+              </p>
+            ) : null}
+            <button
+              className="beta-text-link"
+              type="button"
+              disabled={!canKeep}
+              aria-disabled={!canKeep}
+              onClick={keepIntention}
+            >
+              Keep my intention
+            </button>
+          </div>
         ) : null}
       </div>
     </article>

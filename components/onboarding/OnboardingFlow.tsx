@@ -1,11 +1,14 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState, type CSSProperties, type FormEvent, type ReactNode } from "react";
 import BrandMark from "../brand/BrandMark";
 import GradientDefs from "../layout/GradientDefs";
 import ThemeToggle from "../layout/ThemeToggle";
 import VisitorAuthPanel from "../auth/VisitorAuthPanel";
 import LocationSuggestField from "./LocationSuggestField";
+import { persistDiscoveryProfile } from "../../lib/discovery-persist";
+import { createClient } from "../../lib/supabase/client";
 import { formatDateOfBirth } from "../../lib/zodiac";
 import { stateImageSrc } from "../../lib/state-images";
 import {
@@ -15,7 +18,6 @@ import {
   normalizeAccessCode,
   numberFromDob,
   worlds,
-  type HospitalityWorld,
 } from "../../lib/worlds";
 import { loadSpaceState, saveSpaceState, type SpaceState } from "../../lib/space-state";
 import {
@@ -24,6 +26,7 @@ import {
   foldLocationQuery,
   type CityEntry,
 } from "../../lib/world-cities";
+import StateArchPanel from "../space/StateArchPanel";
 import "./visitor-onboarding.css";
 
 /** Matches HTML layout script: content in `.stage`, fixed action line below. */
@@ -49,51 +52,6 @@ type Scene =
   | "stay";
 
 type Guest = { n: number; code: string };
-
-function PinIcon() {
-  return (
-    <svg className="pin" viewBox="0 0 20 26" aria-hidden="true">
-      <path d="M10 24.5 C10 24.5 2 15.5 2 9.5 A8 8 0 0 1 18 9.5 C18 15.5 10 24.5 10 24.5Z" />
-      <circle cx="10" cy="9.5" r="3.2" />
-    </svg>
-  );
-}
-
-function ArchBlock({
-  world,
-  label,
-  imageFailed,
-  onImageError,
-}: {
-  world: HospitalityWorld;
-  label?: string;
-  imageFailed?: boolean;
-  onImageError?: () => void;
-}) {
-  const image = stateImageSrc(world);
-  return (
-    <div className="copy">
-      {label ? <p className="arch-eye fade" style={{ "--d": ".2s" } as CSSProperties}>{label}</p> : null}
-      <h1 className="title arch-state" data-type="">
-        <em className="cu">{world.state}</em>
-      </h1>
-      <div className="arch-row fade" style={{ "--d": ".8s" } as CSSProperties}>
-        <div className={`arch-img${imageFailed ? " noimg" : ""}`}>
-          <img src={image} alt={world.property} onError={onImageError} />
-        </div>
-        <div className="arch-info">
-          <p className="arch-prop">{world.property}</p>
-          <p className="arch-loc">
-            <PinIcon />
-            <span>{world.country}</span>
-          </p>
-          <p className="arch-desc">{world.desc}</p>
-          <p className="arch-line">Your State begins here.</p>
-        </div>
-      </div>
-    </div>
-  );
-}
 
 function DoorwayScene() {
   return (
@@ -151,6 +109,7 @@ function formatCodeDisplay(raw: string) {
 }
 
 export default function OnboardingFlow() {
+  const router = useRouter();
   const [scene, setScene] = useState<Scene>("onb1");
   const [stack, setStack] = useState<Scene[]>([]);
   const [state, setState] = useState<SpaceState>(() => {
@@ -167,8 +126,14 @@ export default function OnboardingFlow() {
   const [guest, setGuest] = useState<Guest | null>(null);
   const [accessCode, setAccessCode] = useState("");
   const [codeError, setCodeError] = useState("");
+  const [signedIn, setSignedIn] = useState(false);
+  const [enteringSpace, setEnteringSpace] = useState(false);
+  const [enterError, setEnterError] = useState("");
   const cityInputRef = useRef<HTMLInputElement>(null);
   const dobNextRef = useRef<HTMLButtonElement>(null);
+  const dobDayRef = useRef<HTMLInputElement>(null);
+  const dobMonthRef = useRef<HTMLInputElement>(null);
+  const dobYearRef = useRef<HTMLInputElement>(null);
 
   const recommended = state.recommended || 9;
   const recommendedWorld = useMemo(() => getWorld(recommended), [recommended]);
@@ -193,7 +158,44 @@ export default function OnboardingFlow() {
     }
   }, []);
 
+  useEffect(() => {
+    let cancelled = false;
+
+    async function checkSession() {
+      const supabase = createClient();
+      const { data: userData } = await supabase.auth.getUser();
+      if (cancelled) return;
+      if (!userData.user) {
+        setSignedIn(false);
+        return;
+      }
+      setSignedIn(true);
+
+      const [{ data: profile }, { data: stays }] = await Promise.all([
+        supabase
+          .from("profiles")
+          .select("discovery_completed_at")
+          .eq("id", userData.user.id)
+          .maybeSingle(),
+        supabase.from("stays").select("id").eq("guest_id", userData.user.id).limit(1),
+      ]);
+      if (cancelled) return;
+      if (profile?.discovery_completed_at || stays?.length) {
+        router.replace("/space");
+      }
+    }
+
+    void checkSession();
+    return () => {
+      cancelled = true;
+    };
+  }, [router]);
+
   function go(next: Scene) {
+    if (next === "login" && signedIn) {
+      void enterSpace();
+      return;
+    }
     setStack((items) => [...items, scene]);
     if (next === "code") setGuest(null);
     setScene(next);
@@ -211,6 +213,20 @@ export default function OnboardingFlow() {
   function persist(next: SpaceState) {
     setState(next);
     saveSpaceState(next);
+  }
+
+  function onDobPartChange(part: "day" | "month" | "year", raw: string) {
+    const max = part === "year" ? 4 : 2;
+    const digits = raw.replace(/\D/g, "").slice(0, max);
+    setDob((value) => ({ ...value, [part]: digits }));
+    setDobError(false);
+    if (part === "day" && digits.length === 2) {
+      dobMonthRef.current?.focus();
+      dobMonthRef.current?.select();
+    } else if (part === "month" && digits.length === 2) {
+      dobYearRef.current?.focus();
+      dobYearRef.current?.select();
+    }
   }
 
   function submitDob() {
@@ -261,6 +277,33 @@ export default function OnboardingFlow() {
       entryMode: mode,
     });
     go("onb3");
+  }
+
+  async function enterSpace() {
+    if (enteringSpace) return;
+    setEnteringSpace(true);
+    setEnterError("");
+    const draft: SpaceState = {
+      ...state,
+      chosen: state.chosen || state.visited || state.recommended,
+      entryMode: state.entryMode || (state.chosen ? "chosen" : "recommended"),
+    };
+    persist(draft);
+    const message = await persistDiscoveryProfile(draft);
+    if (message) {
+      setEnterError(message);
+      setEnteringSpace(false);
+      return;
+    }
+    router.replace("/space");
+  }
+
+  function enterSpaceOrLogin() {
+    if (signedIn) {
+      void enterSpace();
+      return;
+    }
+    go("login");
   }
 
   function submitCode(event?: FormEvent) {
@@ -323,7 +366,7 @@ export default function OnboardingFlow() {
                 >
                   {guest ? "Continue" : "Find where to begin"}
                 </button>
-                {!guest ? (
+                {!guest && !signedIn ? (
                   <p className="have-acct">
                     <button className="top-signin" type="button" onClick={() => go("login")}>Have an account?</button>
                   </p>
@@ -417,19 +460,18 @@ export default function OnboardingFlow() {
         </section>
 
         <section className={`scr${scene === "stay" ? " on" : ""}`} data-name="stay" aria-label="Your stay">
-          <SceneCol
-            actions={(
-              <div className="actions fade" style={{ "--d": "1.8s" } as CSSProperties}>
-                <button className="tlink bp" type="button" onClick={() => go("onb2")}>Continue</button>
-              </div>
-            )}
-          >
+          <SceneCol>
             {guestWorld ? (
-              <ArchBlock
+              <StateArchPanel
                 world={guestWorld}
                 label="Your stay"
                 imageFailed={failedImages[guestWorld.n]}
                 onImageError={() => setFailedImages((prev) => ({ ...prev, [guestWorld.n]: true }))}
+                actions={(
+                  <button className="tlink bp" type="button" onClick={() => go("onb2")}>
+                    Continue
+                  </button>
+                )}
               />
             ) : null}
           </SceneCol>
@@ -466,11 +508,39 @@ export default function OnboardingFlow() {
             <div className="fgroup fade" style={{ "--d": "1.2s" } as CSSProperties}>
               <p className="flabel" id="dobLabel">Date of birth</p>
               <div className={`dob${dobError ? " bad" : ""}`} role="group" aria-labelledby="dobLabel">
-                <input inputMode="numeric" maxLength={2} placeholder="DD" aria-label="Day" autoComplete="bday-day" value={dob.day} onChange={(e) => setDob((v) => ({ ...v, day: e.target.value.replace(/\D/g, "").slice(0, 2) }))} />
+                <input
+                  ref={dobDayRef}
+                  inputMode="numeric"
+                  maxLength={2}
+                  placeholder="DD"
+                  aria-label="Day"
+                  autoComplete="bday-day"
+                  value={dob.day}
+                  onChange={(e) => onDobPartChange("day", e.target.value)}
+                />
                 <span className="slash">/</span>
-                <input inputMode="numeric" maxLength={2} placeholder="MM" aria-label="Month" autoComplete="bday-month" value={dob.month} onChange={(e) => setDob((v) => ({ ...v, month: e.target.value.replace(/\D/g, "").slice(0, 2) }))} />
+                <input
+                  ref={dobMonthRef}
+                  inputMode="numeric"
+                  maxLength={2}
+                  placeholder="MM"
+                  aria-label="Month"
+                  autoComplete="bday-month"
+                  value={dob.month}
+                  onChange={(e) => onDobPartChange("month", e.target.value)}
+                />
                 <span className="slash">/</span>
-                <input className="yyyy" inputMode="numeric" maxLength={4} placeholder="YYYY" aria-label="Year" autoComplete="bday-year" value={dob.year} onChange={(e) => setDob((v) => ({ ...v, year: e.target.value.replace(/\D/g, "").slice(0, 4) }))} />
+                <input
+                  ref={dobYearRef}
+                  className="yyyy"
+                  inputMode="numeric"
+                  maxLength={4}
+                  placeholder="YYYY"
+                  aria-label="Year"
+                  autoComplete="bday-year"
+                  value={dob.year}
+                  onChange={(e) => onDobPartChange("year", e.target.value)}
+                />
               </div>
               <p className={`err${dobError ? " show" : ""}`} role="alert">Please enter a valid date of birth.</p>
             </div>
@@ -565,23 +635,22 @@ export default function OnboardingFlow() {
         </section>
 
         <section className={`scr${scene === "result" ? " on" : ""}`} data-name="result" aria-label="Your recommended world">
-          <SceneCol
-            actions={(
-              <div className="actions fade" style={{ "--d": "1.8s" } as CSSProperties}>
-                <button className="tlink bp" type="button" onClick={() => chooseWorld(recommended, "recommended")}>
-                  Choose this world
-                </button>
-                <button className="tlink tl cg" type="button" onClick={() => go("states")}>
-                  Let me explore all States
-                </button>
-              </div>
-            )}
-          >
-            <ArchBlock
+          <SceneCol>
+            <StateArchPanel
               world={recommendedWorld}
               label="Your recommended world"
               imageFailed={failedImages[recommendedWorld.n]}
               onImageError={() => setFailedImages((prev) => ({ ...prev, [recommendedWorld.n]: true }))}
+              actions={(
+                <>
+                  <button className="tlink bp" type="button" onClick={() => chooseWorld(recommended, "recommended")}>
+                    Choose this world
+                  </button>
+                  <button className="tlink tl cg" type="button" onClick={() => go("states")}>
+                    Let me explore all States
+                  </button>
+                </>
+              )}
             />
           </SceneCol>
         </section>
@@ -643,22 +712,21 @@ export default function OnboardingFlow() {
         </section>
 
         <section className={`scr${scene === "prop" ? " on" : ""}`} data-name="prop" aria-label="Hospitality world">
-          <SceneCol
-            actions={(
-              <div className="actions fade" style={{ "--d": "1.8s" } as CSSProperties}>
-                <button className="tlink bp" type="button" onClick={() => chooseWorld(previewWorld.n, "chosen")}>
-                  Choose this world
-                </button>
-                <button className="tlink tl cg" type="button" onClick={goBack}>
-                  Back to all States
-                </button>
-              </div>
-            )}
-          >
-            <ArchBlock
+          <SceneCol>
+            <StateArchPanel
               world={previewWorld}
               imageFailed={failedImages[previewWorld.n]}
               onImageError={() => setFailedImages((prev) => ({ ...prev, [previewWorld.n]: true }))}
+              actions={(
+                <>
+                  <button className="tlink bp" type="button" onClick={() => chooseWorld(previewWorld.n, "chosen")}>
+                    Choose this world
+                  </button>
+                  <button className="tlink tl cg" type="button" onClick={goBack}>
+                    Back to all States
+                  </button>
+                </>
+              )}
             />
           </SceneCol>
         </section>
@@ -667,7 +735,17 @@ export default function OnboardingFlow() {
           <SceneCol
             actions={(
               <div className="actions fade" style={{ "--d": "3.2s" } as CSSProperties}>
-                <button className="tlink bp" type="button" onClick={() => go("login")}>Enter your Space</button>
+                <button
+                  className="tlink bp"
+                  type="button"
+                  disabled={enteringSpace}
+                  onClick={enterSpaceOrLogin}
+                >
+                  {enteringSpace ? "Entering…" : "Enter your Space"}
+                </button>
+                {enterError ? (
+                  <p className="err show" role="alert">{enterError}</p>
+                ) : null}
               </div>
             )}
           >
@@ -688,13 +766,15 @@ export default function OnboardingFlow() {
           </SceneCol>
         </section>
 
-        <section className={`scr${scene === "login" ? " on" : ""}`} data-name="login" aria-label="Enter your private space">
-          <VisitorAuthPanel
-            nextPath="/auth/complete"
-            onCode={() => go("code")}
-            hideCodeRow={Boolean(guest)}
-          />
-        </section>
+        {!signedIn ? (
+          <section className={`scr${scene === "login" ? " on" : ""}`} data-name="login" aria-label="Enter your private space">
+            <VisitorAuthPanel
+              nextPath="/auth/complete"
+              onCode={() => go("code")}
+              hideCodeRow={Boolean(guest)}
+            />
+          </section>
+        ) : null}
       </div>
     </main>
   );
