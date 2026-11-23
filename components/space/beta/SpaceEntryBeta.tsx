@@ -104,6 +104,8 @@ export default function SpaceEntryBeta({
 
   const connectedStay = stays.find((stay) => stay.id === activeStayId) || stays[0];
   const guest = isGuestSpace(state);
+  // Explore “Choose this world” → Book CTA; access-code stay → Reflect CTA.
+  const worldFromStay = guest && state.entryMode !== "chosen";
   const stayWorldNumber = connectedStay?.property.worldNumber;
   const activeNumber = dashboardWorldNumber(state, stayWorldNumber);
   const baseWorld = getWorld(activeNumber);
@@ -477,14 +479,16 @@ export default function SpaceEntryBeta({
       ) : (
         <SpaceDeck
           index={slideIndex}
-          guest={guest}
+          guest={worldFromStay}
           onIndexChange={setSlideIndex}
           transitionEnabled={!flow && !profileBusy && !circleDetailId && !accessCodeOpen}
         >
           {SPACE_SLIDES.map((def, i) => (
             <BetaSlideLayer key={def.id} index={i} slideId={def.id}>
               {def.id === "identity" && <IdentitySlide account={account} world={world} />}
-              {def.id === "world" && <ChosenWorldSlide key={world.n} world={world} guest={guest} />}
+              {def.id === "world" && (
+                <ChosenWorldSlide key={world.n} world={world} guest={worldFromStay} />
+              )}
               {def.id === "scent" && (
                 <ScentInvitationSlide
                   world={world}
