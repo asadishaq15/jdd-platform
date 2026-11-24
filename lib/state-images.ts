@@ -10,3 +10,17 @@ export function stateSlug(world: Pick<HospitalityWorld, "state"> | string) {
 export function stateImageSrc(world: Pick<HospitalityWorld, "state"> | string) {
   return `/images/states/${stateSlug(world)}.jpg`;
 }
+
+/**
+ * Image set for arch left/right controls.
+ * Extra paths can be listed per slug when more assets ship; today most worlds have one photo.
+ */
+const EXTRA_STATE_IMAGES: Partial<Record<string, string[]>> = {
+  // e.g. "inner-knowing": ["/images/states/inner-knowing-2.jpg"],
+};
+
+export function stateImageGallery(world: Pick<HospitalityWorld, "state"> | string): string[] {
+  const primary = stateImageSrc(world);
+  const extras = EXTRA_STATE_IMAGES[stateSlug(world)] || [];
+  return [primary, ...extras];
+}

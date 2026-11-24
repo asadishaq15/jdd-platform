@@ -40,16 +40,15 @@ export default function ScentInvitationSlide({
   const status = state.cardStatus || "none";
   const guestReceived = guest && !hasOrder && status === "received";
   const guestBedside = guest && !hasOrder && status !== "received";
-  const memberNotOrdered = !guest && !hasOrder && (status === "none" || !status);
+  // HTML: guest && !o → bedside; else if !o → Order my card; else → track / Received.
+  const memberNotOrdered = !guest && !hasOrder;
   const showPostalReceived = hasOrder && status === "received";
-  /* New UI screen 03: track + simulate sit under Order my card (DESIGN_SYSTEM 4.13). */
-  const showDeliveryUi = !guest && status !== "received";
-  const canSimulate = status === "none" || status === "preparing" || status === "sent";
+  const showDeliveryTrack = hasOrder && status !== "received";
+  const canSimulate = status === "preparing" || status === "sent";
   const showMarkPostal = status === "delivered";
   const showMarkBedside = guestBedside;
-  /* Design mock shows PREPARING as the current step before/at first order. */
   const activeIndex =
-    status === "none" || status === "preparing"
+    status === "preparing"
       ? 0
       : status === "sent"
         ? 1
@@ -57,7 +56,6 @@ export default function ScentInvitationSlide({
           ? 2
           : -1;
 
-  // HTML: Order my card only when there is no order yet (no “Order another”).
   const showOrderCta = canOrder && memberNotOrdered;
 
   return (
@@ -87,7 +85,8 @@ export default function ScentInvitationSlide({
           <>
             <p className="beta-scent-body">
               Your card is waiting for you on the bedside table in your room. It carries the
-              signature aroma of {world.property} and introduces the atmosphere of this world.
+              signature aroma of <em>{world.property}</em> and introduces the atmosphere of this
+              world.
             </p>
             <p className={`beta-rcv${guestReceived ? " on" : ""}`}>
               <span className="beta-rcv-dot" aria-hidden="true" />
@@ -96,11 +95,18 @@ export default function ScentInvitationSlide({
           </>
         ) : null}
 
-        {!guest && !showPostalReceived ? (
-          <p className="beta-scent-body">
-            A personalized card that captures the signature aroma of <em>{world.property}</em> and
-            introduces the atmosphere of this hospitality world.
-          </p>
+        {showOrderCta ? (
+          <>
+            <p className="beta-scent-body">
+              A personalised card that introduces the aroma of <em>{world.property}</em>. It arrives
+              by post and becomes part of your ritual.
+            </p>
+            <div className="beta-scent-actions">
+              <button className="beta-cta" type="button" onClick={onOrder}>
+                Order my card <span aria-hidden="true">→</span>
+              </button>
+            </div>
+          </>
         ) : null}
 
         {showPostalReceived ? (
@@ -109,16 +115,8 @@ export default function ScentInvitationSlide({
           </p>
         ) : null}
 
-        {showOrderCta ? (
-          <div className="beta-scent-actions">
-            <button className="beta-cta" type="button" onClick={onOrder}>
-              Order my card <span aria-hidden="true">→</span>
-            </button>
-          </div>
-        ) : null}
-
-        {showDeliveryUi ? (
-          <div className={`beta-scent-order-status${showOrderCta ? " with-cta" : ""}`}>
+        {showDeliveryTrack ? (
+          <div className="beta-scent-order-status">
             <ol className="beta-track" aria-label="Card delivery status">
               {TRACK.map((step, index) => (
                 <li key={step} className={index <= activeIndex ? "done" : ""}>

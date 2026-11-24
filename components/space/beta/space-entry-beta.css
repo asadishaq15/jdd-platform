@@ -64,8 +64,8 @@ body.night .space-entry-beta {
   --beta-muted: #a69f93;
   --beta-line: rgba(255, 255, 255, 0.14);
   --beta-line-strong: rgba(255, 255, 255, 0.22);
-  --beta-panel: #141412;
-  --beta-panel-border: rgba(255, 255, 255, 0.12);
+  --beta-panel: #1e1e1d;
+  --beta-panel-border: rgba(255, 255, 255, 0.14);
   --beta-cta-bg: #eee8de;
   --beta-cta-fg: #0e0d0b;
   --beta-cta-hover: var(--copper-highlight);
@@ -1081,15 +1081,28 @@ body.night .space-entry-beta {
   place-items: center;
   width: 46px;
   height: 46px;
+  margin: 0;
+  padding: 0;
   border: 1px solid var(--beta-arch-btn-border);
   border-radius: 50%;
   color: var(--beta-arch-btn-color);
   background: transparent;
+  cursor: pointer;
+  font: inherit;
+}
+
+.beta-arch-btn:disabled {
+  opacity: 0.35;
+  cursor: default;
 }
 
 body.night .beta-arch-btn {
   border-color: #eee8de;
   color: #eee8de;
+}
+
+.beta-arch-nav .beta-arch-btn {
+  pointer-events: auto;
 }
 
 .beta-arch-arrow {
@@ -1201,6 +1214,15 @@ body.night .beta-arch-btn {
   color: var(--beta-soft-text);
   font-size: 15px;
   line-height: 1.75;
+}
+
+.beta-world-commit {
+  margin: 4px 0 0;
+  max-width: 38ch;
+  color: var(--beta-muted);
+  font-size: 13px;
+  line-height: 1.6;
+  text-align: left;
 }
 
 .beta-world-cta {

@@ -44,6 +44,7 @@ export type SpaceState = {
   becoming?: string;
   entryMode?: "recommended" | "chosen" | "code";
   cardStatus?: "none" | "preparing" | "sent" | "delivered" | "received";
+  /** Explicit `null` clears a prior postal order on save/sync (JSON keeps the key). */
   order?: {
     property: string;
     state: string;
@@ -55,7 +56,7 @@ export type SpaceState = {
     country?: string;
     price?: string;
     payment?: string;
-  };
+  } | null;
   reminder?: {
     action: string;
     frequency: ReminderFrequency;

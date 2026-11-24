@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useLayoutEffect, useState, type ReactNode } from "react";
 import type { AccountSummary } from "../../../lib/space-data";
 import {
   JOURNEY_DEMO_NOTIFICATIONS,
@@ -10,8 +10,25 @@ import {
   type JourneyWorld,
 } from "../../../lib/my-journey-demo";
 import BrandMark from "../../brand/BrandMark";
+import ThemeToggle from "../../layout/ThemeToggle";
 import type { SpaceProfileAction } from "./SpaceBetaHeader";
 import "./my-journey.css";
+
+const THEME_KEY = "jdd-theme";
+
+function readJourneyLight() {
+  if (typeof document !== "undefined" && document.body.classList.contains("night")) {
+    return false;
+  }
+  try {
+    if (typeof localStorage !== "undefined" && localStorage.getItem(THEME_KEY) === "dark") {
+      return false;
+    }
+  } catch {
+    // ignore
+  }
+  return true;
+}
 
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
@@ -210,7 +227,7 @@ export default function MyJourneyPage({
   onProfileAction: (action: SpaceProfileAction) => void;
   onSignOut: () => void;
 }) {
-  const [light, setLight] = useState(true);
+  const [light, setLight] = useState(readJourneyLight);
   const [worlds, setWorlds] = useState<JourneyWorld[]>(() =>
     JOURNEY_DEMO_WORLDS.map((world) => ({
       ...world,
@@ -232,17 +249,29 @@ export default function MyJourneyPage({
   const initial = account.fullName.trim().charAt(0).toUpperCase() || "G";
   const hasUnread = notifications.some((item) => !item.answered);
 
+  useLayoutEffect(() => {
+    function syncLight() {
+      setLight(!document.body.classList.contains("night"));
+    }
+    syncLight();
+    const observer = new MutationObserver(syncLight);
+    observer.observe(document.body, { attributes: true, attributeFilter: ["class"] });
+    return () => observer.disconnect();
+  }, []);
+
   useEffect(() => {
+    if (!bellOpen && !accountOpen) return;
     function onDocClick(event: MouseEvent) {
       const target = event.target as HTMLElement | null;
-      if (!target?.closest(".my-journey .dropdown") && !target?.closest(".my-journey .icon-btn") && !target?.closest(".my-journey .avatar")) {
-        setBellOpen(false);
-        setAccountOpen(false);
+      if (target?.closest(".my-journey .bell-wrap") || target?.closest(".my-journey .pmenu-wrap")) {
+        return;
       }
+      setBellOpen(false);
+      setAccountOpen(false);
     }
     document.addEventListener("click", onDocClick);
     return () => document.removeEventListener("click", onDocClick);
-  }, []);
+  }, [bellOpen, accountOpen]);
 
   function closeMenus() {
     setBellOpen(false);
@@ -308,124 +337,114 @@ export default function MyJourneyPage({
           <span className="journey-brand-title">My Space</span>
         </button>
         <div className="icons">
-          <button
-            className="icon-btn"
-            type="button"
-            aria-label="Day / night"
-            onClick={(event) => {
-              event.stopPropagation();
-              setLight((value) => !value);
-            }}
-          >
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2" aria-hidden="true">
-              <circle cx="12" cy="12" r="4" />
-              <path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" />
-            </svg>
-          </button>
-          <button
-            className="icon-btn"
-            type="button"
-            aria-label="Notifications"
-            onClick={(event) => {
-              event.stopPropagation();
-              setAccountOpen(false);
-              setBellOpen((value) => !value);
-            }}
-          >
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2" aria-hidden="true">
-              <path d="M6 17V11a6 6 0 0 1 12 0v6M4 17h16M10 20h4" />
-            </svg>
-            {hasUnread ? <span className="badge" /> : null}
-          </button>
-          <button
-            className="avatar"
-            type="button"
-            aria-label="Account"
-            onClick={(event) => {
-              event.stopPropagation();
-              setBellOpen(false);
-              setAccountOpen((value) => !value);
-            }}
-          >
-            {account.avatarUrl ? (
-              <img src={account.avatarUrl} alt="" referrerPolicy="no-referrer" />
-            ) : (
-              initial
-            )}
-          </button>
-          <div className={`dropdown notifs${bellOpen ? " open" : ""}`}>
-            {notifications.map((note) => {
-              const world = worlds.find((item) => item.id === note.worldId);
-              const action = world?.actions.find((item) => item.id === note.actionId);
-              if (!world || !action) return null;
-              return (
-                <div className="notif" key={note.id}>
-                  <div className="eyebrow">
-                    Action · {action.schedule} · {note.when}
-                  </div>
-                  <h4>Have you acted today?</h4>
-                  <p>{action.text}</p>
-                  {note.answered ? (
-                    <div className="done">{note.answered}</div>
-                  ) : (
-                    <div className="btn-row">
-                      <button className="btn primary" type="button" onClick={() => answerAction(note.id, true)}>
-                        Yes, I did
-                      </button>
-                      <button className="btn" type="button" onClick={() => answerAction(note.id, false)}>
-                        Not today
-                      </button>
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-          <div className={`dropdown menu${accountOpen ? " open" : ""}`}>
-            <div className="who">
-              <div className="name">{account.fullName}</div>
-              <div className="mail">{account.email}</div>
-            </div>
-            <hr className="sep" />
-            <button type="button" onClick={() => runProfileAction("account")}>
-              My account
-            </button>
-            <button type="button" onClick={() => runProfileAction("orders")}>
-              My orders
-            </button>
-            <button type="button" className="current" onClick={closeMenus}>My journey</button>
-            <button type="button" onClick={() => runProfileAction("events")}>
-              My events
-            </button>
-            <button type="button" onClick={() => runProfileAction("explore")}>
-              Explore all States
-            </button>
-            <hr className="sep cg-line" />
-            <div className="small">
-              <button type="button" className="small" onClick={() => runProfileAction("legal")}>
-                Terms of Use
-              </button>
-              {" · "}
-              <button type="button" className="small" onClick={() => runProfileAction("legal")}>
-                Privacy Policy
-              </button>
-            </div>
-            <button type="button" className="small" onClick={() => runProfileAction("delete")}>
-              Delete account
-            </button>
+          <ThemeToggle />
+          <div className="bell-wrap">
             <button
+              className="icon-btn"
               type="button"
-              className="small"
+              aria-label="Notifications"
+              aria-haspopup="true"
+              aria-expanded={bellOpen}
               onClick={() => {
-                closeMenus();
-                onSignOut();
+                setAccountOpen(false);
+                setBellOpen((value) => !value);
               }}
             >
-              Sign out
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2" aria-hidden="true">
+                <path d="M6 17V11a6 6 0 0 1 12 0v6M4 17h16M10 20h4" />
+              </svg>
+              {hasUnread ? <span className="badge" /> : null}
             </button>
-            <button type="button" className="small" onClick={onClose} style={{ marginTop: 8 }}>
-              Close journey
+            {bellOpen ? (
+              <div className="dropdown notifs open">
+                {notifications.map((note) => {
+                  const world = worlds.find((item) => item.id === note.worldId);
+                  const action = world?.actions.find((item) => item.id === note.actionId);
+                  if (!world || !action) return null;
+                  return (
+                    <div className="notif" key={note.id}>
+                      <div className="eyebrow">
+                        Action · {action.schedule} · {note.when}
+                      </div>
+                      <h4>Have you acted today?</h4>
+                      <p>{action.text}</p>
+                      {note.answered ? (
+                        <div className="done">{note.answered}</div>
+                      ) : (
+                        <div className="btn-row">
+                          <button className="btn primary" type="button" onClick={() => answerAction(note.id, true)}>
+                            Yes, I did
+                          </button>
+                          <button className="btn" type="button" onClick={() => answerAction(note.id, false)}>
+                            Not today
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            ) : null}
+          </div>
+          <div className="pmenu-wrap">
+            <button
+              className="profile"
+              type="button"
+              aria-label="Account menu"
+              aria-haspopup="true"
+              aria-expanded={accountOpen}
+              onClick={() => {
+                setBellOpen(false);
+                setAccountOpen((value) => !value);
+              }}
+            >
+              {account.avatarUrl ? (
+                <img src={account.avatarUrl} alt="" referrerPolicy="no-referrer" />
+              ) : (
+                initial
+              )}
             </button>
+            {accountOpen ? (
+              <div className="pmenu beta-pmenu" role="menu">
+                <div className="pm-head">
+                  <p className="pm-name">{account.fullName}</p>
+                  <p className="pm-mail">{account.email}</p>
+                </div>
+                <button className="pm-item" role="menuitem" type="button" onClick={() => runProfileAction("account")}>
+                  My account
+                </button>
+                <button className="pm-item" role="menuitem" type="button" onClick={() => runProfileAction("orders")}>
+                  My orders
+                </button>
+                <button className="pm-item" role="menuitem" type="button" onClick={closeMenus}>
+                  My journey
+                </button>
+                <button className="pm-item" role="menuitem" type="button" onClick={() => runProfileAction("events")}>
+                  My events
+                </button>
+                <button className="pm-item" role="menuitem" type="button" onClick={() => runProfileAction("explore")}>
+                  Explore all States
+                </button>
+                <span className="pm-rule" />
+                <button className="pm-item small" role="menuitem" type="button" onClick={() => runProfileAction("legal")}>
+                  Terms of Use · Privacy Policy
+                </button>
+                <button className="pm-item small" role="menuitem" type="button" onClick={() => runProfileAction("delete")}>
+                  Delete account
+                </button>
+                <button
+                  className="pm-item small"
+                  role="menuitem"
+                  type="button"
+                  onClick={() => {
+                    closeMenus();
+                    onSignOut();
+                  }}
+                >
+                  Sign out
+                </button>
+              </div>
+            ) : null}
           </div>
         </div>
       </header>

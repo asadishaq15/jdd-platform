@@ -343,6 +343,26 @@ body.night .beta-ritual-overlay .stay-actions .tlink:focus-visible {
   text-align: center;
 }
 
+/* World warn: Keep my current world (HTML #v-worldwarn secondary link) */
+.beta-ritual-overlay .links.small.world-warn-keep {
+  margin-top: 22px;
+}
+
+.beta-ritual-overlay .links.small.world-warn-keep .tlink {
+  color: var(--muted);
+  font-size: 13px;
+  letter-spacing: 0.02em;
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+}
+
+.beta-ritual-overlay .links.small.world-warn-keep .tlink:hover,
+.beta-ritual-overlay .links.small.world-warn-keep .tlink:focus-visible {
+  color: var(--fg);
+}
+
 .beta-ritual-overlay .links.small .sep {
   margin: 0 10px;
   color: var(--muted);

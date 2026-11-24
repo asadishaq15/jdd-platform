@@ -29,6 +29,7 @@ export default function SpaceBetaHeader({
   onProfileAction,
   onSignOut,
   topStart,
+  showUiToggle = true,
 }: {
   account: AccountSummary;
   menuOpen: boolean;
@@ -40,6 +41,8 @@ export default function SpaceBetaHeader({
   onSignOut: () => void;
   /** Top-left control (e.g. Back on detail windows), matching AuthShell topStart. */
   topStart?: ReactNode;
+  /** New/Classic toggle — hidden on overlay pages like Explore. */
+  showUiToggle?: boolean;
 }) {
   const initial = account.fullName.trim().charAt(0).toUpperCase() || "G";
   const [bellOpen, setBellOpen] = useState(false);
@@ -83,7 +86,9 @@ export default function SpaceBetaHeader({
         <span className="dash-title">My Space</span>
       </div>
       <div className="dash-controls">
-        <SpaceUiToggle version={uiVersion} onChange={onUiVersionChange} />
+        {showUiToggle ? (
+          <SpaceUiToggle version={uiVersion} onChange={onUiVersionChange} />
+        ) : null}
         {/* Order matches My Journey: light mode → bell (+dot) → profile */}
         <ThemeToggle />
         <div className="beta-bell-wrap">

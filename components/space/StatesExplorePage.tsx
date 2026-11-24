@@ -1,21 +1,34 @@
 "use client";
 
 import { useEffect, useMemo, useState, type CSSProperties } from "react";
-import BrandMark from "../brand/BrandMark";
+import type { AccountSummary } from "../../lib/space-data";
 import { stateImageSrc } from "../../lib/state-images";
 import { loadSpaceState } from "../../lib/space-state";
+import type { SpaceUiVersion } from "../../lib/space-ui-version";
 import { worlds, type HospitalityWorld } from "../../lib/worlds";
 import StateArchPanel from "./StateArchPanel";
+import SpaceBetaHeader, { type SpaceProfileAction } from "./beta/SpaceBetaHeader";
 import "../onboarding/visitor-onboarding.css";
+import "./beta/space-entry-beta.css";
 import "./states-explore.css";
 
 export default function StatesExplorePage({
+  account,
+  uiVersion,
+  onUiVersionChange,
+  onProfileAction,
+  onSignOut,
   onClose,
   chosen: chosenProp,
   visited: visitedProp,
   recommended: recommendedProp,
   onChooseWorld,
 }: {
+  account: AccountSummary;
+  uiVersion: SpaceUiVersion;
+  onUiVersionChange: (version: SpaceUiVersion) => void;
+  onProfileAction: (action: SpaceProfileAction) => void;
+  onSignOut: () => void;
   onClose: () => void;
   chosen?: number;
   visited?: number;
@@ -28,6 +41,7 @@ export default function StatesExplorePage({
   const recommended = recommendedProp ?? stored.recommended;
   const [selected, setSelected] = useState<HospitalityWorld | null>(null);
   const [failedImages, setFailedImages] = useState<Record<number, boolean>>({});
+  const [menuOpen, setMenuOpen] = useState(false);
 
   useEffect(() => {
     const prev = document.documentElement.style.overflow;
@@ -50,25 +64,40 @@ export default function StatesExplorePage({
   const canChoose =
     Boolean(onChooseWorld) && selected != null && selected.n !== chosen;
 
+  function handleBack() {
+    if (selected) setSelected(null);
+    else onClose();
+  }
+
   return (
-    <div className="visitor-app states-explore wide" role="dialog" aria-modal="true" aria-label="Explore all States">
-      <header className="top states-explore-top">
-        <button
-          className="back show"
-          type="button"
-          onClick={() => {
-            if (selected) setSelected(null);
-            else onClose();
-          }}
-        >
-          Back
-        </button>
-        <div className="states-explore-brand" aria-hidden="true">
-          <BrandMark className="states-explore-logo" decorative />
-          <span className="states-explore-mark">My Space</span>
-        </div>
-        <span aria-hidden="true" style={{ minWidth: 44 }} />
-      </header>
+    <div
+      className="visitor-app states-explore wide space-entry-beta"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Explore all States"
+    >
+      <SpaceBetaHeader
+        account={account}
+        menuOpen={menuOpen}
+        uiVersion={uiVersion}
+        onUiVersionChange={onUiVersionChange}
+        showUiToggle={false}
+        onToggleMenu={() => setMenuOpen((value) => !value)}
+        onCloseMenu={() => setMenuOpen(false)}
+        onProfileAction={(action) => {
+          if (action === "explore") {
+            setMenuOpen(false);
+            return;
+          }
+          onProfileAction(action);
+        }}
+        onSignOut={onSignOut}
+        topStart={
+          <button className="beta-hback" type="button" onClick={handleBack}>
+            Back
+          </button>
+        }
+      />
 
       <div className="screens">
         <section className={`scr on${selected ? "" : " states-scr"}`} data-name={selected ? "prop" : "states"}>
@@ -79,9 +108,10 @@ export default function StatesExplorePage({
                   world={selected}
                   imageFailed={failedImages[selected.n]}
                   onImageError={() => setFailedImages((prev) => ({ ...prev, [selected.n]: true }))}
-                  actions={(
-                    <>
-                      {canChoose ? (
+                  showArchNav
+                  actions={
+                    canChoose ? (
+                      <>
                         <button
                           className="tlink bp"
                           type="button"
@@ -89,12 +119,13 @@ export default function StatesExplorePage({
                         >
                           Choose this world
                         </button>
-                      ) : null}
-                      <button className="tlink tl cg" type="button" onClick={() => setSelected(null)}>
-                        Back to all States
-                      </button>
-                    </>
-                  )}
+                        <p className="states-explore-commit">
+                          Changing your world starts a new commitment. You’ll set
+                          a new intention, who you are becoming, and your actions.
+                        </p>
+                      </>
+                    ) : undefined
+                  }
                 />
               ) : (
                 <>

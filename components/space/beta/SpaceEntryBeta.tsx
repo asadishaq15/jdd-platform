@@ -7,7 +7,13 @@ import type { SpaceUiVersion } from "../../../lib/space-ui-version";
 import { communityCircleForWorld } from "../../../lib/community-circle";
 import { getWorld, worldNumberForDemoCode } from "../../../lib/worlds";
 import { dashboardWorldNumber, isGuestSpace } from "../../../lib/space-active-world";
-import { attachDemoCode, migrateStaysFromCode } from "../../../lib/space-property-snapshot";
+import {
+  attachDemoCode,
+  chooseWorldAsActive,
+  hasSpaceCommitment,
+  isAccessCodeStayChange,
+  migrateStaysFromCode,
+} from "../../../lib/space-property-snapshot";
 import { persistDiscoveryProfile } from "../../../lib/discovery-persist";
 import { trackProductEvent } from "../../../lib/product-events";
 import { persistSpaceState, type SpaceState } from "../../../lib/space-state";
@@ -23,6 +29,7 @@ import LegalSheet from "./LegalSheet";
 import MyJourneyPage from "./MyJourneyPage";
 import OrderCardFlow from "./OrderCardFlow";
 import PerfumeOilFlow from "./PerfumeOilFlow";
+import WorldWarnFlow from "./WorldWarnFlow";
 import SpaceBetaHeader, { type SpaceProfileAction } from "./SpaceBetaHeader";
 import { BetaSlideLayer } from "./BetaSlideLayer";
 import SpaceDeck from "./SpaceDeck";
@@ -75,6 +82,8 @@ export default function SpaceEntryBeta({
   const [flow, setFlow] = useState<BetaFlow | null>(null);
   const [circleDetailId, setCircleDetailId] = useState<string | null>(null);
   const [accessCodeOpen, setAccessCodeOpen] = useState(false);
+  /** Pending Explore world when commitment exists (HTML #v-worldwarn). */
+  const [pendingWorld, setPendingWorld] = useState<number | null>(null);
 
   useEffect(() => {
     setAccount(initialAccount);
@@ -125,8 +134,8 @@ export default function SpaceEntryBeta({
     persistSpaceState(next);
   }
 
-  function chooseWorldFromExplore(n: number) {
-    const next = { ...state, chosen: n, entryMode: "chosen" as const };
+  function applyChosenWorld(n: number) {
+    const next = chooseWorldAsActive(state, n);
     updateState(next);
     void trackProductEvent({
       name: "world_chosen",
@@ -138,15 +147,34 @@ export default function SpaceEntryBeta({
       },
     });
     void persistDiscoveryProfile(next);
+    setPendingWorld(null);
     setExploreOpen(false);
-    if (WORLD_SLIDE_INDEX >= 0) setSlideIndex(WORLD_SLIDE_INDEX);
+    setJourneyOpen(false);
+    // HTML toSpace(null, true) after world change — open My Space from the first slide.
+    if (IDENTITY_SLIDE_INDEX >= 0) setSlideIndex(IDENTITY_SLIDE_INDEX);
+  }
+
+  function chooseWorldFromExplore(n: number) {
+    // HTML changesActive: fromDash && (isGuest() || n !== st.chosen)
+    const changesActive = isGuestSpace(state) || n !== state.chosen;
+    if (!changesActive) {
+      setExploreOpen(false);
+      setJourneyOpen(false);
+      if (WORLD_SLIDE_INDEX >= 0) setSlideIndex(WORLD_SLIDE_INDEX);
+      return;
+    }
+    if (hasSpaceCommitment(state)) {
+      setPendingWorld(n);
+      return;
+    }
+    applyChosenWorld(n);
   }
 
   function simulateDelivery() {
-    // Demo control: none/preparing → sent → delivered (never jumps to received)
+    // HTML: Simulate only advances preparing → sent → delivered (never from none / to received)
     const current = state.cardStatus || "none";
     const nextStatus =
-      current === "none" || current === "preparing" ? "sent"
+      current === "preparing" ? "sent"
         : current === "sent" ? "delivered"
           : current;
     if (nextStatus === current) return;
@@ -219,11 +247,25 @@ export default function SpaceEntryBeta({
       <BetaAccessCodeFlow
         onClose={() => setAccessCodeOpen(false)}
         onComplete={({ code, visited }) => {
+          const stayChanged = isAccessCodeStayChange(state, visited);
           updateState(attachDemoCode(state, code, visited));
           setAccessCodeOpen(false);
-          // HTML toSpace(): new code opens the first dashboard slide (My Space), not the previous one.
-          if (IDENTITY_SLIDE_INDEX >= 0) setSlideIndex(IDENTITY_SLIDE_INDEX);
+          // New/different stay → Scent so bedside Mark as received is visible; same stay → identity.
+          if (stayChanged && SCENT_SLIDE_INDEX >= 0) {
+            setSlideIndex(SCENT_SLIDE_INDEX);
+          } else if (IDENTITY_SLIDE_INDEX >= 0) {
+            setSlideIndex(IDENTITY_SLIDE_INDEX);
+          }
         }}
+      />
+    );
+  }
+
+  if (pendingWorld != null) {
+    return (
+      <WorldWarnFlow
+        onContinue={() => applyChosenWorld(pendingWorld)}
+        onKeep={() => setPendingWorld(null)}
       />
     );
   }
@@ -421,11 +463,19 @@ export default function SpaceEntryBeta({
       <SpaceEventsDrawer open={eventsOpen} onClose={() => setEventsOpen(false)} />
       {exploreOpen ? (
         <StatesExplorePage
+          account={account}
+          uiVersion={uiVersion}
+          onUiVersionChange={onUiVersionChange}
           chosen={state.chosen}
           visited={state.visited}
           recommended={state.recommended}
           onClose={() => setExploreOpen(false)}
           onChooseWorld={chooseWorldFromExplore}
+          onSignOut={signOut}
+          onProfileAction={(action) => {
+            setExploreOpen(false);
+            handleProfileAction(action);
+          }}
         />
       ) : null}
       <LegalSheet open={legalOpen} onClose={() => setLegalOpen(false)} />
@@ -481,13 +531,18 @@ export default function SpaceEntryBeta({
           index={slideIndex}
           guest={worldFromStay}
           onIndexChange={setSlideIndex}
-          transitionEnabled={!flow && !profileBusy && !circleDetailId && !accessCodeOpen}
+          transitionEnabled={!flow && !profileBusy && !circleDetailId && !accessCodeOpen && pendingWorld == null}
         >
           {SPACE_SLIDES.map((def, i) => (
             <BetaSlideLayer key={def.id} index={i} slideId={def.id}>
               {def.id === "identity" && <IdentitySlide account={account} world={world} />}
               {def.id === "world" && (
-                <ChosenWorldSlide key={world.n} world={world} guest={worldFromStay} />
+                <ChosenWorldSlide
+                  key={world.n}
+                  world={world}
+                  guest={worldFromStay}
+                  fromExplore={state.entryMode === "chosen"}
+                />
               )}
               {def.id === "scent" && (
                 <ScentInvitationSlide

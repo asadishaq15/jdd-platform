@@ -133,6 +133,7 @@ export default function SpaceEntry({
     });
     void persistDiscoveryProfile(next);
     setExploreOpen(false);
+    setModal(null);
   }
 
   function signOut() {
@@ -176,11 +177,28 @@ export default function SpaceEntry({
   if (exploreOpen) {
     return (
       <StatesExplorePage
+        account={account}
+        uiVersion={uiVersion}
+        onUiVersionChange={onUiVersionChange || (() => {})}
         chosen={state.chosen}
         visited={state.visited}
         recommended={state.recommended}
         onClose={() => setExploreOpen(false)}
         onChooseWorld={chooseWorldFromExplore}
+        onSignOut={signOut}
+        onProfileAction={(action) => {
+          setExploreOpen(false);
+          if (action === "journey") {
+            setModal("journey");
+            return;
+          }
+          if (action === "explore") return;
+          if (action === "events") {
+            setModal("events");
+            return;
+          }
+          setModal(action);
+        }}
       />
     );
   }

@@ -91,9 +91,16 @@ export function spaceStateToSnapshot(state: SpaceState): PrivateSpaceSnapshot {
       snapshot.byProp = byProp;
       continue;
     }
-    if (key === "order" && isPlainObject(value)) {
-      snapshot.order = { ...(value as NonNullable<SpaceState["order"]>) };
-      continue;
+    if (key === "order") {
+      // Keep explicit null so a cleared guest/postal order survives JSON + API sync.
+      if (value === null) {
+        snapshot.order = null;
+        continue;
+      }
+      if (isPlainObject(value)) {
+        snapshot.order = { ...(value as Exclude<NonNullable<SpaceState["order"]>, null>) };
+        continue;
+      }
     }
     if (key === "reminder" && isPlainObject(value)) {
       snapshot.reminder = { ...(value as NonNullable<SpaceState["reminder"]>) };
@@ -123,7 +130,8 @@ function mergeByProp(
   b: SpaceState["byProp"],
 ): SpaceState["byProp"] | undefined {
   if (!a && !b) return undefined;
-  return { ...(a || {}), ...(b || {}) };
+  // Local (a) wins over snapshot (b) so a just-switched stay’s byProp is not overwritten.
+  return { ...(b || {}), ...(a || {}) };
 }
 
 function mergeRsvps(
@@ -183,16 +191,26 @@ export function mergeSpaceState(
   if (local.recommended != null || snapshot.recommended != null || profile.recommended != null) {
     merged.recommended = profile.recommended ?? local.recommended ?? snapshot.recommended;
   }
-  if (local.cardStatus && snapshot.cardStatus) {
+  // Demo-code stay switches: prefer local card so stale snapshot "received" cannot revive.
+  if (local.entryMode === "code" && local.cardStatus) {
+    merged.cardStatus = local.cardStatus;
+    merged.entryMode = "code";
+    if (local.code) merged.code = local.code;
+    if (local.visited != null) merged.visited = local.visited;
+  } else if (local.cardStatus && snapshot.cardStatus) {
     merged.cardStatus = snapshot.cardStatus;
   } else if (local.cardStatus || snapshot.cardStatus) {
     merged.cardStatus = local.cardStatus || snapshot.cardStatus;
   }
-  if (local.order || snapshot.order) {
+
+  // Explicit local null (or code stay with no order) must not resurrect snapshot.order.
+  if (local.order === null || (local.entryMode === "code" && !local.order && local.cardStatus === "none")) {
+    merged.order = null;
+  } else if (local.order || snapshot.order) {
     merged.order = {
       ...(snapshot.order || {}),
       ...(local.order || {}),
-    } as NonNullable<SpaceState["order"]>;
+    } as Exclude<NonNullable<SpaceState["order"]>, null>;
   }
   if (local.reminder || snapshot.reminder) {
     merged.reminder = snapshot.reminder || local.reminder;
@@ -315,8 +333,9 @@ export function buildDashboardSpaceState(args: {
       }
     : {};
 
+  // Demo access codes: guest bedside card lives in local/byProp only (HTML). Never overlay DB postal orders.
   const next = hasDemoCode
-    ? { ...synced, ...persistedOrder }
+    ? { ...synced }
     : connected
       ? { ...synced, ...persistedOrder, visited: connected.property.worldNumber }
       : { ...synced, ...persistedOrder };
