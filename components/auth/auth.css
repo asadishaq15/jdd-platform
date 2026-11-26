@@ -332,13 +332,20 @@ body.night .entry-providers .btn {
   align-items: stretch;
   justify-content: stretch;
   padding: 4px var(--pad-x) calc(env(safe-area-inset-bottom) + 28px);
+  /* Short phones: allow scroll instead of clipping the footer / CTAs */
+  overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .auth-shell .panel:has(.admin-portal) {
   display: flex;
   flex: 1;
   flex-direction: column;
+  box-sizing: border-box;
+  width: 100%;
   max-width: min(500px, 100%);
+  min-width: 0;
   min-height: min(720px, calc(100dvh - 108px));
 }
 
@@ -347,6 +354,8 @@ body.night .entry-providers .btn {
   flex: 1;
   flex-direction: column;
   width: 100%;
+  max-width: 100%;
+  min-width: 0;
   text-align: center;
 }
 
@@ -397,6 +406,8 @@ body.night .entry-providers .btn {
   max-width: 420px;
   margin-top: 40px;
   gap: 14px;
+  /* Stack on narrow screens so labels are not cramped / clipped */
+  grid-template-columns: 1fr;
 }
 
 .admin-portal-providers .btn {
@@ -448,22 +459,24 @@ body.night .admin-portal-providers .btn-portal-team {
 
 .admin-portal-security {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
   gap: 8px;
   margin: 0 auto;
-  max-width: none;
+  max-width: 36ch;
   color: var(--muted);
   font-size: 12px;
   font-weight: 300;
   line-height: 1.55;
   text-align: center;
-  white-space: nowrap;
+  white-space: normal;
 }
 
 .admin-portal-security span {
+  min-width: 0;
   text-align: center;
-  white-space: nowrap;
+  white-space: normal;
+  text-wrap: balance;
 }
 
 .admin-portal-lock {
@@ -515,6 +528,90 @@ body.night .admin-portal-request {
 .admin-portal-request:focus-visible {
   outline: none;
   color: var(--copper-highlight);
+}
+
+@media (min-width: 640px) {
+  .admin-portal-providers {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .admin-portal-security {
+    max-width: none;
+    align-items: center;
+    white-space: nowrap;
+  }
+
+  .admin-portal-security span {
+    white-space: nowrap;
+  }
+}
+
+@media (max-width: 480px) {
+  .auth-shell .panel:has(.admin-portal) {
+    /* Don’t force a tall min-height that overflows short viewports */
+    min-height: 0;
+  }
+
+  .admin-portal-main {
+    padding: 8px 0 18px;
+  }
+
+  .admin-portal-foot {
+    padding-top: 28px;
+  }
+
+  .admin-portal-title {
+    font-size: clamp(30px, 8vw, 38px);
+  }
+
+  .admin-portal-body {
+    margin-top: 18px;
+    font-size: 14px;
+  }
+
+  .admin-portal-providers {
+    margin-top: 28px;
+  }
+}
+
+/* Short phones (e.g. iPhone SE): compress vertical rhythm so CTAs + footer stay reachable */
+@media (max-width: 480px) and (max-height: 720px) {
+  .auth-shell .stage:has(.admin-portal) {
+    padding-top: 0;
+    padding-bottom: calc(env(safe-area-inset-bottom) + 16px);
+  }
+
+  .admin-portal-eyebrow {
+    margin-bottom: 12px;
+  }
+
+  .admin-portal-main {
+    justify-content: flex-start;
+    padding: 4px 0 12px;
+  }
+
+  .admin-portal-body {
+    margin-top: 14px;
+    font-size: 13.5px;
+    line-height: 1.55;
+  }
+
+  .admin-portal-providers {
+    margin-top: 22px;
+    gap: 10px;
+  }
+
+  .admin-portal-providers .btn {
+    height: 48px;
+  }
+
+  .admin-portal-foot {
+    padding-top: 20px;
+  }
+
+  .admin-portal-partner-line {
+    margin-top: 14px;
+  }
 }
 
 @media (min-width: 900px) {

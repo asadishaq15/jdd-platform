@@ -24,10 +24,12 @@ export async function updateSession(request: NextRequest) {
   const { data } = await supabase.auth.getUser();
   const path = request.nextUrl.pathname;
   const isAdminSignIn = path === "/admin/sign-in";
+  // Access-denied view is public chrome (AuthShell); membership is checked by admin routes.
+  const isAdminUnauthorized = path === "/admin/unauthorized";
   const isProtected = path.startsWith("/discover")
     || path.startsWith("/space")
     || path.startsWith("/auth/complete")
-    || (path.startsWith("/admin") && !isAdminSignIn)
+    || (path.startsWith("/admin") && !isAdminSignIn && !isAdminUnauthorized)
     || path.startsWith("/activate/");
 
   if (isProtected && !data.user) {
